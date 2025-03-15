@@ -38,7 +38,10 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> {
       final catProvider = Provider.of<CatProvider>(context, listen: false);
       
       if (_isRandom) {
-        await catProvider.adoptCat(name: _nameController.text.trim());
+        await catProvider.adoptCat(
+          name: _nameController.text.trim(),
+          breed: CatBreed.random,
+        );
       } else {
         await catProvider.adoptCat(
           breed: _selectedBreed,

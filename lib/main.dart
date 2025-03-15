@@ -1,15 +1,35 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // 导入实现的页面
 import 'screens/cat_home_screen.dart';
 import 'screens/travel_map_screen.dart';
 import 'screens/profile_screen.dart';
+import 'screens/dialogue_screen.dart';
+import 'screens/api_debug_screen.dart';
 import 'providers/cat_provider.dart';
+import 'providers/accessory_provider.dart';
+import 'providers/dialogue_provider.dart';
+import 'services/dialogue_service.dart';
+import 'services/ai_service.dart';
 
-void main() {
+void main() async {
+  //初始化flutter绑定
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // 加载环境变量 - 添加错误处理
+  try {
+    await dotenv.load(fileName: ".env");
+    debugPrint("环境变量加载成功");
+  } catch (e) {
+    debugPrint("环境变量加载失败: $e");
+    // 创建默认环境变量以防止应用崩溃
+    dotenv.env['DEEPSEEK_API_KEY'] = 'default_key';
+    dotenv.env['DEEPSEEK_API_ENDPOINT'] = 'https://api.deepseek.com/v1/chat/completions';
+  }
+  
   // 设置状态栏颜色为透明
   SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
     statusBarColor: Colors.transparent,
@@ -21,10 +41,15 @@ void main() {
     DeviceOrientation.portraitDown,
   ]);
   
+  //使用provider状态管理启动应用
   runApp(
     MultiProvider(
       providers: [
         ChangeNotifierProvider(create: (_) => CatProvider()),
+        ChangeNotifierProvider(create: (_) => AccessoryProvider()),
+        ChangeNotifierProvider(
+          create: (context) => DialogueProvider(),
+        ),
       ],
       child: const MyApp(),
     ),
@@ -54,6 +79,10 @@ class MyApp extends StatelessWidget {
         ),
       ),
       home: const MainScreen(),
+      routes: {
+        DialogueScreen.routeName: (ctx) => const DialogueScreen(),
+        ApiDebugScreen.routeName: (ctx) => const ApiDebugScreen(),
+      },
     );
   }
 }

@@ -5,14 +5,15 @@ import '../services/cat_service.dart';
 /// 猫咪状态管理Provider
 class CatProvider extends ChangeNotifier {
   final CatService _catService = CatService();
+  Cat? _cat;
   bool _isLoading = true;
   String? _errorMessage;
   
   // 获取当前猫咪
-  Cat? get cat => _catService.currentCat;
+  Cat? get cat => _cat;
   
   // 判断用户是否有猫咪
-  bool get hasCat => _catService.hasCat;
+  bool get hasCat => _cat != null;
   
   // 加载状态
   bool get isLoading => _isLoading;
@@ -22,116 +23,126 @@ class CatProvider extends ChangeNotifier {
   
   // 构造函数
   CatProvider() {
-    _initialize();
+    _loadCat();
   }
   
   // 初始化，加载猫咪数据
-  Future<void> _initialize() async {
+  Future<void> _loadCat() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
     
     try {
-      await _catService.loadCat();
+      final loadedCat = await _catService.loadCat();
+      if (loadedCat != null) {
+        _cat = loadedCat;
+        _cat!.updateStatus();
+      }
     } catch (e) {
       _errorMessage = '加载猫咪数据失败: $e';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      debugPrint(_errorMessage);
     }
+
+    _isLoading = false;
+    notifyListeners();
   }
   
   // 领养新猫咪
-  Future<void> adoptCat({CatBreed? breed, String? name}) async {
+  Future<void> adoptCat({required String name, required CatBreed breed}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
     
     try {
-      await _catService.adoptCat(breed: breed, name: name);
+      _cat = await _catService.adoptCat(name: name, breed: breed);
     } catch (e) {
       _errorMessage = '领养猫咪失败: $e';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      debugPrint(_errorMessage);
     }
-  }
-  
-  // 更新猫咪名字
-  Future<void> updateCatName(String newName) async {
-    if (newName.isEmpty) return;
-    
-    try {
-      await _catService.updateCatName(newName);
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = '更新猫咪名字失败: $e';
-      notifyListeners();
-    }
+
+    _isLoading = false;
+    notifyListeners();
   }
   
   // 喂食猫咪
-  Future<void> feedCat() async {
-    try {
-      await _catService.feedCat();
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = '喂食猫咪失败: $e';
+  void feedCat() {
+    if (_cat != null) {
+      _cat!.feed();
+      _saveCat();
       notifyListeners();
     }
   }
   
   // 抚摸猫咪
-  Future<void> petCat() async {
-    try {
-      await _catService.petCat();
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = '抚摸猫咪失败: $e';
+  void petCat() {
+    if (_cat != null) {
+      _cat!.pet();
+      _saveCat();
       notifyListeners();
     }
   }
   
   // 与猫咪玩耍
-  Future<void> playWithCat() async {
-    try {
-      await _catService.playWithCat();
+  void playWithCat() {
+    if (_cat != null) {
+      _cat!.play();
+      _saveCat();
       notifyListeners();
-    } catch (e) {
-      _errorMessage = '与猫咪玩耍失败: $e';
+    }
+  }
+
+  // 给猫咪洗澡/梳理
+  void groomCat() {
+    if (_cat != null) {
+      _cat!.groom();
+      _saveCat();
       notifyListeners();
     }
   }
   
-  // 解锁猫咪装饰品
-  Future<void> unlockAccessory(String accessoryId) async {
-    try {
-      await _catService.unlockAccessory(accessoryId);
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = '解锁装饰品失败: $e';
+  // 训练猫咪
+  void trainCat() {
+    if (_cat != null) {
+      _cat!.train();
+      _saveCat();
       notifyListeners();
     }
   }
+  
+  // 检查互动冷却状态
+  bool canFeedCat() => _cat?.canFeed ?? false;
+  bool canPlayWithCat() => _cat?.canPlay ?? false;
+  bool canGroomCat() => _cat?.canGroom ?? false;
+  bool canTrainCat() => _cat?.canTrain ?? false;
+  
+  // 获取互动冷却剩余时间
+  int getFeedCooldown() => _cat?.feedCooldownRemaining ?? 0;
+  int getPlayCooldown() => _cat?.playCooldownRemaining ?? 0;
+  int getGroomCooldown() => _cat?.groomCooldownRemaining ?? 0;
+  int getTrainCooldown() => _cat?.trainingCooldownRemaining ?? 0;
   
   // 为猫咪装扮
-  Future<void> equipAccessory(String accessoryType, String accessoryId) async {
-    try {
-      await _catService.equipAccessory(accessoryType, accessoryId);
-      notifyListeners();
-    } catch (e) {
-      _errorMessage = '装扮猫咪失败: $e';
+  void equipAccessory(String type, String accessoryId) {
+    if (_cat != null) {
+      _cat!.equippedAccessories[type] = accessoryId;
+      _saveCat();
       notifyListeners();
     }
   }
   
-  // 增加猫咪经验值
-  Future<void> addExperience(int amount) async {
-    try {
-      await _catService.addExperience(amount);
+  void removeAccessory(String type) {
+    if (_cat != null && _cat!.equippedAccessories.containsKey(type)) {
+      _cat!.equippedAccessories.remove(type);
+      _saveCat();
       notifyListeners();
-    } catch (e) {
-      _errorMessage = '增加经验值失败: $e';
+    }
+  }
+  
+  // 更新猫咪名字
+  void updateCatName(String newName) {
+    if (_cat != null) {
+      _cat!.name = newName;
+      _saveCat();
       notifyListeners();
     }
   }
@@ -142,18 +153,31 @@ class CatProvider extends ChangeNotifier {
     notifyListeners();
     
     try {
-      await _catService.resetCat();
+      await _catService.removeCat();
+      _cat = null;
     } catch (e) {
       _errorMessage = '重置猫咪数据失败: $e';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      debugPrint(_errorMessage);
     }
+    
+    _isLoading = false;
+    notifyListeners();
   }
   
   // 清除错误信息
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+  
+  Future<void> _saveCat() async {
+    if (_cat != null) {
+      try {
+        await _catService.saveCat(_cat!);
+      } catch (e) {
+        _errorMessage = '保存猫咪数据失败: $e';
+        debugPrint(_errorMessage);
+      }
+    }
   }
 } 
