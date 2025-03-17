@@ -76,12 +76,12 @@ class AIService {
       
       debugPrint('准备发送API请求，共${messages.length}条消息');
       
-      // 构建请求体 - 修正为DeepSeek API格式
+      // 构建请求体 - 使用DeepSeek API格式
       final Map<String, dynamic> requestBody = {
-        "model": "deepseek-chat",  // DeepSeek通用对话模型
+        "model": "deepseek-chat",  // DeepSeek-V3模型 (官方最新对话模型)
         "messages": messages,
         "temperature": 0.8,
-        "max_tokens": 600,
+        "max_tokens": 1000,  // 增加token上限，支持更长回复
         "stream": false,
       };
       
@@ -108,8 +108,11 @@ class AIService {
         debugPrint('收到API响应，状态码: ${response.statusCode}');
         if (response.statusCode == 200) {
           debugPrint('API响应成功，解析回复内容');
-          final responseData = jsonDecode(response.body);
-          debugPrint('响应数据: ${response.body.substring(0, min(100, response.body.length))}...');
+          
+          // 使用utf8.decode确保正确处理中文字符
+          final responseText = utf8.decode(response.bodyBytes);
+          final responseData = jsonDecode(responseText);
+          debugPrint('响应数据: ${responseText.substring(0, min(100, responseText.length))}...');
           
           try {
             final String replyContent = responseData['choices'][0]['message']['content'];
