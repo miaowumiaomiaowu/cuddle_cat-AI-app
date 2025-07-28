@@ -42,7 +42,8 @@ class _TravelMapScreenState extends State<TravelMapScreen> {
           elevation: 0,
           title: const Text(
             '旅行地图',
-            style: TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
+            style:
+                TextStyle(color: Colors.black87, fontWeight: FontWeight.bold),
           ),
           bottom: const TabBar(
             labelColor: Colors.pink,
@@ -66,7 +67,7 @@ class _TravelMapScreenState extends State<TravelMapScreen> {
           children: [
             // 地图标签页
             _buildMapTab(),
-            
+
             // 记录标签页
             _buildRecordsTab(),
           ],
@@ -103,7 +104,8 @@ class _TravelMapScreenState extends State<TravelMapScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).primaryColor,
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
                   ),
                   child: const Text('添加旅行记录'),
                 ),
@@ -111,7 +113,7 @@ class _TravelMapScreenState extends State<TravelMapScreen> {
             ),
           ),
         ),
-        
+
         // 底部的位置指示器（模拟）
         Positioned(
           bottom: 20,
@@ -132,7 +134,8 @@ class _TravelMapScreenState extends State<TravelMapScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.my_location, color: Theme.of(context).primaryColor, size: 18),
+                Icon(Icons.my_location,
+                    color: Theme.of(context).primaryColor, size: 18),
                 const SizedBox(width: 5),
                 const Text('定位到当前位置', style: TextStyle(fontSize: 12)),
               ],
@@ -204,13 +207,14 @@ class _TravelMapScreenState extends State<TravelMapScreen> {
                   return Container(
                     color: Colors.grey.shade300,
                     alignment: Alignment.center,
-                    child: const Icon(Icons.image_not_supported, size: 50, color: Colors.white),
+                    child: const Icon(Icons.image_not_supported,
+                        size: 50, color: Colors.white),
                   );
                 },
               ),
             ),
           ),
-          
+
           // 内容
           Padding(
             padding: const EdgeInsets.all(16),
@@ -250,8 +254,7 @@ class _TravelMapScreenState extends State<TravelMapScreen> {
                       label: const Text('分享'),
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('分享功能即将开放！'))
-                        );
+                            const SnackBar(content: Text('分享功能即将开放！')));
                       },
                       style: TextButton.styleFrom(
                         foregroundColor: Theme.of(context).primaryColor,
@@ -263,8 +266,7 @@ class _TravelMapScreenState extends State<TravelMapScreen> {
                       label: const Text('编辑'),
                       onPressed: () {
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('编辑功能即将开放！'))
-                        );
+                            const SnackBar(content: Text('编辑功能即将开放！')));
                       },
                       style: TextButton.styleFrom(
                         foregroundColor: Colors.grey.shade700,
@@ -315,4 +317,4 @@ class TravelRecord {
     required this.image,
     required this.description,
   });
-} 
+}

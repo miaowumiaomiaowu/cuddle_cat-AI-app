@@ -1,7 +1,21 @@
 allprojects {
     repositories {
+        // 优先使用官方源
         google()
         mavenCentral()
+        
+        // 备用镜像源
+        maven { url = uri("https://maven.aliyun.com/repository/google") }
+        maven { url = uri("https://maven.aliyun.com/repository/jcenter") }
+        maven { url = uri("https://maven.aliyun.com/repository/public") }
+        maven { url = uri("https://maven.aliyun.com/repository/gradle-plugin") }
+        
+        // 其他源
+        maven { url = uri("https://plugins.gradle.org/m2/") }
+        maven { url = uri("https://jitpack.io") }
+        
+        // 腾讯云镜像作为备用
+        maven { url = uri("https://mirrors.cloud.tencent.com/nexus/repository/maven-public/") }
     }
 }
 

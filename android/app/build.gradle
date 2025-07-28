@@ -5,6 +5,8 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+def kotlin_version = '1.7.22'
+
 android {
     namespace = "com.hanjiayi.cuddle_cat"
     compileSdk = flutter.compileSdkVersion

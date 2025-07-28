@@ -36,7 +36,7 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> {
 
     try {
       final catProvider = Provider.of<CatProvider>(context, listen: false);
-      
+
       if (_isRandom) {
         await catProvider.adoptCat(
           name: _nameController.text.trim(),
@@ -48,7 +48,7 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> {
           name: _nameController.text.trim(),
         );
       }
-      
+
       if (mounted) {
         Navigator.of(context).pop();
       }
@@ -105,7 +105,7 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              
+
               // 猫咪图像预览
               Center(
                 child: Container(
@@ -114,7 +114,7 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> {
                   decoration: BoxDecoration(
                     color: _isRandom
                         ? Colors.pink.shade50
-                        : _getCatColor(_selectedBreed).withOpacity(0.3),
+                        : _getCatColor(_selectedBreed).withValues(alpha: 0.3),
                     shape: BoxShape.circle,
                   ),
                   child: Center(
@@ -145,7 +145,7 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              
+
               // 猫咪名字输入
               TextField(
                 controller: _nameController,
@@ -159,7 +159,7 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> {
                 ),
               ),
               const SizedBox(height: 20),
-              
+
               // 领养方式选择
               SwitchListTile(
                 title: const Text('随机领养'),
@@ -172,7 +172,7 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> {
                   });
                 },
               ),
-              
+
               // 猫咪品种选择（在非随机模式下显示）
               if (!_isRandom) ...[
                 const Padding(
@@ -199,9 +199,9 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> {
                   ],
                 ),
               ],
-              
+
               const SizedBox(height: 30),
-              
+
               // 领养按钮
               Center(
                 child: ElevatedButton(
@@ -243,7 +243,7 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> {
 
   Widget _buildBreedCard(CatBreed breed) {
     final isSelected = _selectedBreed == breed;
-    
+
     return GestureDetector(
       onTap: () {
         setState(() {
@@ -315,4 +315,4 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> {
         return '随机猫咪';
     }
   }
-} 
+}

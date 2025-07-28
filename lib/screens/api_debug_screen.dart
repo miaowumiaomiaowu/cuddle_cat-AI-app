@@ -2,15 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:provider/provider.dart';
 import '../providers/dialogue_provider.dart';
-import '../services/ai_service.dart';
+import '../models/cat.dart';
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 /// API调试专用页面
 class ApiDebugScreen extends StatefulWidget {
   static const routeName = '/api-debug';
-  
-  const ApiDebugScreen({Key? key}) : super(key: key);
+
+  const ApiDebugScreen({super.key});
 
   @override
   State<ApiDebugScreen> createState() => _ApiDebugScreenState();
@@ -20,16 +21,15 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
   String _apiStatus = '未检测';
   bool _isLoading = false;
   String _rawResponse = '';
-  String _testInput = '你好，我是测试消息';
+  final String _testInput = '你好，我是测试消息';
   final TextEditingController _inputController = TextEditingController();
-  final AIService _aiService = AIService();
-  
+
   @override
   void initState() {
     super.initState();
     _inputController.text = _testInput;
   }
-  
+
   @override
   void dispose() {
     _inputController.dispose();
@@ -42,12 +42,13 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
       _apiStatus = '检测中...';
       _rawResponse = '';
     });
-    
+
     try {
       // 获取API密钥和端点
       final String? apiKey = dotenv.env['DEEPSEEK_API_KEY'];
-      final String apiEndpoint = dotenv.env['DEEPSEEK_API_ENDPOINT'] ?? 'https://api.deepseek.com/v1/chat/completions';
-      
+      final String apiEndpoint = dotenv.env['DEEPSEEK_API_ENDPOINT'] ??
+          'https://api.deepseek.com/v1/chat/completions';
+
       if (apiKey == null || apiKey.isEmpty) {
         setState(() {
           _apiStatus = '错误: API密钥未配置';
@@ -55,7 +56,7 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
         });
         return;
       }
-      
+
       // 构建一个简单的请求来测试API连接
       final Map<String, dynamic> requestBody = {
         "model": "deepseek-chat",
@@ -66,27 +67,29 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
         "temperature": 0.7,
         "max_tokens": 100,
       };
-      
-      final response = await http.post(
+
+      final response = await http
+          .post(
         Uri.parse(apiEndpoint),
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer $apiKey',
         },
         body: jsonEncode(requestBody),
-      ).timeout(
+      )
+          .timeout(
         const Duration(seconds: 10),
         onTimeout: () {
           throw Exception('请求超时');
         },
       );
-      
+
       setState(() {
         _rawResponse = 'HTTP ${response.statusCode}\n\n${response.body}';
       });
-      
+
       if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
+        jsonDecode(response.body); // Parse to validate JSON format
         setState(() {
           _apiStatus = '连接成功 (${response.statusCode})';
         });
@@ -106,13 +109,13 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
       });
     }
   }
-  
+
   Future<void> _sendTestMessage() async {
     setState(() {
       _isLoading = true;
       _rawResponse = '';
     });
-    
+
     final input = _inputController.text.trim();
     if (input.isEmpty) {
       setState(() {
@@ -121,31 +124,41 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
       });
       return;
     }
-    
+
     try {
       // 记录对话状态提供者的AI模式
-      final dialogueProvider = Provider.of<DialogueProvider>(context, listen: false);
+      final dialogueProvider =
+          Provider.of<DialogueProvider>(context, listen: false);
       final wasAIEnabled = dialogueProvider.useAI;
-      
+
       // 临时启用AI模式
       if (!wasAIEnabled) {
         dialogueProvider.toggleAIMode();
       }
-      
+
       // 创建一个新的会话
       dialogueProvider.createNewSession();
-      
+
       // 发送测试消息
-      await dialogueProvider.sendUserMessage(input);
-      
+      final mockCat = Cat(
+        name: '测试猫咪',
+        breed: CatBreed.random,
+        mood: CatMoodState.happy,
+        growthStage: CatGrowthStage.adult,
+        energyLevel: 80,
+        happiness: 70,
+      );
+      await dialogueProvider.sendUserMessage(input, mockCat);
+
       // 恢复原来的AI模式
       if (!wasAIEnabled && dialogueProvider.useAI) {
         dialogueProvider.toggleAIMode();
       }
-      
+
       setState(() {
         _apiStatus = dialogueProvider.errorMessage ?? '消息发送成功';
-        _rawResponse = '最后API响应：\n${dialogueProvider.lastApiResponse ?? "无响应"}';
+        _rawResponse =
+            '最后API调用时间：\n${dialogueProvider.lastApiCall?.toString() ?? "无调用记录"}\nAPI调用次数：${dialogueProvider.apiCallCount}';
       });
     } catch (e) {
       setState(() {
@@ -178,7 +191,9 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('API配置信息', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text('API配置信息',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const Divider(),
                     const SizedBox(height: 8),
                     _buildInfoRow('API密钥', _maskApiKey()),
@@ -187,9 +202,9 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // API连接测试
             Card(
               elevation: 4,
@@ -198,7 +213,9 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('API连接测试', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text('API连接测试',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const Divider(),
                     const SizedBox(height: 8),
                     Row(
@@ -212,7 +229,8 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Text('测试连接'),
                         ),
@@ -222,9 +240,9 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // 消息测试
             Card(
               elevation: 4,
@@ -233,7 +251,9 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('发送测试消息', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Text('发送测试消息',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
                     const Divider(),
                     const SizedBox(height: 8),
                     TextField(
@@ -254,7 +274,8 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
                               ? const SizedBox(
                                   width: 20,
                                   height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                  child:
+                                      CircularProgressIndicator(strokeWidth: 2),
                                 )
                               : const Text('发送测试消息'),
                         ),
@@ -264,9 +285,9 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
                 ),
               ),
             ),
-            
+
             const SizedBox(height: 16),
-            
+
             // 原始响应
             if (_rawResponse.isNotEmpty)
               Card(
@@ -276,7 +297,9 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('原始响应', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      const Text('原始响应',
+                          style: TextStyle(
+                              fontSize: 18, fontWeight: FontWeight.bold)),
                       const Divider(),
                       const SizedBox(height: 8),
                       Container(
@@ -300,7 +323,7 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
       ),
     );
   }
-  
+
   Widget _buildInfoRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -321,7 +344,7 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
       ),
     );
   }
-  
+
   // 获取并遮盖API密钥
   String _maskApiKey() {
     final apiKey = dotenv.env['DEEPSEEK_API_KEY'] ?? '未配置';
@@ -330,9 +353,10 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
     }
     return apiKey;
   }
-  
+
   // 获取API端点
   String _getApiEndpoint() {
-    return dotenv.env['DEEPSEEK_API_ENDPOINT'] ?? 'https://api.deepseek.com/v1/chat/completions';
+    return dotenv.env['DEEPSEEK_API_ENDPOINT'] ??
+        'https://api.deepseek.com/v1/chat/completions';
   }
-} 
+}

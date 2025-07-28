@@ -23,9 +23,9 @@ class SvgCatImage extends StatelessWidget {
   Widget build(BuildContext context) {
     // 获取SVG字符串
     final svgString = CatIcons.getCatSvgString(
-      cat.breed, 
+      cat.breed,
       mood: overrideMood ?? cat.mood,
-      accessories: customAccessories ?? cat.equippedAccessories,
+      accessories: customAccessories ?? {},
     );
 
     return SizedBox(

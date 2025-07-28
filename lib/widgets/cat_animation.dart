@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:lottie/lottie.dart';
+
 import '../models/cat.dart';
-import 'svg_cat_image.dart';
+import '../utils/cat_image_manager.dart';
+import '../theme/app_theme.dart';
 import 'cat_interaction_animation.dart';
 
 class CatAnimation extends StatefulWidget {
@@ -24,7 +25,8 @@ class CatAnimation extends StatefulWidget {
   State<CatAnimation> createState() => _CatAnimationState();
 }
 
-class _CatAnimationState extends State<CatAnimation> with SingleTickerProviderStateMixin {
+class _CatAnimationState extends State<CatAnimation>
+    with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   bool _isPlaying = false;
   CatMoodState? _temporaryMood;
@@ -82,17 +84,21 @@ class _CatAnimationState extends State<CatAnimation> with SingleTickerProviderSt
       child: Stack(
         alignment: Alignment.center,
         children: [
-          // 猫咪背景光环
+          // 猫咪背景光环 - 莫兰迪色系
           Container(
             width: widget.size,
             height: widget.size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: widget.cat.breedColor.withOpacity(0.1),
+              color: AppTheme.getMoodColor(widget.cat.mood.toString()).withOpacity(0.1),
+              border: Border.all(
+                color: AppTheme.getMoodColor(widget.cat.mood.toString()).withOpacity(0.3),
+                width: 2,
+              ),
             ),
           ),
-          
-          // 猫咪 SVG
+
+          // 真实猫咪图片
           AnimatedBuilder(
             animation: _controller,
             builder: (context, child) {
@@ -101,16 +107,31 @@ class _CatAnimationState extends State<CatAnimation> with SingleTickerProviderSt
                 child: child,
               );
             },
-            child: SvgCatImage(
-              cat: widget.cat,
-              size: widget.size * 0.8,
-              action: widget.action,
-              overrideMood: _temporaryMood,
+            child: Container(
+              width: widget.size * 0.8,
+              height: widget.size * 0.8,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(widget.size * 0.4),
+                boxShadow: AppTheme.cardShadow,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(widget.size * 0.4),
+                child: CatImageManager.buildCatImage(
+                  breed: widget.cat.breedString,
+                  width: widget.size * 0.8,
+                  height: widget.size * 0.8,
+                  fit: BoxFit.cover,
+                  withShadow: false,
+                  withBorder: false,
+                ),
+              ),
             ),
           ),
-          
-          // 心情表情（如果启用）
-          if (widget.showMood && (widget.cat.mood == CatMoodState.happy || _temporaryMood == CatMoodState.happy))
+
+          // 心情表情（如果启用）- 莫兰迪色系
+          if (widget.showMood &&
+              (widget.cat.mood == CatMoodState.happy ||
+                  _temporaryMood == CatMoodState.happy))
             ...List.generate(
               5,
               (index) => Positioned(
@@ -118,12 +139,12 @@ class _CatAnimationState extends State<CatAnimation> with SingleTickerProviderSt
                 top: widget.size * 0.3 + (index % 3) * 10,
                 child: Icon(
                   Icons.favorite,
-                  color: Colors.pink.withOpacity(0.7),
+                  color: AppTheme.happyColor.withOpacity(0.7),
                   size: 16,
                 ),
               ),
             ),
-            
+
           // 互动动画
           if (_showInteractionAnimation)
             Positioned(
@@ -138,4 +159,4 @@ class _CatAnimationState extends State<CatAnimation> with SingleTickerProviderSt
       ),
     );
   }
-} 
+}

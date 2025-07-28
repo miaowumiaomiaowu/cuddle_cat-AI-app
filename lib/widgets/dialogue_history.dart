@@ -6,21 +6,23 @@ import 'chat_bubble.dart';
 class DialogueHistory extends StatefulWidget {
   final DialogueSession? session;
   final ScrollController? scrollController;
-  
+  final bool showTypingEffect;
+
   /// 构造函数
   const DialogueHistory({
-    Key? key,
+    super.key,
     this.session,
     this.scrollController,
-  }) : super(key: key);
-  
+    this.showTypingEffect = false,
+  });
+
   @override
   State<DialogueHistory> createState() => _DialogueHistoryState();
 }
 
 class _DialogueHistoryState extends State<DialogueHistory> {
   late ScrollController _scrollController;
-  
+
   @override
   void initState() {
     super.initState();
@@ -29,18 +31,18 @@ class _DialogueHistoryState extends State<DialogueHistory> {
       _scrollToBottom();
     });
   }
-  
+
   @override
   void didUpdateWidget(DialogueHistory oldWidget) {
     super.didUpdateWidget(oldWidget);
-    
+
     if (oldWidget.session?.messages.length != widget.session?.messages.length) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         _scrollToBottom();
       });
     }
   }
-  
+
   @override
   void dispose() {
     if (widget.scrollController == null) {
@@ -48,10 +50,12 @@ class _DialogueHistoryState extends State<DialogueHistory> {
     }
     super.dispose();
   }
-  
+
   /// 滚动到底部
   void _scrollToBottom() {
-    if (_scrollController.hasClients && widget.session != null && widget.session!.messages.isNotEmpty) {
+    if (_scrollController.hasClients &&
+        widget.session != null &&
+        widget.session!.messages.isNotEmpty) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 300),
@@ -59,24 +63,32 @@ class _DialogueHistoryState extends State<DialogueHistory> {
       );
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     if (widget.session == null || widget.session!.messages.isEmpty) {
       return _buildEmptyState();
     }
-    
+
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.only(top: 16.0, bottom: 8.0),
       itemCount: widget.session!.messages.length,
       itemBuilder: (context, index) {
         final message = widget.session!.messages[index];
-        return ChatBubble(message: message);
+        final isLastMessage = index == widget.session!.messages.length - 1;
+        final shouldShowTyping = widget.showTypingEffect &&
+            isLastMessage &&
+            message.sender == MessageSender.cat;
+
+        return ChatBubble(
+          message: message,
+          showTypingEffect: shouldShowTyping,
+        );
       },
     );
   }
-  
+
   /// 构建空状态
   Widget _buildEmptyState() {
     return Center(
@@ -109,4 +121,4 @@ class _DialogueHistoryState extends State<DialogueHistory> {
       ),
     );
   }
-} 
+}

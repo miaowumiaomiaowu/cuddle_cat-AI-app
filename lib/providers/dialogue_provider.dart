@@ -1,131 +1,169 @@
-import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import '../services/dialogue_service.dart';
-import '../services/ai_service.dart';
 import '../models/dialogue.dart';
 import '../models/cat.dart';
+import 'base_provider.dart';
 
 /// 对话状态提供者
-class DialogueProvider extends ChangeNotifier {
+class DialogueProvider extends BaseProvider {
   final DialogueService _dialogueService = DialogueService();
-  final AIService _aiService = AIService();
   DialogueSession? _activeSession;
   bool _useAI = true;
   bool _isProcessing = false;
-  String? _errorMessage;
+
+  // API调用相关字段 - 用于调试和监控
   DateTime? _lastApiCall;
   int _apiCallCount = 0;
-  String? _lastApiResponse;
-  bool _isLoading = false;
-  
+
+  @override
+  String get providerId => 'dialogue_provider';
+
   /// 构造函数
-  DialogueProvider() {
-    _loadActiveSession();
-  }
-  
+  DialogueProvider();
+
   /// 获取当前活跃会话
   DialogueSession? get activeSession => _activeSession;
-  
+
   /// 获取历史会话列表
   List<DialogueSession> get historySessions => _dialogueService.historySessions;
-  
-  /// 获取是否正在加载
-  bool get isLoading => _isLoading;
-  
-  /// 获取错误信息
-  String? get errorMessage => _errorMessage;
-  
+
   /// 获取AI模式状态
   bool get useAI => _useAI;
-  
+
   /// 获取是否正在处理消息
   bool get isProcessing => _isProcessing;
-  
+
   /// 获取API最后一次调用时间
   DateTime? get lastApiCall => _lastApiCall;
-  
+
   /// 获取API调用次数
   int get apiCallCount => _apiCallCount;
-  
-  /// 获取API最后一次响应
-  String? get lastApiResponse => _lastApiResponse;
-  
+
+  @override
+  Map<String, dynamic> get persistentData {
+    return {
+      'activeSession': _activeSession?.toJson(),
+      'historySessions': _dialogueService.historySessions.map((s) => s.toJson()).toList(),
+      'useAI': _useAI,
+      'apiCallCount': _apiCallCount,
+      'lastApiCall': _lastApiCall?.toIso8601String(),
+    };
+  }
+
+  @override
+  Future<void> restoreFromData(Map<String, dynamic> data) async {
+    try {
+      if (data.containsKey('useAI')) {
+        _useAI = data['useAI'] as bool;
+        markPropertyChanged('useAI');
+      }
+      
+      if (data.containsKey('apiCallCount')) {
+        _apiCallCount = data['apiCallCount'] as int;
+        markPropertyChanged('apiCallCount');
+      }
+      
+      if (data.containsKey('lastApiCall') && data['lastApiCall'] != null) {
+        _lastApiCall = DateTime.parse(data['lastApiCall'] as String);
+        markPropertyChanged('lastApiCall');
+      }
+      
+      // 恢复会话数据通过DialogueService处理
+      await _dialogueService.loadSessions();
+      _activeSession = _dialogueService.activeSession;
+      markPropertyChanged('activeSession');
+    } catch (e) {
+      debugPrint('DialogueProvider: 恢复对话数据失败 - $e');
+    }
+  }
+
+  @override
+  Future<void> onInitialize() async {
+    await _loadActiveSession();
+  }
+
   /// 切换AI模式
   void toggleAIMode() {
-    _useAI = !_useAI;
-    print('AI模式切换: $_useAI');
-    notifyListeners();
+    batchUpdate(() {
+      _useAI = !_useAI;
+      markPropertyChanged('useAI');
+    });
+    saveData(); // 异步保存
   }
-  
+
   /// 加载活跃会话
   Future<void> _loadActiveSession() async {
-    _isLoading = true;
-    notifyListeners();
-    
     try {
       await _dialogueService.loadSessions();
       _activeSession = _dialogueService.activeSession;
+      markPropertyChanged('activeSession');
     } catch (e) {
-      print('加载对话历史失败: $e');
-      _errorMessage = '加载对话历史失败: $e';
-    } finally {
-      _isLoading = false;
-      notifyListeners();
+      throw Exception('加载对话历史失败: $e');
     }
   }
-  
+
   /// 创建新会话
   void createNewSession() {
-    _activeSession = _dialogueService.createNewSession();
-    _errorMessage = null;
-    notifyListeners();
+    batchUpdate(() {
+      _activeSession = _dialogueService.createNewSession();
+      markPropertyChanged('activeSession');
+    });
+    saveData(); // 异步保存
   }
-  
+
   /// 发送用户消息
-  Future<void> sendUserMessage(String message) async {
+  Future<void> sendUserMessage(String message, Cat cat) async {
     if (message.trim().isEmpty) return;
-    
-    // 重置错误消息
-    _errorMessage = null;
-    _isProcessing = true;
-    notifyListeners();
-    
-    try {
-      // 确保有活跃会话
-      if (_activeSession == null) {
-        createNewSession();
+
+    await executeWithErrorHandling(() async {
+      batchUpdate(() {
+        _isProcessing = true;
+        markPropertyChanged('isProcessing');
+      });
+
+      try {
+        // 确保有活跃会话
+        if (_activeSession == null) {
+          createNewSession();
+        }
+
+        // 设置AI模式
+        _dialogueService.useAI = _useAI;
+
+        // 处理消息
+        await _dialogueService.processUserMessage(
+          messageText: message,
+          cat: cat,
+        );
+
+        batchUpdate(() {
+          _activeSession = _dialogueService.activeSession;
+          markPropertyChanged('activeSession');
+
+          // 如果使用AI，记录API调用
+          if (_useAI) {
+            _lastApiCall = DateTime.now();
+            _apiCallCount++;
+            markPropertyChanged('lastApiCall');
+            markPropertyChanged('apiCallCount');
+          }
+        });
+
+        await saveData(); // 保存会话数据
+      } finally {
+        batchUpdate(() {
+          _isProcessing = false;
+          markPropertyChanged('isProcessing');
+        });
       }
-      
-      // 处理消息
-      await _dialogueService.processUserMessage(
-        messageText: message,
-        cat: _mockCat(),
-      );
-      
-      _activeSession = _dialogueService.activeSession;
-      
-      // 如果使用AI，记录API调用
-      if (_useAI) {
-        _lastApiCall = DateTime.now();
-        _apiCallCount++;
-      }
-    } catch (e) {
-      print('发送消息出错: $e');
-      _errorMessage = e.toString();
-    } finally {
-      _isProcessing = false;
-      notifyListeners();
-    }
+    }, errorMessage: '发送消息失败', showLoading: false);
   }
-  
-  // 创建一个模拟猫咪对象用于测试
-  Cat _mockCat() {
-    return Cat(
-      name: '喵喵',
-      breed: CatBreed.random,
-      mood: CatMoodState.happy,
-      growthStage: CatGrowthStage.kitten,
-      energyLevel: 80,
-      happiness: 70,
-    );
+
+  @override
+  Future<void> onClearData() async {
+    _activeSession = null;
+    _apiCallCount = 0;
+    _lastApiCall = null;
+    _isProcessing = false;
   }
-} 
+}

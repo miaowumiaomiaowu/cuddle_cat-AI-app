@@ -4,14 +4,14 @@ import 'package:flutter/material.dart';
 class DialogueInput extends StatefulWidget {
   final Function(String) onSendMessage;
   final bool isLoading;
-  
+
   /// 构造函数
   const DialogueInput({
-    Key? key,
+    super.key,
     required this.onSendMessage,
     this.isLoading = false,
-  }) : super(key: key);
-  
+  });
+
   @override
   State<DialogueInput> createState() => _DialogueInputState();
 }
@@ -19,20 +19,20 @@ class DialogueInput extends StatefulWidget {
 class _DialogueInputState extends State<DialogueInput> {
   final TextEditingController _textController = TextEditingController();
   bool _hasText = false;
-  
+
   @override
   void initState() {
     super.initState();
     _textController.addListener(_updateHasText);
   }
-  
+
   @override
   void dispose() {
     _textController.removeListener(_updateHasText);
     _textController.dispose();
     super.dispose();
   }
-  
+
   /// 更新文本状态
   void _updateHasText() {
     final hasText = _textController.text.trim().isNotEmpty;
@@ -42,29 +42,42 @@ class _DialogueInputState extends State<DialogueInput> {
       });
     }
   }
-  
+
   /// 发送消息
   void _handleSend() {
     if (!_hasText || widget.isLoading) return;
-    
+
     final message = _textController.text.trim();
     if (message.isNotEmpty) {
       widget.onSendMessage(message);
       _textController.clear();
     }
   }
-  
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 8.0),
+      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          colors: [
+            Color(0xFFFFFAF5),
+            Colors.white,
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
-            blurRadius: 4,
-            offset: const Offset(0, -2),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.15),
+            blurRadius: 12,
+            offset: const Offset(0, -4),
+            spreadRadius: 1,
+          ),
+          BoxShadow(
+            color: Colors.white.withValues(alpha: 0.8),
+            blurRadius: 6,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
@@ -73,18 +86,44 @@ class _DialogueInputState extends State<DialogueInput> {
           Expanded(
             child: Container(
               decoration: BoxDecoration(
-                color: Colors.grey[200],
-                borderRadius: BorderRadius.circular(24.0),
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFFFFF8F0),
+                    Colors.grey.shade50,
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(28.0),
+                border: Border.all(
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.1),
+                    blurRadius: 8,
+                    offset: const Offset(2, 2),
+                  ),
+                ],
               ),
               child: TextField(
                 controller: _textController,
                 textCapitalization: TextCapitalization.sentences,
                 enabled: !widget.isLoading,
                 decoration: InputDecoration(
-                  hintText: '与猫咪聊天...',
-                  hintStyle: TextStyle(color: Colors.grey[500]),
+                  hintText: '💬 与猫咪聊天...',
+                  hintStyle: TextStyle(
+                    color: Theme.of(context).primaryColor.withValues(alpha: 0.6),
+                    fontSize: 16,
+                  ),
                   border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 10.0),
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20.0, vertical: 14.0),
+                ),
+                style: TextStyle(
+                  color: Theme.of(context).primaryColor,
+                  fontSize: 16,
                 ),
                 maxLines: null,
                 keyboardType: TextInputType.multiline,
@@ -93,41 +132,81 @@ class _DialogueInputState extends State<DialogueInput> {
               ),
             ),
           ),
-          const SizedBox(width: 8.0),
+          const SizedBox(width: 12.0),
           _buildSendButton(),
         ],
       ),
     );
   }
-  
-  /// 构建发送按钮
+
+  /// 构建手绘风格发送按钮
   Widget _buildSendButton() {
-    return ClipOval(
+    final isActive = _hasText && !widget.isLoading;
+
+    return Container(
+      decoration: BoxDecoration(
+        gradient: isActive
+            ? LinearGradient(
+                colors: [
+                  Theme.of(context).primaryColor,
+                  Theme.of(context).primaryColor.withValues(alpha: 0.8),
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              )
+            : LinearGradient(
+                colors: [
+                  Colors.grey.shade400,
+                  Colors.grey.shade500,
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        shape: BoxShape.circle,
+        boxShadow: isActive
+            ? [
+                BoxShadow(
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.4),
+                  blurRadius: 8,
+                  offset: const Offset(2, 4),
+                ),
+                BoxShadow(
+                  color: Colors.white.withValues(alpha: 0.8),
+                  blurRadius: 4,
+                  offset: const Offset(-1, -2),
+                ),
+              ]
+            : [
+                BoxShadow(
+                  color: Colors.grey.withValues(alpha: 0.3),
+                  blurRadius: 4,
+                  offset: const Offset(1, 2),
+                ),
+              ],
+      ),
       child: Material(
-        color: _hasText && !widget.isLoading
-            ? Theme.of(context).primaryColor
-            : Colors.grey[400],
+        color: Colors.transparent,
         child: InkWell(
-          onTap: _handleSend,
+          onTap: isActive ? _handleSend : null,
+          borderRadius: BorderRadius.circular(28),
           child: Container(
-            padding: const EdgeInsets.all(10.0),
+            padding: const EdgeInsets.all(12.0),
             child: widget.isLoading
                 ? SizedBox(
                     width: 24,
                     height: 24,
                     child: CircularProgressIndicator(
-                      strokeWidth: 2.0,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      strokeWidth: 2.5,
+                      valueColor: const AlwaysStoppedAnimation<Color>(Colors.white),
                     ),
                   )
-                : const Icon(
-                    Icons.send,
-                    color: Colors.white,
-                    size: 24,
+                : Text(
+                    '🚀',
+                    style: const TextStyle(fontSize: 24),
                   ),
           ),
         ),
       ),
     );
   }
-} 
+}

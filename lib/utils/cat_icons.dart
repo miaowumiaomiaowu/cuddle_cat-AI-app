@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../models/cat.dart';
-import '../models/accessory.dart';
 
 /// 猫咪图标工具类
 class CatIcons {
@@ -60,27 +59,32 @@ class CatIcons {
     Map<String, String>? accessories,
   }) {
     final baseColor = getBreedBaseColor(breed);
-    final accentColor = getBreedAccentColor(breed);
-    
+    // final accentColor = getBreedAccentColor(breed); // TODO: Use accent color in future
+
     String moodPath = '';
-    
+
     // 根据心情添加不同的表情
     if (mood != null) {
       switch (mood) {
         case CatMoodState.happy:
-          moodPath = '<path d="M43,60 Q50,70 57,60" stroke="black" stroke-width="2" fill="none" />';
+          moodPath =
+              '<path d="M43,60 Q50,70 57,60" stroke="black" stroke-width="2" fill="none" />';
           break;
         case CatMoodState.normal:
-          moodPath = '<path d="M43,60 Q50,65 57,60" stroke="black" stroke-width="2" fill="none" />';
+          moodPath =
+              '<path d="M43,60 Q50,65 57,60" stroke="black" stroke-width="2" fill="none" />';
           break;
         case CatMoodState.hungry:
-          moodPath = '<path d="M43,65 Q50,60 57,65" stroke="black" stroke-width="2" fill="none" />';
+          moodPath =
+              '<path d="M43,65 Q50,60 57,65" stroke="black" stroke-width="2" fill="none" />';
           break;
         case CatMoodState.tired:
-          moodPath = '<path d="M40,60 L60,60" stroke="black" stroke-width="2" />';
+          moodPath =
+              '<path d="M40,60 L60,60" stroke="black" stroke-width="2" />';
           break;
         case CatMoodState.bored:
-          moodPath = '<path d="M43,63 Q50,60 57,63" stroke="black" stroke-width="2" fill="none" />';
+          moodPath =
+              '<path d="M43,63 Q50,60 57,63" stroke="black" stroke-width="2" fill="none" />';
           break;
       }
     }
@@ -93,25 +97,28 @@ class CatIcons {
 
     // 替换基础SVG中的颜色和表情
     String result = _baseCatSvgPath
-        .replaceFirst('<path d="M43,60 Q50,65 57,60" stroke="black" stroke-width="2" fill="none" />', moodPath)
-        .replaceFirst('<path d="M50,20 C30,20 20,40 20,60 C20,75 30,85 50,85 C70,85 80,75 80,60 C80,40 70,20 50,20 Z" />', 
+        .replaceFirst(
+            '<path d="M43,60 Q50,65 57,60" stroke="black" stroke-width="2" fill="none" />',
+            moodPath)
+        .replaceFirst(
+            '<path d="M50,20 C30,20 20,40 20,60 C20,75 30,85 50,85 C70,85 80,75 80,60 C80,40 70,20 50,20 Z" />',
             '<path d="M50,20 C30,20 20,40 20,60 C20,75 30,85 50,85 C70,85 80,75 80,60 C80,40 70,20 50,20 Z" fill="${_colorToHex(baseColor)}" />');
 
     // 在SVG结束标签前插入装饰品路径
     result = result.replaceFirst('</svg>', '$accessoriesPath</svg>');
-    
+
     return result;
   }
 
   // 将Color转换为16进制字符串
   static String _colorToHex(Color color) {
-    return '#${color.value.toRadixString(16).substring(2)}';
+    return '#${(color.alpha.toInt() << 24 | color.red.toInt() << 16 | color.green.toInt() << 8 | color.blue.toInt()).toRadixString(16).substring(2)}';
   }
 
   // 根据装饰品ID获取SVG路径
   static String _getAccessoriesPath(Map<String, String> accessories) {
     StringBuffer paths = StringBuffer();
-    
+
     accessories.forEach((type, id) {
       switch (type) {
         case 'AccessoryType.hat':
@@ -131,10 +138,10 @@ class CatIcons {
           break;
       }
     });
-    
+
     return paths.toString();
   }
-  
+
   // 帽子SVG路径
   static String _getHatPath(String id) {
     switch (id) {
@@ -159,7 +166,7 @@ class CatIcons {
         return '';
     }
   }
-  
+
   // 项圈SVG路径
   static String _getCollarPath(String id) {
     switch (id) {
@@ -179,7 +186,7 @@ class CatIcons {
         return '';
     }
   }
-  
+
   // 眼镜SVG路径
   static String _getGlassesPath(String id) {
     switch (id) {
@@ -199,7 +206,7 @@ class CatIcons {
         return '';
     }
   }
-  
+
   // 服装SVG路径
   static String _getCostumePath(String id) {
     switch (id) {
@@ -217,7 +224,7 @@ class CatIcons {
         return '';
     }
   }
-  
+
   // 背景SVG路径
   static String _getBackgroundPath(String id) {
     switch (id) {
@@ -242,4 +249,4 @@ class CatIcons {
         return '';
     }
   }
-} 
+}
