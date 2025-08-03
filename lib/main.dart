@@ -10,6 +10,7 @@ import 'screens/profile_screen.dart';
 import 'screens/dialogue_screen.dart';
 import 'screens/api_debug_screen.dart';
 import 'screens/data_debug_screen.dart';
+import 'screens/travel_test_screen.dart';
 import 'providers/cat_provider.dart';
 import 'providers/dialogue_provider.dart';
 import 'providers/travel_provider.dart';
@@ -82,6 +83,7 @@ class MyApp extends StatelessWidget {
         DialogueScreen.routeName: (ctx) => const DialogueScreen(),
         ApiDebugScreen.routeName: (ctx) => const ApiDebugScreen(),
         DataDebugScreen.routeName: (ctx) => const DataDebugScreen(),
+        '/travel_test': (ctx) => const TravelTestScreen(),
       },
       // 自定义页面过渡动画
       onGenerateRoute: (settings) {
@@ -150,8 +152,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       await providerManager.initializeProviders([
         catProvider,
         dialogueProvider,
-        travelProvider,
       ]);
+
+      // 单独初始化TravelProvider（不继承BaseProvider）
+      await travelProvider.initialize();
 
       _isInitialized = true;
       debugPrint("Provider管理器延迟初始化成功");

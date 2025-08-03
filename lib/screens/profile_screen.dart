@@ -424,6 +424,20 @@ class ProfileScreen extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(height: AppTheme.spacingMedium),
+          Row(
+            children: [
+              Expanded(
+                child: _buildQuickActionButton('🗺️', '旅行测试', () {
+                  Navigator.pushNamed(context, '/travel_test');
+                }),
+              ),
+              const SizedBox(width: AppTheme.spacingMedium),
+              Expanded(
+                child: Container(), // 占位符，保持布局对称
+              ),
+            ],
+          ),
         ],
       ),
     );

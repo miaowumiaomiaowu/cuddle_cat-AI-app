@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 // import 'package:amap_flutter_map/amap_flutter_map.dart';
 // import 'package:amap_flutter_base/amap_flutter_base.dart';
 import '../providers/travel_provider.dart';
-import '../models/travel.dart';
+import '../models/travel_record_model.dart';
 import '../services/location_service.dart';
 import '../services/photo_service.dart';
 import 'package:image_picker/image_picker.dart';
@@ -39,7 +39,7 @@ class _AddTravelScreenState extends State<AddTravelScreen> {
   bool _isSearchingLocation = false;
 
   // 服务实例
-  final LocationService _locationService = LocationService();
+  final LocationService _locationService = LocationService.instance;
   final PhotoService _photoService = PhotoService();
 
   @override

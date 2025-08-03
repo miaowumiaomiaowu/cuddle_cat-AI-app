@@ -1,153 +1,371 @@
-import 'package:flutter/foundation.dart';
-import '../models/travel.dart';
-import 'base_provider.dart';
+import 'package:flutter/material.dart';
+import '../models/travel_record_model.dart';
+import '../services/travel_service.dart';
+import '../services/location_service.dart';
 
-/// 旅行记录状态管理Provider
-class TravelProvider extends BaseProvider {
-  List<Travel> _records = [];
-  late TravelStats _stats;
+/// 旅行记录状态管理 - 增强版
+class TravelProvider extends ChangeNotifier {
+  final TravelService _travelService = TravelService.instance;
+  final LocationService _locationService = LocationService.instance;
 
-  @override
-  String get providerId => 'travel_provider';
+  // 状态变量
+  List<TravelRecord> _records = [];
+  List<TravelRecord> _filteredRecords = [];
+  TravelStats? _stats;
+  bool _isLoading = false;
+  String? _error;
 
-  TravelProvider() {
-    _stats = TravelStats.fromRecords(_records);
+  // 筛选和搜索状态
+  String _searchKeyword = '';
+  String? _selectedCity;
+  String? _selectedProvince;
+  String? _selectedMood;
+  List<String> _selectedTags = [];
+  DateTime? _startDate;
+  DateTime? _endDate;
+  bool? _isPrivateFilter;
+
+  // Getters
+  List<TravelRecord> get records => _filteredRecords;
+  List<TravelRecord> get allRecords => _records;
+  TravelStats? get stats => _stats;
+  bool get isLoading => _isLoading;
+  String? get error => _error;
+  bool get hasRecords => _records.isNotEmpty;
+
+  // 筛选器状态
+  String get searchKeyword => _searchKeyword;
+  String? get selectedCity => _selectedCity;
+  String? get selectedProvince => _selectedProvince;
+  String? get selectedMood => _selectedMood;
+  List<String> get selectedTags => _selectedTags;
+  DateTime? get startDate => _startDate;
+  DateTime? get endDate => _endDate;
+  bool? get isPrivateFilter => _isPrivateFilter;
+
+  /// 初始化Provider
+  Future<void> initialize() async {
+    await _loadRecords();
+    await _loadStats();
   }
 
-  /// 获取所有旅行记录
-  List<Travel> get records => List.unmodifiable(_records);
-
-  /// 获取旅行统计信息
-  TravelStats get stats => _stats;
-
-  @override
-  Map<String, dynamic> get persistentData {
-    return {
-      'records': _records.map((r) => r.toJson()).toList(),
-      'stats': {
-        'totalRecords': _stats.totalRecords,
-        'totalPlaces': _stats.totalPlaces,
-        'mostVisitedPlaces': _stats.mostVisitedPlaces,
-        'mostUsedTags': _stats.mostUsedTags,
-        'mostCommonMood': _stats.mostCommonMood,
-      },
-    };
-  }
-
-  @override
-  Future<void> restoreFromData(Map<String, dynamic> data) async {
+  /// 加载所有记录
+  Future<void> _loadRecords() async {
     try {
-      if (data.containsKey('records')) {
-        final recordsList = data['records'] as List<dynamic>;
-        _records = recordsList.map((item) => Travel.fromJson(item)).toList();
-        _updateStats();
-        markPropertyChanged('records');
-      }
+      _setLoading(true);
+      _records = await _travelService.getAllRecords();
+      await _applyFilters();
+      _clearError();
     } catch (e) {
-      debugPrint('TravelProvider: 恢复旅行数据失败 - $e');
-      _records = [];
-      _updateStats();
+      _setError('加载旅行记录失败: $e');
+    } finally {
+      _setLoading(false);
     }
   }
 
-  /// 更新统计信息
-  void _updateStats() {
-    _stats = TravelStats.fromRecords(_records);
-    markPropertyChanged('stats');
+  /// 加载统计数据
+  Future<void> _loadStats() async {
+    try {
+      _stats = await _travelService.getStats();
+      notifyListeners();
+    } catch (e) {
+      debugPrint('加载统计数据失败: $e');
+    }
   }
 
-  /// 加载所有旅行记录
-  Future<void> loadRecords() async {
-    await executeWithErrorHandling(() async {
-      // 数据已通过 restoreFromData 加载，这里只需要确保统计信息是最新的
-      _updateStats();
-    }, errorMessage: '加载旅行记录失败');
+  /// 刷新数据
+  Future<void> refresh() async {
+    await _loadRecords();
+    await _loadStats();
   }
 
-  /// 添加新的旅行记录
-  Future<void> addRecord(Travel record) async {
-    await executeWithErrorHandling(() async {
-      _records.add(record);
-      _updateStats();
-      markPropertyChanged('records');
-      await saveData(immediate: true);
-    }, errorMessage: '添加旅行记录失败');
-  }
-
-  /// 更新旅行记录
-  Future<void> updateRecord(Travel updatedRecord) async {
-    await executeWithErrorHandling(() async {
-      final index =
-          _records.indexWhere((record) => record.id == updatedRecord.id);
-      if (index >= 0) {
-        _records[index] = updatedRecord;
-        _updateStats();
-        markPropertyChanged('records');
-        await saveData(immediate: true);
+  /// 添加新记录
+  Future<bool> addRecord(TravelRecord record) async {
+    try {
+      _setLoading(true);
+      final success = await _travelService.saveRecord(record);
+      if (success) {
+        await _loadRecords();
+        await _loadStats();
+        return true;
       }
-    }, errorMessage: '更新旅行记录失败');
+      return false;
+    } catch (e) {
+      _setError('添加记录失败: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
   }
 
-  /// 删除旅行记录
-  Future<void> deleteRecord(String id) async {
-    await executeWithErrorHandling(() async {
-      _records.removeWhere((record) => record.id == id);
-      _updateStats();
-      markPropertyChanged('records');
-      await saveData(immediate: true);
-    }, errorMessage: '删除旅行记录失败');
-  }
-
-  /// 按时间排序的旅行记录
-  List<Travel> get sortedRecords {
-    final sorted = List<Travel>.from(_records);
-    sorted.sort((a, b) => b.date.compareTo(a.date));
-    return sorted;
-  }
-
-  /// 按标签筛选的旅行记录
-  List<Travel> searchByTag(String tag) {
-    return _records.where((record) => record.tags.contains(tag)).toList();
-  }
-
-  /// 按地点筛选的旅行记录
-  List<Travel> searchByLocation(String location) {
-    return _records
-        .where((record) =>
-            record.locationName.toLowerCase().contains(location.toLowerCase()))
-        .toList();
-  }
-
-  /// 切换收藏状态
-  Future<void> toggleFavorite(String id) async {
-    await executeWithErrorHandling(() async {
-      final index = _records.indexWhere((record) => record.id == id);
-      if (index >= 0) {
-        final record = _records[index];
-        final updatedRecord = record.copyWith(isFavorite: !record.isFavorite);
-        _records[index] = updatedRecord;
-        markPropertyChanged('records');
-        await saveData();
+  /// 更新记录
+  Future<bool> updateRecord(TravelRecord record) async {
+    try {
+      _setLoading(true);
+      final success = await _travelService.saveRecord(record);
+      if (success) {
+        await _loadRecords();
+        await _loadStats();
+        return true;
       }
-    }, errorMessage: '切换收藏状态失败');
+      return false;
+    } catch (e) {
+      _setError('更新记录失败: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
   }
 
-  /// 按关键词搜索
-  List<Travel> search(String keyword) {
-    final lowercaseKeyword = keyword.toLowerCase();
-    return _records
-        .where((record) =>
-            record.title.toLowerCase().contains(lowercaseKeyword) ||
-            record.description.toLowerCase().contains(lowercaseKeyword) ||
-            record.locationName.toLowerCase().contains(lowercaseKeyword) ||
-            record.tags
-                .any((tag) => tag.toLowerCase().contains(lowercaseKeyword)))
-        .toList();
+  /// 删除记录
+  Future<bool> deleteRecord(String id) async {
+    try {
+      _setLoading(true);
+      final success = await _travelService.deleteRecord(id);
+      if (success) {
+        await _loadRecords();
+        await _loadStats();
+        return true;
+      }
+      return false;
+    } catch (e) {
+      _setError('删除记录失败: $e');
+      return false;
+    } finally {
+      _setLoading(false);
+    }
   }
 
-  @override
-  Future<void> onClearData() async {
-    _records.clear();
-    _updateStats();
+  /// 根据ID获取记录
+  TravelRecord? getRecordById(String id) {
+    try {
+      return _records.firstWhere((record) => record.id == id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  /// 搜索记录
+  Future<void> searchRecords(String keyword) async {
+    _searchKeyword = keyword;
+    await _applyFilters();
+  }
+
+  /// 设置城市筛选
+  Future<void> filterByCity(String? city) async {
+    _selectedCity = city;
+    await _applyFilters();
+  }
+
+  /// 设置省份筛选
+  Future<void> filterByProvince(String? province) async {
+    _selectedProvince = province;
+    await _applyFilters();
+  }
+
+  /// 设置心情筛选
+  Future<void> filterByMood(String? mood) async {
+    _selectedMood = mood;
+    await _applyFilters();
+  }
+
+  /// 设置标签筛选
+  Future<void> filterByTags(List<String> tags) async {
+    _selectedTags = tags;
+    await _applyFilters();
+  }
+
+  /// 设置日期范围筛选
+  Future<void> filterByDateRange(DateTime? start, DateTime? end) async {
+    _startDate = start;
+    _endDate = end;
+    await _applyFilters();
+  }
+
+  /// 设置隐私筛选
+  Future<void> filterByPrivacy(bool? isPrivate) async {
+    _isPrivateFilter = isPrivate;
+    await _applyFilters();
+  }
+
+  /// 清除所有筛选
+  Future<void> clearFilters() async {
+    _searchKeyword = '';
+    _selectedCity = null;
+    _selectedProvince = null;
+    _selectedMood = null;
+    _selectedTags = [];
+    _startDate = null;
+    _endDate = null;
+    _isPrivateFilter = null;
+    await _applyFilters();
+  }
+
+  /// 应用筛选条件
+  Future<void> _applyFilters() async {
+    try {
+      if (_searchKeyword.isNotEmpty) {
+        _filteredRecords = await _travelService.searchRecords(_searchKeyword);
+      } else {
+        _filteredRecords = await _travelService.filterRecords(
+          city: _selectedCity,
+          province: _selectedProvince,
+          mood: _selectedMood,
+          tags: _selectedTags.isNotEmpty ? _selectedTags : null,
+          startDate: _startDate,
+          endDate: _endDate,
+          isPrivate: _isPrivateFilter,
+        );
+      }
+      notifyListeners();
+    } catch (e) {
+      _setError('筛选记录失败: $e');
+    }
+  }
+
+  /// 获取当前位置
+  Future<LocationInfo?> getCurrentLocation() async {
+    try {
+      return await _locationService.getCurrentLocation();
+    } catch (e) {
+      _setError('获取位置失败: $e');
+      return null;
+    }
+  }
+
+  /// 地理编码
+  Future<LocationInfo?> geocodeAddress(String address) async {
+    try {
+      return await _locationService.geocodeAddress(address);
+    } catch (e) {
+      _setError('地址解析失败: $e');
+      return null;
+    }
+  }
+
+  /// 搜索周边POI
+  Future<List<PoiInfo>> searchNearbyPoi({
+    required double latitude,
+    required double longitude,
+    String keywords = '',
+    int radius = 1000,
+  }) async {
+    try {
+      return await _locationService.searchNearbyPoi(
+        latitude: latitude,
+        longitude: longitude,
+        keywords: keywords,
+        radius: radius,
+      );
+    } catch (e) {
+      _setError('搜索周边失败: $e');
+      return [];
+    }
+  }
+
+  /// 添加媒体文件
+  Future<MediaItem?> addMediaFromCamera({
+    required MediaType type,
+    String? caption,
+  }) async {
+    try {
+      return await _travelService.addMediaFromCamera(
+        type: type,
+        caption: caption,
+      );
+    } catch (e) {
+      _setError('添加媒体失败: $e');
+      return null;
+    }
+  }
+
+  /// 从相册添加媒体
+  Future<MediaItem?> addMediaFromGallery({
+    required MediaType type,
+    String? caption,
+  }) async {
+    try {
+      return await _travelService.addMediaFromGallery(
+        type: type,
+        caption: caption,
+      );
+    } catch (e) {
+      _setError('添加媒体失败: $e');
+      return null;
+    }
+  }
+
+  /// 获取所有城市列表
+  List<String> getAllCities() {
+    final cities = <String>{};
+    for (final record in _records) {
+      if (record.location.city != null) {
+        cities.add(record.location.city!);
+      }
+    }
+    return cities.toList()..sort();
+  }
+
+  /// 获取所有省份列表
+  List<String> getAllProvinces() {
+    final provinces = <String>{};
+    for (final record in _records) {
+      if (record.location.province != null) {
+        provinces.add(record.location.province!);
+      }
+    }
+    return provinces.toList()..sort();
+  }
+
+  /// 获取所有标签列表
+  List<String> getAllTags() {
+    final tags = <String>{};
+    for (final record in _records) {
+      tags.addAll(record.tags);
+    }
+    return tags.toList()..sort();
+  }
+
+  /// 获取所有心情列表
+  List<String> getAllMoods() {
+    final moods = <String>{};
+    for (final record in _records) {
+      moods.add(record.mood);
+    }
+    return moods.toList()..sort();
+  }
+
+  /// 清空所有数据
+  Future<void> clearAllData() async {
+    try {
+      _setLoading(true);
+      await _travelService.clearAllData();
+      _records.clear();
+      _filteredRecords.clear();
+      _stats = null;
+      await clearFilters();
+    } catch (e) {
+      _setError('清空数据失败: $e');
+    } finally {
+      _setLoading(false);
+    }
+  }
+
+  /// 设置加载状态
+  void _setLoading(bool loading) {
+    _isLoading = loading;
+    notifyListeners();
+  }
+
+  /// 设置错误信息
+  void _setError(String error) {
+    _error = error;
+    notifyListeners();
+  }
+
+  /// 清除错误信息
+  void _clearError() {
+    _error = null;
+    notifyListeners();
   }
 }

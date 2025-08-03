@@ -41,14 +41,24 @@ dependencies:
   uuid: ^4.3.3
   http: ^1.2.1
   flutter_dotenv: ^5.1.0
-  # 高德地图相关包
-  # amap_flutter_map: ^3.0.0
-  # amap_flutter_location: ^3.0.0
-  # amap_flutter_base: ^3.0.0
+
+  # 位置服务 (简化方案，避免网络问题)
+  geolocator: ^10.1.0
+  permission_handler: ^11.1.0
+
+  # 移除有问题的地图依赖，使用自定义地图方案
+
+  # 多媒体处理
   image_picker: ^1.0.7
   path_provider: ^2.1.2
   path: ^1.8.3
   flutter_image_compress: ^2.1.0
+  video_player: ^2.8.1
+  audio_waveforms: ^1.0.5
+
+  # 网络和数据处理
+  dio: ^5.4.0
+  cached_network_image: ^3.3.0
   flutter_rating_bar: ^4.0.1
 
 dev_dependencies:
@@ -80,6 +90,8 @@ flutter:
     - assets/svgs/
     - assets/svgs/accessories/
     - assets/icons/
+    - assets/base/
+    - assets/travel/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

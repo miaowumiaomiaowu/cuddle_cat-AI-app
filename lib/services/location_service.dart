@@ -1,305 +1,300 @@
-import 'package:flutter/foundation.dart';
-import '../models/travel.dart';
-import 'dart:math' as dart_math;
+import 'dart:async';
+import 'package:geolocator/geolocator.dart';
+import 'package:dio/dio.dart';
+import '../models/travel_record_model.dart';
 
-/// 位置信息类
-class LocationInfo {
-  final LatLng coordinates;
-  final String name;
-  final String address;
-  final String? city;
-  final String? province;
-  final String? country;
-
-  LocationInfo({
-    required this.coordinates,
-    required this.name,
-    required this.address,
-    this.city,
-    this.province,
-    this.country,
-  });
-
-  factory LocationInfo.fromJson(Map<String, dynamic> json) {
-    return LocationInfo(
-      coordinates: LatLng(json['latitude'], json['longitude']),
-      name: json['name'] ?? '',
-      address: json['address'] ?? '',
-      city: json['city'],
-      province: json['province'],
-      country: json['country'],
-    );
-  }
-
-  Map<String, dynamic> toJson() {
-    return {
-      'latitude': coordinates.latitude,
-      'longitude': coordinates.longitude,
-      'name': name,
-      'address': address,
-      'city': city,
-      'province': province,
-      'country': country,
-    };
-  }
-}
-
-/// 位置建议类
-class LocationSuggestion {
-  final String name;
-  final String address;
-  final LatLng coordinates;
-  final String type; // 'poi', 'address', 'city' etc.
-
-  LocationSuggestion({
-    required this.name,
-    required this.address,
-    required this.coordinates,
-    required this.type,
-  });
-}
-
-/// 位置服务类
+/// 通用定位服务类 - 兼容性更好的替代方案
 class LocationService {
-  static final LocationService _instance = LocationService._internal();
+  static LocationService? _instance;
+  static LocationService get instance => _instance ??= LocationService._();
 
-  factory LocationService() => _instance;
+  LocationService._();
 
-  LocationService._internal();
+  late Dio _dio;
 
-  /// 获取当前位置（模拟实现）
+  // 高德地图Web API密钥
+  static const String _webApiKey = '0cee9416ae3897011cc1d83fef7375fb';
+
+  /// 初始化定位服务
+  Future<void> initialize() async {
+    // 初始化网络请求
+    _dio = Dio(BaseOptions(
+      baseUrl: 'https://restapi.amap.com',
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+    ));
+  }
+
+  /// 检查定位权限
+  Future<bool> checkLocationPermission() async {
+    bool serviceEnabled;
+    LocationPermission permission;
+
+    // 检查定位服务是否启用
+    serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!serviceEnabled) {
+      return false;
+    }
+
+    permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
+      if (permission == LocationPermission.denied) {
+        return false;
+      }
+    }
+
+    if (permission == LocationPermission.deniedForever) {
+      return false;
+    }
+
+    return true;
+  }
+  /// 获取当前位置
   Future<LocationInfo?> getCurrentLocation() async {
     try {
-      // 模拟网络延迟
-      await Future.delayed(const Duration(seconds: 1));
+      // 检查权限
+      if (!await checkLocationPermission()) {
+        throw Exception('定位权限被拒绝');
+      }
 
-      // 返回模拟的北京位置信息
-      return LocationInfo(
-        coordinates: const LatLng(39.9054, 116.3976),
-        name: '天安门广场',
-        address: '北京市东城区天安门广场',
-        city: '北京市',
-        province: '北京市',
-        country: '中国',
+      // 获取当前位置
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+        timeLimit: const Duration(seconds: 15),
       );
+
+      // 使用高德地图API进行逆地理编码
+      final locationInfo = await _reverseGeocodeWithAmap(
+        position.latitude,
+        position.longitude
+      );
+
+      if (locationInfo != null) {
+        return locationInfo;
+      }
+
+      // 如果高德API失败，使用系统逆地理编码作为备选
+      return await _reverseGeocodeWithSystem(
+        position.latitude,
+        position.longitude
+      );
+
     } catch (e) {
-      debugPrint('获取当前位置失败: $e');
+      print('获取位置失败: $e');
       return null;
     }
   }
 
-  /// 搜索位置建议
-  Future<List<LocationSuggestion>> searchLocationSuggestions(
-      String query) async {
-    if (query.trim().isEmpty) {
-      return [];
-    }
-
+  /// 使用高德地图API进行逆地理编码
+  Future<LocationInfo?> _reverseGeocodeWithAmap(
+    double latitude,
+    double longitude
+  ) async {
     try {
-      // 模拟搜索延迟
-      await Future.delayed(const Duration(milliseconds: 500));
+      final response = await _dio.get('/v3/geocode/regeo', queryParameters: {
+        'key': _webApiKey,
+        'location': '$longitude,$latitude',
+        'radius': 1000,
+        'extensions': 'all',
+      });
 
-      // 返回模拟的搜索结果
-      final List<LocationSuggestion> suggestions = [];
+      if (response.data['status'] == '1' && response.data['regeocode'] != null) {
+        final regeocode = response.data['regeocode'];
+        final addressComponent = regeocode['addressComponent'];
 
-      // 根据查询内容返回不同的模拟结果
-      if (query.contains('北京') || query.contains('beijing')) {
-        suggestions.addAll([
-          LocationSuggestion(
-            name: '天安门广场',
-            address: '北京市东城区天安门广场',
-            coordinates: const LatLng(39.9054, 116.3976),
-            type: 'poi',
-          ),
-          LocationSuggestion(
-            name: '故宫博物院',
-            address: '北京市东城区景山前街4号',
-            coordinates: const LatLng(39.9163, 116.3972),
-            type: 'poi',
-          ),
-          LocationSuggestion(
-            name: '北京大学',
-            address: '北京市海淀区颐和园路5号',
-            coordinates: const LatLng(39.9990, 116.3059),
-            type: 'poi',
-          ),
-        ]);
-      } else if (query.contains('上海') || query.contains('shanghai')) {
-        suggestions.addAll([
-          LocationSuggestion(
-            name: '外滩',
-            address: '上海市黄浦区中山东一路',
-            coordinates: const LatLng(31.2397, 121.4912),
-            type: 'poi',
-          ),
-          LocationSuggestion(
-            name: '东方明珠',
-            address: '上海市浦东新区世纪大道1号',
-            coordinates: const LatLng(31.2397, 121.4999),
-            type: 'poi',
-          ),
-        ]);
-      } else if (query.contains('广州') || query.contains('guangzhou')) {
-        suggestions.addAll([
-          LocationSuggestion(
-            name: '广州塔',
-            address: '广州市海珠区阅江西路222号',
-            coordinates: const LatLng(23.1056, 113.3249),
-            type: 'poi',
-          ),
-        ]);
-      } else {
-        // 通用搜索结果
-        suggestions.addAll([
-          LocationSuggestion(
-            name: '$query (模拟地点)',
-            address: '$query 的模拟地址',
-            coordinates: LatLng(39.9054 + (query.hashCode % 100) * 0.01,
-                116.3976 + (query.hashCode % 100) * 0.01),
-            type: 'poi',
-          ),
-        ]);
+        return LocationInfo(
+          latitude: latitude,
+          longitude: longitude,
+          address: regeocode['formatted_address'] ?? '未知地址',
+          city: addressComponent['city'] ?? addressComponent['district'],
+          province: addressComponent['province'],
+          country: addressComponent['country'] ?? '中国',
+          poiName: regeocode['pois']?.isNotEmpty == true
+              ? regeocode['pois'][0]['name']
+              : null,
+        );
       }
-
-      return suggestions;
     } catch (e) {
-      debugPrint('搜索位置建议失败: $e');
-      return [];
+      print('高德逆地理编码失败: $e');
     }
+    return null;
   }
 
-  /// 根据坐标获取地址信息（逆地理编码）
-  Future<LocationInfo?> getLocationInfoFromCoordinates(
-      LatLng coordinates) async {
+  /// 使用简单的坐标显示作为备选
+  Future<LocationInfo?> _reverseGeocodeWithSystem(
+    double latitude,
+    double longitude
+  ) async {
     try {
-      // 模拟网络延迟
-      await Future.delayed(const Duration(milliseconds: 800));
-
-      // 根据坐标返回模拟的地址信息
-      String name = '未知地点';
-      String address = '未知地址';
-      String? city;
-      String? province;
-
-      // 简单的坐标范围判断来模拟不同城市
-      if (coordinates.latitude >= 39.4 &&
-          coordinates.latitude <= 41.0 &&
-          coordinates.longitude >= 115.4 &&
-          coordinates.longitude <= 117.5) {
-        // 北京范围
-        name = '北京地点';
-        address = '北京市某区某街道';
-        city = '北京市';
-        province = '北京市';
-      } else if (coordinates.latitude >= 31.0 &&
-          coordinates.latitude <= 31.5 &&
-          coordinates.longitude >= 121.0 &&
-          coordinates.longitude <= 122.0) {
-        // 上海范围
-        name = '上海地点';
-        address = '上海市某区某街道';
-        city = '上海市';
-        province = '上海市';
-      } else {
-        // 其他地区
-        name =
-            '地点 (${coordinates.latitude.toStringAsFixed(4)}, ${coordinates.longitude.toStringAsFixed(4)})';
-        address =
-            '坐标: ${coordinates.latitude.toStringAsFixed(4)}, ${coordinates.longitude.toStringAsFixed(4)}';
-      }
-
+      // 简单的坐标显示，避免依赖geocoding包
       return LocationInfo(
-        coordinates: coordinates,
-        name: name,
-        address: address,
-        city: city,
-        province: province,
+        latitude: latitude,
+        longitude: longitude,
+        address: '位置: ${latitude.toStringAsFixed(4)}, ${longitude.toStringAsFixed(4)}',
+        city: '未知城市',
+        province: '未知省份',
         country: '中国',
+        poiName: '当前位置',
       );
     } catch (e) {
-      debugPrint('获取地址信息失败: $e');
-      return null;
+      print('备选定位失败: $e');
     }
+    return null;
   }
 
-  /// 获取热门地点推荐
-  Future<List<LocationSuggestion>> getPopularLocations() async {
+  /// 地理编码 - 根据地址获取坐标
+  Future<LocationInfo?> geocodeAddress(String address) async {
     try {
-      // 模拟网络延迟
-      await Future.delayed(const Duration(milliseconds: 300));
-
-      return [
-        LocationSuggestion(
-          name: '天安门广场',
-          address: '北京市东城区天安门广场',
-          coordinates: const LatLng(39.9054, 116.3976),
-          type: 'poi',
-        ),
-        LocationSuggestion(
-          name: '外滩',
-          address: '上海市黄浦区中山东一路',
-          coordinates: const LatLng(31.2397, 121.4912),
-          type: 'poi',
-        ),
-        LocationSuggestion(
-          name: '广州塔',
-          address: '广州市海珠区阅江西路222号',
-          coordinates: const LatLng(23.1056, 113.3249),
-          type: 'poi',
-        ),
-        LocationSuggestion(
-          name: '西湖',
-          address: '浙江省杭州市西湖区',
-          coordinates: const LatLng(30.2741, 120.1551),
-          type: 'poi',
-        ),
-        LocationSuggestion(
-          name: '大雁塔',
-          address: '陕西省西安市雁塔区',
-          coordinates: const LatLng(34.2186, 108.9647),
-          type: 'poi',
-        ),
-      ];
+      // 只使用高德地图API进行地理编码
+      return await _geocodeWithAmap(address);
     } catch (e) {
-      debugPrint('获取热门地点失败: $e');
-      return [];
+      print('地理编码失败: $e');
+    }
+    return null;
+  }
+
+  /// 使用高德地图API进行地理编码
+  Future<LocationInfo?> _geocodeWithAmap(String address) async {
+    try {
+      final response = await _dio.get('/v3/geocode/geo', queryParameters: {
+        'key': _webApiKey,
+        'address': address,
+        'city': '', // 可以指定城市范围
+      });
+
+      if (response.data['status'] == '1' &&
+          response.data['geocodes'] != null &&
+          response.data['geocodes'].isNotEmpty) {
+
+        final geocode = response.data['geocodes'][0];
+        final location = geocode['location'] as String;
+        final coordinates = location.split(',');
+
+        if (coordinates.length == 2) {
+          return LocationInfo(
+            latitude: double.parse(coordinates[1]),
+            longitude: double.parse(coordinates[0]),
+            address: address,
+            city: geocode['city'],
+            province: geocode['province'],
+            country: '中国',
+          );
+        }
+      }
+    } catch (e) {
+      print('高德地理编码失败: $e');
+    }
+    return null;
+  }
+
+  /// 搜索周边POI
+  Future<List<PoiInfo>> searchNearbyPoi({
+    required double latitude,
+    required double longitude,
+    String keywords = '',
+    int radius = 1000,
+    int page = 1,
+    int pageSize = 20,
+  }) async {
+    try {
+      final response = await _dio.get('/v3/place/around', queryParameters: {
+        'key': _webApiKey,
+        'location': '$longitude,$latitude',
+        'keywords': keywords,
+        'radius': radius,
+        'page': page,
+        'offset': pageSize,
+        'extensions': 'all',
+      });
+
+      if (response.data['status'] == '1' && response.data['pois'] != null) {
+        final pois = response.data['pois'] as List;
+        return pois.map((poi) => PoiInfo.fromJson(poi)).toList();
+      }
+    } catch (e) {
+      print('搜索POI失败: $e');
+    }
+    return [];
+  }
+
+  /// 计算两点间距离 (公里)
+  double calculateDistance(
+    double lat1, double lon1,
+    double lat2, double lon2
+  ) {
+    return Geolocator.distanceBetween(lat1, lon1, lat2, lon2) / 1000;
+  }
+
+  /// 获取位置流（实时定位）
+  Stream<LocationInfo?> getLocationStream() async* {
+    const LocationSettings locationSettings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 10, // 10米变化才更新
+    );
+
+    await for (Position position in Geolocator.getPositionStream(
+      locationSettings: locationSettings,
+    )) {
+      final locationInfo = await _reverseGeocodeWithAmap(
+        position.latitude,
+        position.longitude
+      );
+      yield locationInfo;
     }
   }
 
-  /// 验证坐标是否有效
-  bool isValidCoordinates(LatLng coordinates) {
-    return coordinates.latitude >= -90 &&
-        coordinates.latitude <= 90 &&
-        coordinates.longitude >= -180 &&
-        coordinates.longitude <= 180;
+  /// 检查定位服务是否可用
+  Future<bool> isLocationServiceEnabled() async {
+    return await Geolocator.isLocationServiceEnabled();
   }
 
-  /// 计算两点之间的距离（公里）
-  double calculateDistance(LatLng point1, LatLng point2) {
-    const double earthRadius = 6371; // 地球半径（公里）
+  /// 打开定位设置
+  Future<bool> openLocationSettings() async {
+    return await Geolocator.openLocationSettings();
+  }
 
-    final double lat1Rad = point1.latitude * (3.14159 / 180);
-    final double lat2Rad = point2.latitude * (3.14159 / 180);
-    final double deltaLatRad =
-        (point2.latitude - point1.latitude) * (3.14159 / 180);
-    final double deltaLngRad =
-        (point2.longitude - point1.longitude) * (3.14159 / 180);
-
-    final double a = (deltaLatRad / 2).sin() * (deltaLatRad / 2).sin() +
-        lat1Rad.cos() *
-            lat2Rad.cos() *
-            (deltaLngRad / 2).sin() *
-            (deltaLngRad / 2).sin();
-    final double c = 2 * (a.sqrt()).atan2((1 - a).sqrt());
-
-    return earthRadius * c;
+  /// 打开应用设置
+  Future<bool> openAppSettings() async {
+    return await Geolocator.openAppSettings();
   }
 }
 
-/// 扩展 sin, cos, atan2, sqrt 方法
-extension MathExtensions on double {
-  double sin() => dart_math.sin(this);
-  double cos() => dart_math.cos(this);
-  double atan2(double x) => dart_math.atan2(this, x);
-  double sqrt() => dart_math.sqrt(this);
+/// POI信息模型
+class PoiInfo {
+  final String id;
+  final String name;
+  final String address;
+  final double latitude;
+  final double longitude;
+  final String? category;
+  final String? phone;
+  final double? distance;
+
+  PoiInfo({
+    required this.id,
+    required this.name,
+    required this.address,
+    required this.latitude,
+    required this.longitude,
+    this.category,
+    this.phone,
+    this.distance,
+  });
+
+  factory PoiInfo.fromJson(Map<String, dynamic> json) {
+    final location = json['location'] as String;
+    final coordinates = location.split(',');
+
+    return PoiInfo(
+      id: json['id'],
+      name: json['name'],
+      address: json['address'],
+      latitude: double.parse(coordinates[1]),
+      longitude: double.parse(coordinates[0]),
+      category: json['type'],
+      phone: json['tel'],
+      distance: json['distance']?.toDouble(),
+    );
+  }
 }

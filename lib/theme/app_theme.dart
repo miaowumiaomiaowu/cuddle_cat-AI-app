@@ -8,6 +8,7 @@ class AppTheme {
   static const Color primaryColorLight = Color(0xFFE8C4A0); // 浅暖米色
   static const Color primaryColorDark = Color(0xFFB8956A); // 深暖米色
   static const Color accentColor = Color(0xFF9ABEAA); // 薄荷绿
+  static const Color secondaryColor = Color(0xFF9ABEAA); // 次要颜色（薄荷绿）
 
   // 莫兰迪色系背景色配置
   static const Color backgroundColor = Color(0xFFF5F1EB); // 奶白色
@@ -18,6 +19,7 @@ class AppTheme {
   static const Color textPrimary = Color(0xFF5D4E37); // 深棕色
   static const Color textSecondary = Color(0xFF8B7355); // 中棕色
   static const Color textHint = Color(0xFFB5A490); // 浅棕色
+  static const Color textColor = Color(0xFF5D4E37); // 主文本颜色（与textPrimary相同）
 
   // 莫兰迪色系功能色配置
   static const Color successColor = Color(0xFF8FA68E); // 柔和绿

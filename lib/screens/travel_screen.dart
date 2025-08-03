@@ -66,7 +66,7 @@ class _TravelScreenState extends State<TravelScreen>
 
     try {
       final provider = Provider.of<TravelProvider>(context, listen: false);
-      await provider.loadRecords();
+      await provider.refresh();
       // _updateMarkers();
     } catch (e) {
       setState(() {
@@ -508,7 +508,17 @@ class _TravelScreenState extends State<TravelScreen>
                     padding: const EdgeInsets.all(AppTheme.spacingMedium),
                     child: Column(
                       children: [
-                        TravelStatsCard(stats: provider.stats),
+                        TravelStatsCard(stats: provider.stats ?? TravelStats(
+                          totalRecords: 0,
+                          totalCities: 0,
+                          totalProvinces: 0,
+                          totalDistance: 0,
+                          totalDays: 0,
+                          moodDistribution: {},
+                          monthlyDistribution: {},
+                          topCities: [],
+                          topTags: [],
+                        )),
                         const SizedBox(height: AppTheme.spacingMedium),
 
                         // 快速旅行组件
@@ -675,7 +685,9 @@ class _TravelSearchDelegate extends SearchDelegate<String> {
           );
         }
 
-        final results = provider.search(query);
+        // 使用新的搜索方法
+        provider.searchRecords(query);
+        final results = provider.records;
 
         if (results.isEmpty) {
           return Center(
