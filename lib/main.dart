@@ -5,7 +5,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // 导入实现的页面
 import 'screens/cat_home_screen.dart';
-import 'screens/travel_map_screen.dart';
+import 'screens/travel_map_screen_enhanced.dart';
 import 'screens/profile_screen.dart';
 import 'screens/dialogue_screen.dart';
 import 'screens/api_debug_screen.dart';
@@ -125,7 +125,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   // 主页面列表
   final List<Widget> _screens = const [
     CatHomeScreen(),
-    TravelMapScreen(),
+    TravelMapScreenEnhanced(),
     ProfileScreen(),
   ];
 

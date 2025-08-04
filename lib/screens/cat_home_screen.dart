@@ -1,21 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/cat_provider.dart';
 import '../widgets/cat_animation.dart';
-import '../widgets/cat_interaction_panel.dart';
 import '../widgets/common/loading_widget.dart';
 import '../widgets/common/error_widget.dart';
-import '../widgets/hand_drawn_card.dart';
-import '../widgets/hand_drawn_button.dart';
-import '../widgets/animated_hand_drawn_button.dart';
-import '../utils/animation_utils.dart';
 import '../theme/app_theme.dart';
 import '../utils/page_transitions.dart';
 import '../utils/responsive_utils.dart';
 import '../utils/cat_image_manager.dart';
 import '../theme/artistic_theme.dart';
-import '../widgets/artistic_chart.dart';
 import '../widgets/artistic_button.dart';
+import '../widgets/simple_chat_bubble.dart';
 import 'adopt_cat_screen.dart';
 import 'dialogue_screen.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -27,8 +23,210 @@ class CatHomeScreen extends StatefulWidget {
   State<CatHomeScreen> createState() => _CatHomeScreenState();
 }
 
-class _CatHomeScreenState extends State<CatHomeScreen> {
+class _CatHomeScreenState extends State<CatHomeScreen>
+    with TickerProviderStateMixin {
   int _petCount = 0;
+
+  // 手势识别相关
+  int _tapCount = 0;
+  DateTime? _lastTapTime;
+  static const Duration _tapTimeout = Duration(milliseconds: 500);
+
+  // 动画控制器
+  late AnimationController _bubbleController;
+  late AnimationController _catScaleController;
+  late Animation<double> _bubbleAnimation;
+  late Animation<double> _catScaleAnimation;
+
+  // 气泡消息
+  String _currentBubbleMessage = '';
+  String _currentBubbleEmoji = '';
+  bool _showBubble = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    // 初始化动画控制器
+    _bubbleController = AnimationController(
+      duration: const Duration(milliseconds: 2000),
+      vsync: this,
+    );
+
+    _catScaleController = AnimationController(
+      duration: const Duration(milliseconds: 200),
+      vsync: this,
+    );
+
+    _bubbleAnimation = Tween<double>(
+      begin: 0.0,
+      end: 1.0,
+    ).animate(CurvedAnimation(
+      parent: _bubbleController,
+      curve: Curves.elasticOut,
+    ));
+
+    _catScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: 1.1,
+    ).animate(CurvedAnimation(
+      parent: _catScaleController,
+      curve: Curves.elasticOut,
+    ));
+  }
+
+  @override
+  void dispose() {
+    _bubbleController.dispose();
+    _catScaleController.dispose();
+    super.dispose();
+  }
+
+  // 手势识别处理
+  void _handleCatInteraction(CatProvider catProvider) {
+    final now = DateTime.now();
+
+    // 检查是否在连击时间窗口内
+    if (_lastTapTime != null &&
+        now.difference(_lastTapTime!) < _tapTimeout) {
+      _tapCount++;
+    } else {
+      _tapCount = 1;
+    }
+
+    _lastTapTime = now;
+
+    // 根据点击次数执行不同的交互
+    if (_tapCount == 1) {
+      // 单击 - 轻拍
+      _performGentlePat(catProvider);
+    } else if (_tapCount >= 2 && _tapCount <= 3) {
+      // 双击/三击 - 抚摸
+      _performPetting(catProvider);
+    } else if (_tapCount >= 4) {
+      // 多次点击 - 殴打（调皮的互动）
+      _performPlayfulHit(catProvider);
+    }
+
+    // 延迟重置点击计数
+    Future.delayed(_tapTimeout, () {
+      if (mounted && _lastTapTime != null &&
+          now.difference(_lastTapTime!) >= _tapTimeout) {
+        _tapCount = 0;
+      }
+    });
+  }
+
+  // 轻拍交互
+  void _performGentlePat(CatProvider catProvider) {
+    catProvider.petCat();
+    _showCatResponse('😊', '喵~ 轻轻的好舒服呢');
+    _triggerCatAnimation();
+    HapticFeedback.lightImpact();
+
+    setState(() {
+      _petCount++;
+    });
+  }
+
+  // 抚摸交互
+  void _performPetting(CatProvider catProvider) {
+    catProvider.petCat();
+    final responses = [
+      ('😸', '喵喵~ 好喜欢这样'),
+      ('🥰', '继续摸摸我吧~'),
+      ('😽', '你的手好温暖'),
+    ];
+    final response = responses[_tapCount % responses.length];
+    _showCatResponse(response.$1, response.$2);
+    _triggerCatAnimation();
+    HapticFeedback.mediumImpact();
+
+    setState(() {
+      _petCount += 2;
+    });
+  }
+
+  // 调皮互动（多次点击）
+  void _performPlayfulHit(CatProvider catProvider) {
+    catProvider.playWithCat();
+    final responses = [
+      ('😾', '喵！轻一点啦'),
+      ('🙀', '你在干什么呀！'),
+      ('😤', '哼，不理你了'),
+      ('😼', '想玩是吧，来啊！'),
+    ];
+    final response = responses[(_tapCount - 4) % responses.length];
+    _showCatResponse(response.$1, response.$2);
+    _triggerCatAnimation();
+    HapticFeedback.heavyImpact();
+
+    setState(() {
+      _petCount++;
+    });
+  }
+
+  // 滑动手势处理
+  void _handlePanGesture(DragUpdateDetails details, CatProvider catProvider) {
+    // 检测滑动方向和速度
+    final velocity = details.delta;
+    final speed = velocity.distance;
+
+    if (speed > 2.0) { // 滑动速度阈值
+      catProvider.petCat();
+
+      if (velocity.dx.abs() > velocity.dy.abs()) {
+        // 水平滑动
+        if (velocity.dx > 0) {
+          _showCatResponse('😸', '向右摸摸，好舒服~');
+        } else {
+          _showCatResponse('😊', '向左摸摸，喜欢这样');
+        }
+      } else {
+        // 垂直滑动
+        if (velocity.dy > 0) {
+          _showCatResponse('🥰', '从上往下摸，好温柔');
+        } else {
+          _showCatResponse('😽', '轻抚我的头吧~');
+        }
+      }
+
+      _triggerCatAnimation();
+      HapticFeedback.selectionClick();
+
+      setState(() {
+        _petCount++;
+      });
+    }
+  }
+
+  // 显示猫咪回应气泡
+  void _showCatResponse(String emoji, String message) {
+    setState(() {
+      _currentBubbleEmoji = emoji;
+      _currentBubbleMessage = message;
+      _showBubble = true;
+    });
+
+    _bubbleController.forward().then((_) {
+      Future.delayed(const Duration(milliseconds: 1500), () {
+        if (mounted) {
+          _bubbleController.reverse().then((_) {
+            setState(() {
+              _showBubble = false;
+            });
+          });
+        }
+      });
+    });
+  }
+
+  // 触发猫咪动画
+  void _triggerCatAnimation() {
+    _catScaleController.forward().then((_) {
+      _catScaleController.reverse();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -161,80 +359,63 @@ class _CatHomeScreenState extends State<CatHomeScreen> {
             child: SafeArea(
               child: Column(
                 children: [
-                  // 艺术感猫咪状态面板
+                  // 简化的猫咪信息栏
                   Container(
                     margin: const EdgeInsets.all(ArtisticTheme.spacingMedium),
-                    padding: const EdgeInsets.all(ArtisticTheme.spacingLarge),
-                    decoration: ArtisticTheme.artisticCard,
-                    child: Column(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: ArtisticTheme.spacingLarge,
+                      vertical: ArtisticTheme.spacingMedium,
+                    ),
+                    decoration: ArtisticTheme.glassEffect,
+                    child: Row(
                       children: [
-                        // 猫咪名称和品种
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.all(ArtisticTheme.spacingSmall),
-                              decoration: BoxDecoration(
-                                color: ArtisticTheme.getMoodColor(cat.mood.toString()).withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(ArtisticTheme.radiusSmall),
-                              ),
-                              child: const Text('🐾', style: TextStyle(fontSize: 20)),
+                        Container(
+                          padding: const EdgeInsets.all(ArtisticTheme.spacingSmall),
+                          decoration: BoxDecoration(
+                            color: ArtisticTheme.getMoodColor(cat.mood.toString()).withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(ArtisticTheme.radiusSmall),
+                          ),
+                          child: Text(
+                            cat.moodText,
+                            style: ArtisticTheme.bodyMedium.copyWith(
+                              color: ArtisticTheme.getMoodColor(cat.mood.toString()),
+                              fontWeight: FontWeight.w600,
                             ),
-                            const SizedBox(width: ArtisticTheme.spacingMedium),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    cat.name,
-                                    style: ArtisticTheme.headlineMedium,
-                                  ),
-                                  Text(
-                                    CatImageManager.getCatBreedName(cat.breedString),
-                                    style: ArtisticTheme.bodyMedium,
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
+                          ),
                         ),
-                        const SizedBox(height: ArtisticTheme.spacingLarge),
-                        // 简化的状态显示
+                        const SizedBox(width: ArtisticTheme.spacingMedium),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                cat.name,
+                                style: ArtisticTheme.headlineSmall.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              Text(
+                                CatImageManager.getCatBreedName(cat.breedString),
+                                style: ArtisticTheme.bodySmall.copyWith(
+                                  color: ArtisticTheme.textSecondary,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // 简化的状态指示器
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                           children: [
-                            Expanded(
-                              child: ArtisticStatusCard(
-                                title: '快乐度',
-                                value: '${cat.happiness}%',
-                                icon: Icons.favorite,
-                                color: ArtisticTheme.joyColor,
-                              ),
-                            ),
-                            const SizedBox(width: ArtisticTheme.spacingMedium),
-                            Expanded(
-                              child: ArtisticStatusCard(
-                                title: '能量值',
-                                value: '${cat.energyLevel}%',
-                                icon: Icons.flash_on,
-                                color: ArtisticTheme.energyColor,
-                              ),
-                            ),
-                            const SizedBox(width: ArtisticTheme.spacingMedium),
-                            Expanded(
-                              child: ArtisticStatusCard(
-                                title: '心情',
-                                value: cat.moodText,
-                                icon: Icons.mood,
-                                color: ArtisticTheme.getMoodColor(cat.mood.toString()),
-                              ),
-                            ),
+                            _buildMiniStatusIndicator('❤️', cat.happiness),
+                            const SizedBox(width: ArtisticTheme.spacingSmall),
+                            _buildMiniStatusIndicator('⚡', cat.energyLevel),
                           ],
                         ),
                       ],
                     ),
                   ),
 
-                  // 艺术感猫咪显示区域
+                  // 主要的猫咪交互区域
                   Expanded(
                     child: Container(
                       margin: const EdgeInsets.all(ArtisticTheme.spacingMedium),
@@ -245,95 +426,102 @@ class _CatHomeScreenState extends State<CatHomeScreen> {
                       ),
                       child: Stack(
                         children: [
-                          // 艺术装饰元素
-                          Positioned(
-                            top: 30,
-                            right: 30,
-                            child: Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                color: ArtisticTheme.joyColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(30),
-                                border: Border.all(
-                                  color: ArtisticTheme.joyColor.withOpacity(0.2),
-                                  width: 1,
+                          // 手势识别区域
+                          Positioned.fill(
+                            child: GestureDetector(
+                              onTap: () => _handleCatInteraction(catProvider),
+                              onPanUpdate: (details) => _handlePanGesture(details, catProvider),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(ArtisticTheme.radiusXLarge),
                                 ),
-                              ),
-                              child: const Center(
-                                child: Text('✨', style: TextStyle(fontSize: 24)),
                               ),
                             ),
                           ),
-                          Positioned(
-                            bottom: 40,
-                            left: 30,
-                            child: Container(
-                              width: 50,
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: ArtisticTheme.energyColor.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(25),
-                                border: Border.all(
-                                  color: ArtisticTheme.energyColor.withOpacity(0.2),
-                                  width: 1,
-                                ),
-                              ),
-                              child: const Center(
-                                child: Text('🌸', style: TextStyle(fontSize: 20)),
-                              ),
-                            ),
-                          ),
+
                           // 猫咪主体
                           Center(
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.all(ArtisticTheme.spacingLarge),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withOpacity(0.3),
-                                    borderRadius: BorderRadius.circular(ArtisticTheme.radiusXXLarge),
-                                    boxShadow: [
-                                      BoxShadow(
-                                        color: ArtisticTheme.getMoodColor(cat.mood.toString()).withOpacity(0.2),
-                                        blurRadius: 30,
-                                        offset: const Offset(0, 10),
+                            child: AnimatedBuilder(
+                              animation: _catScaleAnimation,
+                              builder: (context, child) {
+                                return Transform.scale(
+                                  scale: _catScaleAnimation.value,
+                                  child: Container(
+                                    padding: const EdgeInsets.all(ArtisticTheme.spacingLarge),
+                                    decoration: BoxDecoration(
+                                      color: Colors.white.withOpacity(0.3),
+                                      borderRadius: BorderRadius.circular(ArtisticTheme.radiusXXLarge),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: ArtisticTheme.getMoodColor(cat.mood.toString()).withOpacity(0.2),
+                                          blurRadius: 30,
+                                          offset: const Offset(0, 10),
+                                        ),
+                                      ],
+                                    ),
+                                    child: CatAnimation(
+                                      cat: cat,
+                                      size: ResponsiveUtils.getResponsiveValue(
+                                        context,
+                                        mobile: 180.0,
+                                        tablet: 220.0,
+                                        desktop: 260.0,
                                       ),
-                                    ],
-                                  ),
-                                  child: CatAnimation(
-                                    cat: cat,
-                                    size: ResponsiveUtils.getResponsiveValue(
-                                      context,
-                                      mobile: 180.0,
-                                      tablet: 220.0,
-                                      desktop: 260.0,
-                                    ),
-                                    onTap: () {
-                                      setState(() {
-                                        _petCount++;
-                                      });
-                                      catProvider.petCat();
-                                    },
-                                  ),
-                                ),
-                                const SizedBox(height: ArtisticTheme.spacingLarge),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: ArtisticTheme.spacingLarge,
-                                    vertical: ArtisticTheme.spacingMedium,
-                                  ),
-                                  decoration: ArtisticTheme.glassEffect,
-                                  child: Text(
-                                    '轻触猫咪来抚摸它 🐾',
-                                    style: ArtisticTheme.bodyMedium.copyWith(
-                                      fontStyle: FontStyle.italic,
-                                      letterSpacing: 0.5,
+                                      onTap: () {}, // 禁用CatAnimation内部的点击处理
                                     ),
                                   ),
+                                );
+                              },
+                            ),
+                          ),
+
+                          // 气泡消息
+                          if (_showBubble)
+                            Positioned(
+                              top: 80,
+                              left: 0,
+                              right: 0,
+                              child: AnimatedBuilder(
+                                animation: _bubbleAnimation,
+                                builder: (context, child) {
+                                  return Transform.scale(
+                                    scale: _bubbleAnimation.value,
+                                    child: Opacity(
+                                      opacity: _bubbleAnimation.value,
+                                      child: Center(
+                                        child: SimpleChatBubble(
+                                          message: _currentBubbleMessage,
+                                          emoji: _currentBubbleEmoji,
+                                          isUser: false,
+                                        ),
+                                      ),
+                                    ),
+                                  );
+                                },
+                              ),
+                            ),
+
+                          // 手势提示
+                          Positioned(
+                            bottom: 30,
+                            left: 0,
+                            right: 0,
+                            child: Center(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: ArtisticTheme.spacingLarge,
+                                  vertical: ArtisticTheme.spacingSmall,
                                 ),
-                              ],
+                                decoration: ArtisticTheme.glassEffect,
+                                child: Text(
+                                  '点击、滑动与猫咪互动 🐾',
+                                  style: ArtisticTheme.bodySmall.copyWith(
+                                    fontStyle: FontStyle.italic,
+                                    letterSpacing: 0.5,
+                                    color: ArtisticTheme.textSecondary,
+                                  ),
+                                ),
+                              ),
                             ),
                           ),
                         ],
@@ -341,63 +529,15 @@ class _CatHomeScreenState extends State<CatHomeScreen> {
                     ),
                   ),
 
-                  // 猫咪互动面板
-                  CatInteractionPanel(
-                    onPetCat: () {
-                      setState(() {
-                        _petCount++;
-                      });
-                    },
-                  ),
-
-                  // 艺术感抚摸计数器
+                  // 简洁的互动统计
                   Container(
                     margin: const EdgeInsets.all(ArtisticTheme.spacingMedium),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+                      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: ArtisticTheme.spacingLarge,
-                            vertical: ArtisticTheme.spacingMedium,
-                          ),
-                          decoration: ArtisticTheme.glassEffect,
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.all(ArtisticTheme.spacingSmall),
-                                decoration: BoxDecoration(
-                                  color: ArtisticTheme.loveColor.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(ArtisticTheme.radiusSmall),
-                                ),
-                                child: Icon(
-                                  Icons.pets,
-                                  size: 18,
-                                  color: ArtisticTheme.loveColor,
-                                ),
-                              ),
-                              const SizedBox(width: ArtisticTheme.spacingMedium),
-                              Column(
-                                mainAxisSize: MainAxisSize.min,
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    '今日互动',
-                                    style: ArtisticTheme.caption,
-                                  ),
-                                  Text(
-                                    '$_petCount 次',
-                                    style: ArtisticTheme.titleMedium.copyWith(
-                                      color: ArtisticTheme.loveColor,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
-                          ),
-                        ),
+                        _buildInteractionStat('🐾', '今日互动', '$_petCount 次'),
+                        _buildInteractionStat('😊', '猫咪心情', cat.moodText),
+                        _buildInteractionStat('⭐', '亲密度', '${cat.happiness}%'),
                       ],
                     ),
                   ),
@@ -406,6 +546,76 @@ class _CatHomeScreenState extends State<CatHomeScreen> {
             ),
           );
         },
+      ),
+    );
+  }
+
+  // 构建迷你状态指示器
+  Widget _buildMiniStatusIndicator(String emoji, int value) {
+    Color color = ArtisticTheme.primaryColor;
+    if (value > 70) {
+      color = ArtisticTheme.successColor;
+    } else if (value > 30) {
+      color = ArtisticTheme.warningColor;
+    } else {
+      color = ArtisticTheme.errorColor;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: ArtisticTheme.spacingSmall,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(ArtisticTheme.radiusSmall),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 12)),
+          const SizedBox(width: 2),
+          Text(
+            '$value%',
+            style: ArtisticTheme.caption.copyWith(
+              color: color,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // 构建互动统计项
+  Widget _buildInteractionStat(String emoji, String label, String value) {
+    return Container(
+      padding: const EdgeInsets.all(ArtisticTheme.spacingMedium),
+      decoration: ArtisticTheme.glassEffect,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(emoji, style: const TextStyle(fontSize: 24)),
+          const SizedBox(height: ArtisticTheme.spacingXSmall),
+          Text(
+            label,
+            style: ArtisticTheme.caption.copyWith(
+              color: ArtisticTheme.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            value,
+            style: ArtisticTheme.bodyMedium.copyWith(
+              fontWeight: FontWeight.w600,
+              color: ArtisticTheme.textPrimary,
+            ),
+          ),
+        ],
       ),
     );
   }

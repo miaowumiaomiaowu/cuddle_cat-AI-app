@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import 'settings_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -28,10 +29,10 @@ class ProfileScreen extends StatelessWidget {
           IconButton(
             icon: const Text('⚙️', style: TextStyle(fontSize: 20)),
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  content: const Text('设置功能即将开放！ 🚧'),
-                  backgroundColor: AppTheme.warningColor,
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => const SettingsScreen(),
                 ),
               );
             },
