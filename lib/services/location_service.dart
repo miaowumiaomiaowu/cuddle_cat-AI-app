@@ -3,7 +3,7 @@ import 'package:geolocator/geolocator.dart';
 import 'package:dio/dio.dart';
 import '../models/travel_record_model.dart';
 
-/// 通用定位服务类 - 兼容性更好的替代方案
+/// 增强的定位服务类 - 支持心情地图和位置追踪
 class LocationService {
   static LocationService? _instance;
   static LocationService get instance => _instance ??= LocationService._();
@@ -11,6 +11,9 @@ class LocationService {
   LocationService._();
 
   late Dio _dio;
+  Position? _lastKnownPosition;
+  StreamSubscription<Position>? _positionStream;
+  final List<LocationListener> _listeners = [];
 
   // 高德地图Web API密钥
   static const String _webApiKey = '0cee9416ae3897011cc1d83fef7375fb';
@@ -296,5 +299,101 @@ class PoiInfo {
       phone: json['tel'],
       distance: json['distance']?.toDouble(),
     );
+  }
+}
+
+// === 新增的增强功能 ===
+
+/// 位置监听器接口
+abstract class LocationListener {
+  void onLocationUpdate(Position position);
+}
+
+/// 位置工具类扩展
+extension LocationServiceExtension on LocationService {
+  /// 开始位置监听
+  Future<void> startLocationTracking({
+    LocationAccuracy accuracy = LocationAccuracy.high,
+    int distanceFilter = 10,
+  }) async {
+    try {
+      if (!await checkLocationPermission()) {
+        throw Exception('位置权限未授予');
+      }
+
+      await stopLocationTracking();
+
+      final locationSettings = LocationSettings(
+        accuracy: accuracy,
+        distanceFilter: distanceFilter,
+      );
+
+      _positionStream = Geolocator.getPositionStream(
+        locationSettings: locationSettings,
+      ).listen(
+        (Position position) {
+          _lastKnownPosition = position;
+          _notifyListeners(position);
+        },
+        onError: (error) {
+          print('位置监听错误: $error');
+        },
+      );
+    } catch (e) {
+      print('启动位置跟踪失败: $e');
+      rethrow;
+    }
+  }
+
+  /// 停止位置监听
+  Future<void> stopLocationTracking() async {
+    await _positionStream?.cancel();
+    _positionStream = null;
+  }
+
+  /// 计算两点之间的距离
+  double calculateDistance(
+    double startLatitude,
+    double startLongitude,
+    double endLatitude,
+    double endLongitude,
+  ) {
+    return Geolocator.distanceBetween(
+      startLatitude,
+      startLongitude,
+      endLatitude,
+      endLongitude,
+    );
+  }
+
+  /// 添加位置监听器
+  void addLocationListener(LocationListener listener) {
+    _listeners.add(listener);
+  }
+
+  /// 移除位置监听器
+  void removeLocationListener(LocationListener listener) {
+    _listeners.remove(listener);
+  }
+
+  /// 通知所有监听器
+  void _notifyListeners(Position position) {
+    for (final listener in _listeners) {
+      try {
+        listener.onLocationUpdate(position);
+      } catch (e) {
+        print('位置监听器错误: $e');
+      }
+    }
+  }
+
+  /// 获取最后已知位置
+  Position? get lastKnownPosition => _lastKnownPosition;
+
+  /// 清理资源
+  Future<void> dispose() async {
+    await stopLocationTracking();
+    _listeners.clear();
+    _lastKnownPosition = null;
   }
 }
