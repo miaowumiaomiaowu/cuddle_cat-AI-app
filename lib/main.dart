@@ -10,13 +10,16 @@ import 'screens/profile_screen.dart';
 import 'screens/dialogue_screen.dart';
 import 'screens/api_debug_screen.dart';
 import 'screens/data_debug_screen.dart';
-import 'screens/travel_test_screen.dart';
 import 'screens/records_summary_screen.dart';
 import 'screens/ai_chat_screen.dart';
 import 'screens/enhanced_mood_entry_screen.dart';
 import 'screens/mood_map_screen.dart';
 import 'screens/developer_tools_screen.dart';
+import 'screens/splash_screen.dart';
+import 'screens/onboarding_screen.dart';
+import 'screens/help_center_screen.dart';
 import 'widgets/quick_record_fab.dart';
+import 'services/error_handling_service.dart';
 import 'providers/cat_provider.dart';
 import 'providers/dialogue_provider.dart';
 import 'providers/travel_provider.dart';
@@ -26,12 +29,15 @@ import 'services/provider_manager.dart';
 import 'services/auth_service.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
-import 'theme/app_theme.dart';
+import 'theme/artistic_theme.dart';
 import 'utils/page_transitions.dart';
 
 void main() async {
   //初始化flutter绑定
   WidgetsFlutterBinding.ensureInitialized();
+
+  // 初始化错误处理服务
+  ErrorHandlingService().initialize();
 
   // 加载环境变量 - 添加错误处理
   try {
@@ -96,20 +102,24 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: '暖猫',
-      theme: AppTheme.lightTheme,
-      home: const MainScreen(),
+      theme: ArtisticTheme.lightTheme,
+      home: const SplashScreen(),
       routes: {
         LoginScreen.routeName: (ctx) => const LoginScreen(),
         RegisterScreen.routeName: (ctx) => const RegisterScreen(),
         DialogueScreen.routeName: (ctx) => const DialogueScreen(),
         ApiDebugScreen.routeName: (ctx) => const ApiDebugScreen(),
         DataDebugScreen.routeName: (ctx) => const DataDebugScreen(),
-        '/travel_test': (ctx) => const TravelTestScreen(),
+
         '/records_summary': (ctx) => const RecordsSummaryScreen(),
         AIChatScreen.routeName: (ctx) => const AIChatScreen(),
         EnhancedMoodEntryScreen.routeName: (ctx) => const EnhancedMoodEntryScreen(),
         MoodMapScreen.routeName: (ctx) => const MoodMapScreen(),
         DeveloperToolsScreen.routeName: (ctx) => const DeveloperToolsScreen(),
+        OnboardingScreen.routeName: (ctx) => const OnboardingScreen(),
+        HelpCenterScreen.routeName: (ctx) => const HelpCenterScreen(),
+        '/splash': (ctx) => const SplashScreen(),
+        '/main': (ctx) => const MainScreen(),
       },
       // 自定义页面过渡动画
       onGenerateRoute: (settings) {
@@ -236,8 +246,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       floatingActionButton: const QuickRecordFAB(),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: AppTheme.surfaceColor,
-          boxShadow: AppTheme.elevatedShadow,
+          color: ArtisticTheme.surfaceColor,
+          boxShadow: ArtisticTheme.elevatedShadow,
         ),
         child: SafeArea(
           child: BottomNavigationBar(
@@ -249,8 +259,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             },
             elevation: 0,
             backgroundColor: Colors.transparent,
-            selectedItemColor: AppTheme.primaryColor,
-            unselectedItemColor: AppTheme.textSecondary,
+            selectedItemColor: ArtisticTheme.primaryColor,
+            unselectedItemColor: ArtisticTheme.textSecondary,
             type: BottomNavigationBarType.fixed,
             selectedLabelStyle: const TextStyle(
               fontSize: 12,

@@ -302,16 +302,7 @@ class PoiInfo {
   }
 }
 
-// === 新增的增强功能 ===
-
-/// 位置监听器接口
-abstract class LocationListener {
-  void onLocationUpdate(Position position);
-}
-
-/// 位置工具类扩展
-extension LocationServiceExtension on LocationService {
-  /// 开始位置监听
+  /// 开始位置监听 - 增强功能
   Future<void> startLocationTracking({
     LocationAccuracy accuracy = LocationAccuracy.high,
     int distanceFilter = 10,
@@ -396,4 +387,9 @@ extension LocationServiceExtension on LocationService {
     _listeners.clear();
     _lastKnownPosition = null;
   }
+}
+
+/// 位置监听器接口
+abstract class LocationListener {
+  void onLocationUpdate(Position position);
 }

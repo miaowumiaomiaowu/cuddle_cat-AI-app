@@ -6,6 +6,7 @@ import 'records_summary_screen.dart';
 import 'ai_chat_screen.dart';
 import 'mood_map_screen.dart';
 import 'developer_tools_screen.dart';
+import 'help_center_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -31,6 +32,13 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.help_outline),
+            onPressed: () {
+              Navigator.pushNamed(context, HelpCenterScreen.routeName);
+            },
+            tooltip: '帮助中心',
+          ),
           IconButton(
             icon: const Text('⚙️', style: TextStyle(fontSize: 20)),
             onPressed: () {
