@@ -1,6 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'settings_screen.dart';
+import 'records_summary_screen.dart';
+import 'ai_chat_screen.dart';
+import 'mood_map_screen.dart';
+import 'developer_tools_screen.dart';
 
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
@@ -409,9 +414,12 @@ class ProfileScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _buildQuickActionButton('📊', '数据统计', () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('数据统计功能即将开放！')),
+                child: _buildQuickActionButton('📊', '记录总结', () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const RecordsSummaryScreen(),
+                    ),
                   );
                 }),
               ),
@@ -429,16 +437,33 @@ class ProfileScreen extends StatelessWidget {
           Row(
             children: [
               Expanded(
-                child: _buildQuickActionButton('🗺️', '旅行测试', () {
-                  Navigator.pushNamed(context, '/travel_test');
+                child: _buildQuickActionButton('🤖', 'AI聊天', () {
+                  Navigator.pushNamed(context, AIChatScreen.routeName);
                 }),
               ),
               const SizedBox(width: AppTheme.spacingMedium),
               Expanded(
-                child: Container(), // 占位符，保持布局对称
+                child: _buildQuickActionButton('🗺️', '心情地图', () {
+                  Navigator.pushNamed(context, MoodMapScreen.routeName);
+                }),
               ),
             ],
           ),
+          // 开发者工具（仅在调试模式下显示）
+          if (kDebugMode) ...[
+            const SizedBox(height: AppTheme.spacingMedium),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildQuickActionButton('🛠️', '开发者工具', () {
+                    Navigator.pushNamed(context, DeveloperToolsScreen.routeName);
+                  }),
+                ),
+                const SizedBox(width: AppTheme.spacingMedium),
+                Expanded(child: Container()), // 占位符保持对称
+              ],
+            ),
+          ],
         ],
       ),
     );
