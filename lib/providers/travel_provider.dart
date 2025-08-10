@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../models/travel_record_model.dart';
+import '../models/travel.dart';
 import '../services/travel_service.dart';
 import '../services/location_service.dart';
 
@@ -11,6 +12,7 @@ class TravelProvider extends ChangeNotifier {
   // 状态变量
   List<TravelRecord> _records = [];
   List<TravelRecord> _filteredRecords = [];
+  TravelRecord? _selectedRecord;
   TravelStats? _stats;
   bool _isLoading = false;
   String? _error;
@@ -28,6 +30,8 @@ class TravelProvider extends ChangeNotifier {
   // Getters
   List<TravelRecord> get records => _filteredRecords;
   List<TravelRecord> get allRecords => _records;
+  List<TravelRecord> get filteredRecords => _filteredRecords;
+  TravelRecord? get selectedRecord => _selectedRecord;
   TravelStats? get stats => _stats;
   bool get isLoading => _isLoading;
   String? get error => _error;
@@ -367,5 +371,88 @@ class TravelProvider extends ChangeNotifier {
   void _clearError() {
     _error = null;
     notifyListeners();
+  }
+
+  // ========== 向后兼容的方法（用于测试） ==========
+
+  /// 向后兼容：获取travels列表
+  List<Travel> get travels {
+    return _filteredRecords.map((record) => _convertToTravel(record)).toList();
+  }
+
+  /// 向后兼容：加载travels
+  Future<void> loadTravels() async {
+    await _loadRecords();
+  }
+
+  /// 向后兼容：添加travel
+  Future<void> addTravel(Travel travel, {String? mood}) async {
+    final record = _convertToTravelRecord(travel);
+    await addRecord(record);
+  }
+
+  /// 向后兼容：删除travel
+  Future<void> deleteTravel(String id) async {
+    await deleteRecord(id);
+  }
+
+  /// 将TravelRecord转换为Travel
+  Travel _convertToTravel(TravelRecord record) {
+    return Travel(
+      id: record.id,
+      title: record.title,
+      locationName: record.location.address,
+      latitude: record.location.latitude,
+      longitude: record.location.longitude,
+      mood: record.mood,
+      description: record.description,
+      tags: record.tags,
+      photos: record.mediaItems.where((item) => item.type == 'photo').map((item) => item.path).toList(),
+      date: record.createdAt,
+      isFavorite: record.rating != null && record.rating! >= 4.0,
+    );
+  }
+
+  /// 将Travel转换为TravelRecord
+  TravelRecord _convertToTravelRecord(Travel travel) {
+    return TravelRecord(
+      id: travel.id,
+      title: travel.title,
+      description: travel.description,
+      location: LocationInfo(
+        address: travel.locationName,
+        latitude: travel.latitude,
+        longitude: travel.longitude,
+      ),
+      mediaItems: travel.photos.map((photo) => MediaItem(
+        path: photo,
+        type: 'photo',
+      )).toList(),
+      mood: travel.mood,
+      tags: travel.tags,
+      companions: [],
+      createdAt: travel.date,
+      rating: travel.isFavorite ? 5.0 : null,
+    );
+  }
+
+  /// 切换收藏状态
+  Future<void> toggleFavorite(String recordId) async {
+    try {
+      final recordIndex = _records.indexWhere((r) => r.id == recordId);
+      if (recordIndex != -1) {
+        final record = _records[recordIndex];
+        final updatedRecord = record.copyWith(
+          rating: record.rating != null && record.rating! >= 4.0 ? null : 5.0,
+        );
+        _records[recordIndex] = updatedRecord;
+        await _travelService.saveRecord(updatedRecord);
+        _applyFilters();
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = '切换收藏状态失败: $e';
+      notifyListeners();
+    }
   }
 }

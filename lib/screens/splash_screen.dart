@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 import '../theme/artistic_theme.dart';
-import '../services/performance_service.dart';
-import '../services/health_check_service.dart';
+// import '../services/performance_service.dart'; // 已删除
+// import '../services/health_check_service.dart'; // 已删除
 
 /// 启动画面 - 温暖治愈的欢迎界面
 class SplashScreen extends StatefulWidget {
@@ -118,17 +118,16 @@ class _SplashScreenState extends State<SplashScreen>
   }
 
   Future<void> _performInitialization() async {
-    final performanceService = PerformanceService();
-    final healthCheckService = HealthCheckService();
-    
+    // 健康检查和性能服务已删除
+    // 健康检查和性能服务已删除
+
     try {
-      // 启动性能监控
-      performanceService.startMonitoring();
+      // 性能监控已删除
       _updateLoadingMessage(0);
       await Future.delayed(const Duration(milliseconds: 600));
       
-      // 启动健康监控
-      healthCheckService.startHealthMonitoring();
+      // 启动健康监控 (已禁用)
+      // healthCheckService.startHealthMonitoring();
       _updateLoadingMessage(1);
       await Future.delayed(const Duration(milliseconds: 600));
       
@@ -279,7 +278,7 @@ class _SplashScreenState extends State<SplashScreen>
                         return Container(
                           height: 4,
                           decoration: BoxDecoration(
-                            color: ArtisticTheme.textSecondary.withOpacity(0.2),
+                            color: ArtisticTheme.textSecondary.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(2),
                           ),
                           child: FractionallySizedBox(
@@ -307,7 +306,7 @@ class _SplashScreenState extends State<SplashScreen>
                 child: Text(
                   '© 2024 暖猫团队',
                   style: ArtisticTheme.caption.copyWith(
-                    color: ArtisticTheme.textSecondary.withOpacity(0.6),
+                    color: ArtisticTheme.textSecondary.withValues(alpha: 0.6),
                   ),
                 ),
               ),
@@ -327,7 +326,7 @@ class _SplashScreenState extends State<SplashScreen>
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
-            color: ArtisticTheme.primaryColor.withOpacity(0.3),
+            color: ArtisticTheme.primaryColor.withValues(alpha: 0.3),
             blurRadius: 20,
             spreadRadius: 2,
             offset: const Offset(0, 8),

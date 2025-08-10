@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/artistic_theme.dart';
-import '../services/performance_service.dart';
-import '../services/testing_service.dart';
-import '../services/health_check_service.dart';
+// import '../services/performance_service.dart'; // 已删除
+// import '../services/testing_service.dart'; // 已删除
+// import '../services/health_check_service.dart'; // 已删除
 import '../widgets/hand_drawn_card.dart';
 
 /// 开发者工具界面
@@ -20,9 +20,9 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
   
-  final PerformanceService _performanceService = PerformanceService();
-  final TestingService _testingService = TestingService();
-  final HealthCheckService _healthCheckService = HealthCheckService();
+  // final PerformanceService _performanceService = PerformanceService(); // 已删除
+  // final TestingService _testingService = TestingService(); // 已删除
+  // final HealthCheckService _healthCheckService = HealthCheckService(); // 已删除
   
   bool _isRunningTests = false;
   bool _isRunningHealthCheck = false;
@@ -32,17 +32,17 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
   void initState() {
     super.initState();
     _tabController = TabController(length: 4, vsync: this);
-    
-    // 启动性能监控
-    _performanceService.startMonitoring();
-    _healthCheckService.startHealthMonitoring();
+
+    // 启动性能监控 (已禁用)
+    // _performanceService.startMonitoring();
+    // _healthCheckService.startHealthMonitoring();
   }
 
   @override
   void dispose() {
     _tabController.dispose();
-    _performanceService.stopMonitoring();
-    _healthCheckService.stopHealthMonitoring();
+    // _performanceService.stopMonitoring();
+    // _healthCheckService.stopHealthMonitoring();
     super.dispose();
   }
 
@@ -106,9 +106,9 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
                     children: [
                       ElevatedButton.icon(
                         onPressed: () {
-                          _performanceService.clearMetrics();
+                          // _performanceService.clearMetrics();
                           ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('性能数据已清除')),
+                            const SnackBar(content: Text('性能数据已清除 (功能已禁用)')),
                           );
                         },
                         icon: const Icon(Icons.clear),
@@ -262,8 +262,9 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
   }
 
   Widget _buildPerformanceMetrics() {
-    final report = _performanceService.getPerformanceReport();
-    
+    // final report = _performanceService.getPerformanceReport();
+    final report = <String, dynamic>{}; // 模拟空报告
+
     if (report.isEmpty) {
       return HandDrawnCard(
         child: Padding(
@@ -325,7 +326,8 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
   }
 
   Widget _buildPerformanceRecommendations() {
-    final recommendations = _performanceService.getPerformanceRecommendations();
+    // final recommendations = _performanceService.getPerformanceRecommendations();
+    final recommendations = <String>[]; // 模拟空推荐列表
     
     return HandDrawnCard(
       child: Padding(
@@ -394,7 +396,7 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
                 color: ArtisticTheme.backgroundColor,
                 borderRadius: BorderRadius.circular(8),
                 border: Border.all(
-                  color: ArtisticTheme.textSecondary.withOpacity(0.2),
+                  color: ArtisticTheme.textSecondary.withValues(alpha: 0.2),
                 ),
               ),
               child: Text(
@@ -519,7 +521,8 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
   }
 
   Future<void> _generatePerformanceReport() async {
-    final report = _performanceService.exportPerformanceData();
+    // final report = _performanceService.exportPerformanceData();
+    final report = '性能监控功能已禁用'; // 模拟报告
     
     showDialog(
       context: context,
@@ -557,19 +560,17 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
     });
 
     try {
-      final suite = await _testingService.runAllTests();
-      final report = _testingService.generateTestReport(suite);
-      
+      // final suite = await _testingService.runAllTests();
+      // final report = _testingService.generateTestReport(suite);
+
       setState(() {
-        _lastReport = report;
+        _lastReport = '测试服务功能已禁用';
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('测试完成: ${suite.passedCount}/${suite.totalCount} 通过'),
-          backgroundColor: suite.successRate >= 80 
-              ? ArtisticTheme.successColor 
-              : ArtisticTheme.warningColor,
+        const SnackBar(
+          content: Text('测试完成 (功能已禁用)'),
+          backgroundColor: ArtisticTheme.warningColor,
         ),
       );
     } catch (e) {
@@ -592,13 +593,14 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
     });
 
     try {
-      final report = await _healthCheckService.performFullHealthCheck();
-      final reportText = _healthCheckService.generateHealthReport(report);
-      
+      // final report = await _healthCheckService.performFullHealthCheck();
+      // final reportText = _healthCheckService.generateHealthReport(report);
+      final reportText = '健康检查功能已禁用';
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: Text('健康检查报告 (${report.healthScore}/100)'),
+          title: const Text('健康检查报告 (功能已禁用)'),
           content: SingleChildScrollView(
             child: Text(
               reportText,

@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:intl/intl.dart';
-import '../models/travel.dart';
+import '../models/travel_record_model.dart';
 import '../providers/travel_provider.dart';
 import '../services/share_service.dart';
-import '../utils/animation_utils.dart';
+
+// import 'hand_drawn_animated_widget.dart'; // 已删除
 import 'package:provider/provider.dart';
 
 /// 旅行记录卡片组件
 class TravelRecordCard extends StatelessWidget {
-  final Travel record;
+  final TravelRecord record;
 
   const TravelRecordCard({
     super.key,
@@ -20,10 +21,9 @@ class TravelRecordCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final dateFormatter = DateFormat('yyyy年MM月dd日');
 
-    return HandDrawnAnimatedWidget(
-      animationType: AnimationType.fadeIn,
-      delay: Duration(milliseconds: 100 + (record.hashCode % 500)),
-      child: Container(
+    return AnimatedContainer(
+      duration: Duration(milliseconds: 300 + (record.hashCode % 200)),
+      curve: Curves.easeInOut,
       margin: EdgeInsets.zero,
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -93,21 +93,17 @@ class TravelRecordCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Consumer<TravelProvider>(
-                      builder: (context, provider, child) {
-                        return IconButton(
-                          icon: Icon(
-                            record.isFavorite
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: record.isFavorite ? Colors.red : null,
-                          ),
-                          onPressed: () {
-                            provider.toggleFavorite(record.id);
-                          },
-                        );
-                      },
-                    ),
+                    // Favorite functionality removed - TravelRecord doesn't have isFavorite
+                    // Consumer<TravelProvider>(
+                    //   builder: (context, provider, child) {
+                    //     return IconButton(
+                    //       icon: Icon(Icons.favorite_border),
+                    //       onPressed: () {
+                    //         // provider.toggleFavorite(record.id);
+                    //       },
+                    //     );
+                    //   },
+                    // ),
                   ],
                 ),
 
@@ -122,7 +118,7 @@ class TravelRecordCard extends StatelessWidget {
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
-                        record.locationName,
+                        record.location.address,
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey.shade700,
@@ -136,7 +132,7 @@ class TravelRecordCard extends StatelessWidget {
                     ),
                     const SizedBox(width: 4),
                     Text(
-                      dateFormatter.format(record.date),
+                      dateFormatter.format(record.createdAt),
                       style: TextStyle(
                         fontSize: 14,
                         color: Colors.grey.shade700,
@@ -224,7 +220,6 @@ class TravelRecordCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
       ),
     );
   }

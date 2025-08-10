@@ -2,18 +2,24 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 import '../models/user.dart';
+import 'config_service.dart';
+import 'api/auth_api_client.dart';
 
 /// 认证服务 - 处理用户注册、登录、登出等功能
 class AuthService extends ChangeNotifier {
   static const String _userKey = 'current_user';
   static const String _isLoggedInKey = 'is_logged_in';
   static const String _guestModeKey = 'guest_mode';
+  static const String _tokenKey = 'auth_token';
+
+  final _api = AuthApiClient();
 
   User? _currentUser;
   bool _isLoggedIn = false;
   bool _isGuestMode = false;
   bool _isLoading = false;
   String? _error;
+  String? _token;
 
   // Getters
   User? get currentUser => _currentUser;
@@ -22,6 +28,7 @@ class AuthService extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
   bool get isAuthenticated => _isLoggedIn || _isGuestMode;
+  String? get token => _token;
 
   /// 初始化认证服务
   Future<void> initialize() async {
@@ -60,7 +67,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  /// 用户注册
+  /// 用户注册（根据开关决定走本地还是远端）
   Future<bool> register({
     required String username,
     required String email,
@@ -71,25 +78,44 @@ class AuthService extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      // 验证输入
       if (username.isEmpty || email.isEmpty || password.isEmpty) {
         throw Exception('用户名、邮箱和密码不能为空');
       }
-
       if (!_isValidEmail(email)) {
         throw Exception('邮箱格式不正确');
       }
-
       if (password.length < 6) {
         throw Exception('密码长度不能少于6位');
       }
 
-      // 检查用户是否已存在（简化实现，实际应该调用后端API）
-      if (await _isUserExists(email)) {
-        throw Exception('该邮箱已被注册');
+      final useRemote = ConfigService.instance.isRemoteConfigured;
+      if (useRemote) {
+        final resp = await _api.register(email: email, username: username, password: password);
+        final now = DateTime.now();
+        final newUser = User(
+          id: resp['id'] as String,
+          username: resp['username'] as String? ?? username,
+          email: resp['email'] as String? ?? email,
+          phone: phone,
+          settings: UserSettings(
+            reminderSettings: ReminderSettings(),
+            privacySettings: PrivacySettings(),
+          ),
+          createdAt: now,
+          lastLoginAt: now,
+          stats: UserStats(),
+        );
+        await _saveUser(newUser);
+        _currentUser = newUser;
+        _isLoggedIn = true;
+        _isGuestMode = false;
+        await _saveAuthState();
+        debugPrint('用户注册成功(远端): ${newUser.username}');
+        notifyListeners();
+        return true;
       }
 
-      // 创建新用户
+      // 本地模式（原逻辑）
       final now = DateTime.now();
       final newUser = User(
         id: _generateUserId(),
@@ -104,16 +130,12 @@ class AuthService extends ChangeNotifier {
         lastLoginAt: now,
         stats: UserStats(),
       );
-
-      // 保存用户信息
       await _saveUser(newUser);
       _currentUser = newUser;
       _isLoggedIn = true;
       _isGuestMode = false;
-
       await _saveAuthState();
-
-      debugPrint('用户注册成功: ${newUser.username}');
+      debugPrint('用户注册成功(本地): ${newUser.username}');
       notifyListeners();
       return true;
     } catch (e) {
@@ -125,7 +147,7 @@ class AuthService extends ChangeNotifier {
     }
   }
 
-  /// 用户登录
+  /// 用户登录（根据开关决定走本地还是远端）
   Future<bool> login({
     required String email,
     required String password,
@@ -134,35 +156,53 @@ class AuthService extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      // 验证输入
       if (email.isEmpty || password.isEmpty) {
         throw Exception('邮箱和密码不能为空');
       }
-
       if (!_isValidEmail(email)) {
         throw Exception('邮箱格式不正确');
       }
 
-      // 简化实现：从本地存储验证用户（实际应该调用后端API）
+      final useRemote = ConfigService.instance.isRemoteConfigured;
+      if (useRemote) {
+        final resp = await _api.login(email: email, password: password);
+        final userData = resp['user'] as Map<String, dynamic>;
+        final now = DateTime.now();
+        final user = User(
+          id: userData['id'] as String,
+          username: userData['username'] as String? ?? email,
+          email: userData['email'] as String? ?? email,
+          settings: UserSettings(
+            reminderSettings: ReminderSettings(),
+            privacySettings: PrivacySettings(),
+          ),
+          createdAt: now,
+          lastLoginAt: now,
+          stats: UserStats(),
+        );
+        _token = resp['token'] as String?;
+        await _saveUser(user);
+        await _saveAuthState();
+        _currentUser = user;
+        _isLoggedIn = true;
+        _isGuestMode = false;
+        debugPrint('用户登录成功(远端): ${user.username}');
+        notifyListeners();
+        return true;
+      }
+
+      // 本地模式（原逻辑）
       final user = await _getUserByEmail(email);
       if (user == null) {
         throw Exception('用户不存在');
       }
-
-      // 简化实现：这里应该验证密码哈希
-      // 实际项目中密码应该加密存储和验证
-
-      // 更新最后登录时间
       final updatedUser = user.copyWith(lastLoginAt: DateTime.now());
       await _saveUser(updatedUser);
-
       _currentUser = updatedUser;
       _isLoggedIn = true;
       _isGuestMode = false;
-
       await _saveAuthState();
-
-      debugPrint('用户登录成功: ${updatedUser.username}');
+      debugPrint('用户登录成功(本地): ${updatedUser.username}');
       notifyListeners();
       return true;
     } catch (e) {
@@ -347,11 +387,6 @@ class AuthService extends ChangeNotifier {
     return RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email);
   }
 
-  /// 检查用户是否存在（简化实现）
-  Future<bool> _isUserExists(String email) async {
-    // 简化实现：实际应该调用后端API
-    return false;
-  }
 
   /// 根据邮箱获取用户（简化实现）
   Future<User?> _getUserByEmail(String email) async {

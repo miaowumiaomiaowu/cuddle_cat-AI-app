@@ -101,10 +101,10 @@ class _LoginScreenState extends State<LoginScreen>
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: ArtisticTheme.primaryColor.withOpacity(0.1),
+                color: ArtisticTheme.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(30),
                 border: Border.all(
-                  color: ArtisticTheme.primaryColor.withOpacity(0.3),
+                  color: ArtisticTheme.primaryColor.withValues(alpha: 0.3),
                   width: 2,
                 ),
               ),
@@ -266,6 +266,23 @@ class _LoginScreenState extends State<LoginScreen>
                     );
                   },
                 ),
+                const SizedBox(height: 16),
+
+                // 快速游客模式按钮
+                Consumer<UserProvider>(
+                  builder: (context, userProvider, child) {
+                    return TextButton(
+                      onPressed: userProvider.isLoading ? null : _handleGuestLogin,
+                      child: Text(
+                        '跳过登录，直接体验',
+                        style: ArtisticTheme.bodyMedium.copyWith(
+                          color: ArtisticTheme.primaryColor,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -300,24 +317,32 @@ class _LoginScreenState extends State<LoginScreen>
           // 游客模式按钮
           Consumer<UserProvider>(
             builder: (context, userProvider, child) {
-              return OutlinedButton(
-                onPressed: userProvider.isLoading ? null : _handleGuestLogin,
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(ArtisticTheme.radiusMedium),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const Icon(Icons.person_outline),
-                    const SizedBox(width: 8),
-                    Text(
-                      '游客模式体验',
-                      style: ArtisticTheme.titleSmall,
+              return Container(
+                width: double.infinity,
+                child: OutlinedButton(
+                  onPressed: userProvider.isLoading ? null : _handleGuestLogin,
+                  style: OutlinedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                    backgroundColor: ArtisticTheme.primaryColor.withValues(alpha: 0.1),
+                    side: BorderSide(color: ArtisticTheme.primaryColor, width: 2),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(ArtisticTheme.radiusMedium),
                     ),
-                  ],
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.person_outline, color: ArtisticTheme.primaryColor),
+                      const SizedBox(width: 8),
+                      Text(
+                        '游客模式体验',
+                        style: ArtisticTheme.titleSmall.copyWith(
+                          color: ArtisticTheme.primaryColor,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               );
             },

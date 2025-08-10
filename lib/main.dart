@@ -10,7 +10,7 @@ import 'screens/profile_screen.dart';
 import 'screens/dialogue_screen.dart';
 import 'screens/api_debug_screen.dart';
 import 'screens/data_debug_screen.dart';
-import 'screens/records_summary_screen.dart';
+
 import 'screens/ai_chat_screen.dart';
 import 'screens/enhanced_mood_entry_screen.dart';
 import 'screens/mood_map_screen.dart';
@@ -111,7 +111,7 @@ class MyApp extends StatelessWidget {
         ApiDebugScreen.routeName: (ctx) => const ApiDebugScreen(),
         DataDebugScreen.routeName: (ctx) => const DataDebugScreen(),
 
-        '/records_summary': (ctx) => const RecordsSummaryScreen(),
+        // '/records_summary': (ctx) => const RecordsSummaryScreen(), // 已删除
         AIChatScreen.routeName: (ctx) => const AIChatScreen(),
         EnhancedMoodEntryScreen.routeName: (ctx) => const EnhancedMoodEntryScreen(),
         MoodMapScreen.routeName: (ctx) => const MoodMapScreen(),

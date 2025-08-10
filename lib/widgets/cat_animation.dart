@@ -90,9 +90,9 @@ class _CatAnimationState extends State<CatAnimation>
             height: widget.size,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: AppTheme.getMoodColor(widget.cat.mood.toString()).withOpacity(0.1),
+              color: AppTheme.getMoodColor(widget.cat.mood.toString()).withValues(alpha: 0.1),
               border: Border.all(
-                color: AppTheme.getMoodColor(widget.cat.mood.toString()).withOpacity(0.3),
+                color: AppTheme.getMoodColor(widget.cat.mood.toString()).withValues(alpha: 0.3),
                 width: 2,
               ),
             ),
@@ -139,7 +139,7 @@ class _CatAnimationState extends State<CatAnimation>
                 top: widget.size * 0.3 + (index % 3) * 10,
                 child: Icon(
                   Icons.favorite,
-                  color: AppTheme.happyColor.withOpacity(0.7),
+                  color: AppTheme.happyColor.withValues(alpha: 0.7),
                   size: 16,
                 ),
               ),

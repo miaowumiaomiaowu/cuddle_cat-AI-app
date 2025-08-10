@@ -3,6 +3,19 @@ import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/cat.dart';
 
+/// 猫咪互动结果类
+class CatInteractionResult {
+  final Cat updatedCat;
+  final String message;
+  final bool success;
+
+  CatInteractionResult({
+    required this.updatedCat,
+    required this.message,
+    required this.success,
+  });
+}
+
 /// 猫咪服务类，负责猫咪数据的管理和持久化
 class CatService {
   static const String _catKey = 'cat_data';
@@ -47,5 +60,127 @@ class CatService {
   Future<void> removeCat() async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_catKey);
+  }
+
+  // ========== 向后兼容的方法（用于测试） ==========
+
+  /// 喂食猫咪
+  Future<CatInteractionResult> feedCat(Cat cat) async {
+    try {
+      final updatedCat = Cat(
+        name: cat.name,
+        breed: cat.breed,
+        personality: cat.personality,
+        mood: cat.mood,
+        growthStage: cat.growthStage,
+        energyLevel: cat.energyLevel,
+        happiness: cat.happiness,
+        petCount: cat.petCount,
+        feedCount: cat.feedCount + 1,
+        playCount: cat.playCount,
+        groomCount: cat.groomCount,
+        trainingCount: cat.trainingCount,
+        playSkill: cat.playSkill,
+        trainingSkill: cat.trainingSkill,
+        interactionCombo: cat.interactionCombo,
+        lastInteractionTime: cat.lastInteractionTime,
+        previousMood: cat.previousMood,
+      );
+
+      updatedCat.feed();
+      await saveCat(updatedCat);
+
+      return CatInteractionResult(
+        updatedCat: updatedCat,
+        message: '${cat.name}开心地吃完了食物！',
+        success: true,
+      );
+    } catch (e) {
+      return CatInteractionResult(
+        updatedCat: cat,
+        message: '喂食失败：$e',
+        success: false,
+      );
+    }
+  }
+
+  /// 抚摸猫咪
+  Future<CatInteractionResult> petCat(Cat cat) async {
+    try {
+      final updatedCat = Cat(
+        name: cat.name,
+        breed: cat.breed,
+        personality: cat.personality,
+        mood: cat.mood,
+        growthStage: cat.growthStage,
+        energyLevel: cat.energyLevel,
+        happiness: cat.happiness,
+        petCount: cat.petCount,
+        feedCount: cat.feedCount,
+        playCount: cat.playCount,
+        groomCount: cat.groomCount,
+        trainingCount: cat.trainingCount,
+        playSkill: cat.playSkill,
+        trainingSkill: cat.trainingSkill,
+        interactionCombo: cat.interactionCombo,
+        lastInteractionTime: cat.lastInteractionTime,
+        previousMood: cat.previousMood,
+      );
+
+      updatedCat.pet();
+      await saveCat(updatedCat);
+
+      return CatInteractionResult(
+        updatedCat: updatedCat,
+        message: '${cat.name}舒服地享受着你的抚摸！',
+        success: true,
+      );
+    } catch (e) {
+      return CatInteractionResult(
+        updatedCat: cat,
+        message: '抚摸失败：$e',
+        success: false,
+      );
+    }
+  }
+
+  /// 和猫咪玩耍
+  Future<CatInteractionResult> playWithCat(Cat cat) async {
+    try {
+      final updatedCat = Cat(
+        name: cat.name,
+        breed: cat.breed,
+        personality: cat.personality,
+        mood: cat.mood,
+        growthStage: cat.growthStage,
+        energyLevel: cat.energyLevel,
+        happiness: cat.happiness,
+        petCount: cat.petCount,
+        feedCount: cat.feedCount,
+        playCount: cat.playCount,
+        groomCount: cat.groomCount,
+        trainingCount: cat.trainingCount,
+        playSkill: cat.playSkill,
+        trainingSkill: cat.trainingSkill,
+        interactionCombo: cat.interactionCombo,
+        lastInteractionTime: cat.lastInteractionTime,
+        previousMood: cat.previousMood,
+      );
+
+      updatedCat.play();
+      await saveCat(updatedCat);
+
+      return CatInteractionResult(
+        updatedCat: updatedCat,
+        message: '${cat.name}和你玩得很开心！',
+        success: true,
+      );
+    } catch (e) {
+      return CatInteractionResult(
+        updatedCat: cat,
+        message: '玩耍失败：$e',
+        success: false,
+      );
+    }
   }
 }

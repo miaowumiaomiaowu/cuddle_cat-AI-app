@@ -29,7 +29,7 @@ class SimpleChatBubble extends StatelessWidget {
             ? LinearGradient(
                 colors: [
                   ArtisticTheme.primaryColor,
-                  ArtisticTheme.primaryColor.withOpacity(0.8),
+                  ArtisticTheme.primaryColor.withValues(alpha: 0.8),
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -55,21 +55,21 @@ class SimpleChatBubble extends StatelessWidget {
         boxShadow: [
           BoxShadow(
             color: isUser
-                ? ArtisticTheme.primaryColor.withOpacity(0.3)
-                : Colors.grey.withOpacity(0.2),
+                ? ArtisticTheme.primaryColor.withValues(alpha: 0.3)
+                : Colors.grey.withValues(alpha: 0.2),
             blurRadius: 12,
             offset: const Offset(2, 4),
             spreadRadius: 1,
           ),
           BoxShadow(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withValues(alpha: 0.8),
             blurRadius: 6,
             offset: const Offset(-1, -2),
           ),
         ],
         border: !isUser
             ? Border.all(
-                color: ArtisticTheme.primaryColor.withOpacity(0.2),
+                color: ArtisticTheme.primaryColor.withValues(alpha: 0.2),
                 width: 1.5,
               )
             : null,

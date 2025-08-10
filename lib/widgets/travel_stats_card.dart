@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/travel.dart';
+import '../models/travel_record_model.dart';
 
 /// 旅行统计卡片组件
 class TravelStatsCard extends StatelessWidget {

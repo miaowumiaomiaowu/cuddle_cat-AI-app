@@ -5,7 +5,7 @@ import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
-import '../models/travel.dart';
+import '../models/travel_record_model.dart';
 import 'package:intl/intl.dart';
 
 /// 分享内容类型
@@ -37,13 +37,13 @@ class ShareService {
   ShareService._internal();
 
   /// 生成旅行记录的分享文本
-  String generateShareText(Travel record) {
+  String generateShareText(TravelRecord record) {
     final dateFormatter = DateFormat('yyyy年MM月dd日');
     final buffer = StringBuffer();
 
     buffer.writeln('🌟 ${record.title}');
-    buffer.writeln('📍 ${record.locationName}');
-    buffer.writeln('📅 ${dateFormatter.format(record.date)}');
+    buffer.writeln('📍 ${record.location.address}');
+    buffer.writeln('📅 ${dateFormatter.format(record.createdAt)}');
     buffer.writeln('😊 ${_translateMood(record.mood)}');
 
     if (record.description.isNotEmpty) {
@@ -63,7 +63,7 @@ class ShareService {
   }
 
   /// 生成分享卡片图片
-  Future<String?> generateShareCard(Travel record) async {
+  Future<String?> generateShareCard(TravelRecord record) async {
     try {
       // 创建分享卡片的Widget
       final Widget shareCard = _buildShareCardWidget(record);
@@ -79,7 +79,7 @@ class ShareService {
   }
 
   /// 构建分享卡片Widget
-  Widget _buildShareCardWidget(Travel record) {
+  Widget _buildShareCardWidget(TravelRecord record) {
     final dateFormatter = DateFormat('yyyy年MM月dd日');
 
     return Container(
@@ -97,7 +97,7 @@ class ShareService {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withValues(alpha: 0.1),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -126,7 +126,7 @@ class ShareService {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  record.locationName,
+                  record.location.address,
                   style: const TextStyle(
                     fontSize: 16,
                     color: Colors.black87,
@@ -143,7 +143,7 @@ class ShareService {
               const Icon(Icons.calendar_today, color: Colors.blue, size: 20),
               const SizedBox(width: 8),
               Text(
-                dateFormatter.format(record.date),
+                dateFormatter.format(record.createdAt),
                 style: const TextStyle(
                   fontSize: 16,
                   color: Colors.black87,
@@ -334,7 +334,7 @@ class ShareService {
   }
 
   /// 生成完整的分享内容
-  Future<ShareContent> generateShareContent(Travel record) async {
+  Future<ShareContent> generateShareContent(TravelRecord record) async {
     final String shareText = generateShareText(record);
     final String? shareImagePath = await generateShareCard(record);
 

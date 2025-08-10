@@ -90,73 +90,7 @@ class Travel {
   }
 }
 
-/// 旅行统计数据
-class TravelStats {
-  final int totalRecords;
-  final int totalPlaces;
-  final List<String> mostVisitedPlaces;
-  final List<String> mostUsedTags;
-  final String mostCommonMood;
 
-  TravelStats({
-    required this.totalRecords,
-    required this.totalPlaces,
-    required this.mostVisitedPlaces,
-    required this.mostUsedTags,
-    required this.mostCommonMood,
-  });
-
-  /// 从旅行记录列表计算统计数据
-  factory TravelStats.fromRecords(List<Travel> records) {
-    // 总记录数
-    final totalRecords = records.length;
-
-    // 统计地点
-    final places = <String, int>{};
-    for (final record in records) {
-      places[record.locationName] = (places[record.locationName] ?? 0) + 1;
-    }
-
-    // 最常访问的地点
-    final sortedPlaces = places.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final mostVisitedPlaces = sortedPlaces.take(3).map((e) => e.key).toList();
-
-    // 统计标签
-    final tagCounts = <String, int>{};
-    for (final record in records) {
-      for (final tag in record.tags) {
-        tagCounts[tag] = (tagCounts[tag] ?? 0) + 1;
-      }
-    }
-
-    // 最常用的标签
-    final sortedTags = tagCounts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-    final mostUsedTags = sortedTags.take(5).map((e) => e.key).toList();
-
-    // 统计心情
-    final moodCounts = <String, int>{};
-    for (final record in records) {
-      moodCounts[record.mood] = (moodCounts[record.mood] ?? 0) + 1;
-    }
-
-    // 最常见的心情
-    String mostCommonMood = '未知';
-    if (moodCounts.isNotEmpty) {
-      mostCommonMood =
-          moodCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
-    }
-
-    return TravelStats(
-      totalRecords: totalRecords,
-      totalPlaces: places.length,
-      mostVisitedPlaces: mostVisitedPlaces,
-      mostUsedTags: mostUsedTags,
-      mostCommonMood: mostCommonMood,
-    );
-  }
-}
 
 /// 表示经纬度坐标的类，代替高德地图的LatLng类
 class LatLng {

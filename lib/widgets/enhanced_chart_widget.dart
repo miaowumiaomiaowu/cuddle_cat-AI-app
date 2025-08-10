@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../theme/artistic_theme.dart';
-import '../models/mood_record.dart';
-import '../models/expense_record.dart';
+
+// import '../models/expense_record.dart'; // 已删除
 
 /// 增强的图表组件 - 支持多种图表类型
 class EnhancedChartWidget extends StatefulWidget {
@@ -121,7 +121,7 @@ class _EnhancedChartWidgetState extends State<EnhancedChartWidget>
             Icon(
               Icons.bar_chart,
               size: 48,
-              color: ArtisticTheme.textSecondary.withOpacity(0.5),
+              color: ArtisticTheme.textSecondary.withValues(alpha: 0.5),
             ),
             const SizedBox(height: 8),
             Text(
@@ -161,7 +161,7 @@ class _EnhancedChartWidgetState extends State<EnhancedChartWidget>
           horizontalInterval: 1,
           getDrawingHorizontalLine: (value) {
             return FlLine(
-              color: ArtisticTheme.textSecondary.withOpacity(0.1),
+              color: ArtisticTheme.textSecondary.withValues(alpha: 0.1),
               strokeWidth: 1,
             );
           },
@@ -208,7 +208,7 @@ class _EnhancedChartWidgetState extends State<EnhancedChartWidget>
         borderData: FlBorderData(
           show: true,
           border: Border.all(
-            color: ArtisticTheme.textSecondary.withOpacity(0.2),
+            color: ArtisticTheme.textSecondary.withValues(alpha: 0.2),
           ),
         ),
         minX: 0,
@@ -222,7 +222,7 @@ class _EnhancedChartWidgetState extends State<EnhancedChartWidget>
             gradient: LinearGradient(
               colors: [
                 widget.primaryColor ?? ArtisticTheme.primaryColor,
-                (widget.primaryColor ?? ArtisticTheme.primaryColor).withOpacity(0.3),
+                (widget.primaryColor ?? ArtisticTheme.primaryColor).withValues(alpha: 0.3),
               ],
             ),
             barWidth: 3,
@@ -242,8 +242,8 @@ class _EnhancedChartWidgetState extends State<EnhancedChartWidget>
               show: true,
               gradient: LinearGradient(
                 colors: [
-                  (widget.primaryColor ?? ArtisticTheme.primaryColor).withOpacity(0.3),
-                  (widget.primaryColor ?? ArtisticTheme.primaryColor).withOpacity(0.0),
+                  (widget.primaryColor ?? ArtisticTheme.primaryColor).withValues(alpha: 0.3),
+                  (widget.primaryColor ?? ArtisticTheme.primaryColor).withValues(alpha: 0.0),
                 ],
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
@@ -333,7 +333,7 @@ class _EnhancedChartWidgetState extends State<EnhancedChartWidget>
                 gradient: LinearGradient(
                   colors: [
                     widget.primaryColor ?? ArtisticTheme.primaryColor,
-                    (widget.primaryColor ?? ArtisticTheme.primaryColor).withOpacity(0.7),
+                    (widget.primaryColor ?? ArtisticTheme.primaryColor).withValues(alpha: 0.7),
                   ],
                   begin: Alignment.bottomCenter,
                   end: Alignment.topCenter,

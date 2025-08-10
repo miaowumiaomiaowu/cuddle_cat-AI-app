@@ -2,7 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
 import 'settings_screen.dart';
-import 'records_summary_screen.dart';
+// import 'records_summary_screen.dart'; // 已删除
 import 'ai_chat_screen.dart';
 import 'mood_map_screen.dart';
 import 'developer_tools_screen.dart';
@@ -423,11 +423,9 @@ class ProfileScreen extends StatelessWidget {
             children: [
               Expanded(
                 child: _buildQuickActionButton('📊', '记录总结', () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const RecordsSummaryScreen(),
-                    ),
+                  // TODO: 实现记录总结功能
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('记录总结功能开发中...')),
                   );
                 }),
               ),

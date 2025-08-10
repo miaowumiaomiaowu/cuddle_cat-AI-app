@@ -643,7 +643,7 @@ class _TravelMapScreenState extends State<TravelMapScreen> with TickerProviderSt
           borderRadius: BorderRadius.circular(25),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.1),
+              color: Colors.black.withValues(alpha: 0.1),
               blurRadius: 10,
               offset: const Offset(0, 2),
             ),
@@ -753,7 +753,7 @@ class _TravelMapScreenState extends State<TravelMapScreen> with TickerProviderSt
                 width: 40,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: AppTheme.primaryColor.withOpacity(0.1),
+                  color: AppTheme.primaryColor.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Center(
@@ -1038,7 +1038,7 @@ class _TravelMapScreenState extends State<TravelMapScreen> with TickerProviderSt
                           margin: const EdgeInsets.only(bottom: 12),
                           child: ListTile(
                             leading: CircleAvatar(
-                              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+                              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
                               child: Text(record.mood),
                             ),
                             title: Text(record.title),

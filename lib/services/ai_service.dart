@@ -498,6 +498,55 @@ class AIService {
     );
     return emojiRegex.hasMatch(text);
   }
+
+  // ========== 向后兼容的方法（用于测试） ==========
+
+  /// 向后兼容：生成回复
+  Future<String> generateResponse({
+    required String userMessage,
+    required Cat catContext,
+  }) async {
+    try {
+      final dialogueMessage = DialogueMessage.fromUser(text: userMessage);
+      final response = await generateCatReply(
+        userMessage: dialogueMessage,
+        cat: catContext,
+        conversationHistory: [],
+      );
+      return response.text;
+    } catch (e) {
+      // 如果API不可用，返回默认回复
+      return '喵~ 我现在有点累，稍后再聊吧！';
+    }
+  }
+
+  /// 向后兼容：分析情感
+  Future<EmotionAnalysis> analyzeEmotion(String text) async {
+    try {
+      // 简单的情感分析逻辑
+      final lowerText = text.toLowerCase();
+
+      if (lowerText.contains('开心') || lowerText.contains('高兴') || lowerText.contains('快乐')) {
+        return EmotionAnalysis(EmotionType.happy, 0.8);
+      } else if (lowerText.contains('伤心') || lowerText.contains('难过') || lowerText.contains('悲伤')) {
+        return EmotionAnalysis(EmotionType.sad, 0.8);
+      } else if (lowerText.contains('生气') || lowerText.contains('愤怒') || lowerText.contains('气愤')) {
+        return EmotionAnalysis(EmotionType.angry, 0.8);
+      } else if (lowerText.contains('焦虑') || lowerText.contains('担心') || lowerText.contains('紧张')) {
+        return EmotionAnalysis(EmotionType.anxious, 0.7);
+      } else if (lowerText.contains('困惑') || lowerText.contains('疑惑') || lowerText.contains('不明白')) {
+        return EmotionAnalysis(EmotionType.confused, 0.7);
+      } else if (lowerText.contains('惊讶') || lowerText.contains('震惊') || lowerText.contains('意外')) {
+        return EmotionAnalysis(EmotionType.surprised, 0.7);
+      } else if (lowerText.contains('爱') || lowerText.contains('喜欢') || lowerText.contains('关心')) {
+        return EmotionAnalysis(EmotionType.loving, 0.8);
+      } else {
+        return EmotionAnalysis(EmotionType.neutral, 0.5);
+      }
+    } catch (e) {
+      return EmotionAnalysis(EmotionType.neutral, 0.5);
+    }
+  }
 }
 
 /// 情感分析结果类

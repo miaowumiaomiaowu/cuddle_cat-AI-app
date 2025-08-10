@@ -88,7 +88,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              _pages[_currentPage].color.withOpacity(0.1),
+              _pages[_currentPage].color.withValues(alpha: 0.1),
               ArtisticTheme.backgroundColor,
             ],
           ),
@@ -212,10 +212,10 @@ class _OnboardingScreenState extends State<OnboardingScreen>
             width: 120,
             height: 120,
             decoration: BoxDecoration(
-              color: page.color.withOpacity(0.1),
+              color: page.color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(60),
               border: Border.all(
-                color: page.color.withOpacity(0.3),
+                color: page.color.withValues(alpha: 0.3),
                 width: 2,
               ),
             ),
@@ -280,7 +280,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       decoration: BoxDecoration(
         color: isActive 
             ? _pages[_currentPage].color 
-            : ArtisticTheme.textSecondary.withOpacity(0.3),
+            : ArtisticTheme.textSecondary.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(4),
       ),
     );

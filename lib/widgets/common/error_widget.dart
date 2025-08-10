@@ -39,7 +39,7 @@ class ErrorStateWidget extends StatelessWidget {
               width: 80,
               height: 80,
               decoration: BoxDecoration(
-                color: AppTheme.errorColor.withOpacity(0.1),
+                color: AppTheme.errorColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
@@ -156,13 +156,13 @@ class EmptyStateWidget extends StatelessWidget {
               width: 100,
               height: 100,
               decoration: BoxDecoration(
-                color: AppTheme.primaryColor.withOpacity(0.1),
+                color: AppTheme.primaryColor.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: Icon(
                 icon ?? Icons.inbox_outlined,
                 size: 50,
-                color: AppTheme.primaryColor.withOpacity(0.7),
+                color: AppTheme.primaryColor.withValues(alpha: 0.7),
               ),
             ),
 
@@ -226,10 +226,10 @@ class InlineErrorWidget extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppTheme.spacingMedium),
       decoration: BoxDecoration(
-        color: AppTheme.errorColor.withOpacity(0.1),
+        color: AppTheme.errorColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
         border: Border.all(
-          color: AppTheme.errorColor.withOpacity(0.3),
+          color: AppTheme.errorColor.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -289,10 +289,10 @@ class SuccessWidget extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppTheme.spacingMedium),
       decoration: BoxDecoration(
-        color: AppTheme.successColor.withOpacity(0.1),
+        color: AppTheme.successColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
         border: Border.all(
-          color: AppTheme.successColor.withOpacity(0.3),
+          color: AppTheme.successColor.withValues(alpha: 0.3),
         ),
       ),
       child: Row(
@@ -352,10 +352,10 @@ class WarningWidget extends StatelessWidget {
       ),
       padding: const EdgeInsets.all(AppTheme.spacingMedium),
       decoration: BoxDecoration(
-        color: AppTheme.warningColor.withOpacity(0.1),
+        color: AppTheme.warningColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
         border: Border.all(
-          color: AppTheme.warningColor.withOpacity(0.3),
+          color: AppTheme.warningColor.withValues(alpha: 0.3),
         ),
       ),
       child: Row(

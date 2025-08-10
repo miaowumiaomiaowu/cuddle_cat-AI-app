@@ -113,7 +113,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
         // 主要爱心图标
         Icon(
           Icons.favorite,
-          color: Colors.pink.withOpacity(0.8),
+          color: Colors.pink.withValues(alpha: 0.8),
           size: 30 * (1 + _controller.value * 0.3),
         ),
         // 浮动的小爱心
@@ -155,7 +155,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
         // 主要餐具图标
         Icon(
           Icons.restaurant,
-          color: Colors.orange.withOpacity(0.8),
+          color: Colors.orange.withValues(alpha: 0.8),
           size: 30 * (1 + _controller.value * 0.3),
         ),
         // 美味表情
@@ -199,7 +199,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           angle: _controller.value * math.pi * 2,
           child: Icon(
             Icons.toys,
-            color: Colors.purple.withOpacity(0.8),
+            color: Colors.purple.withValues(alpha: 0.8),
             size: 30 * (1 + _controller.value * 0.3),
           ),
         ),
@@ -245,7 +245,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
         // 主要清洁图标
         Icon(
           Icons.shower,
-          color: Colors.blue.withOpacity(0.8),
+          color: Colors.blue.withValues(alpha: 0.8),
           size: 30 * (1 + _controller.value * 0.3),
         ),
         // 闪亮效果
@@ -306,7 +306,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           angle: _controller.value * math.pi * 0.5,
           child: Icon(
             Icons.stars,
-            color: Colors.amber.withOpacity(0.8),
+            color: Colors.amber.withValues(alpha: 0.8),
             size: 30 * (1 + _controller.value * 0.5),
           ),
         ),
@@ -316,7 +316,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           child: Icon(
             Icons.auto_awesome,
             color:
-                Colors.yellow.withOpacity(0.9 - _controller.value * 0.3),
+                Colors.yellow.withValues(alpha: 0.9 - _controller.value * 0.3),
             size: 20 * (1 + _controller.value),
           ),
         ),

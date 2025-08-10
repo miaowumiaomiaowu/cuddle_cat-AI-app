@@ -14,6 +14,28 @@ class ChatBubble extends StatefulWidget {
     this.showTypingEffect = false,
   });
 
+  /// 向后兼容的构造函数（用于测试）
+  factory ChatBubble.legacy({
+    Key? key,
+    required String message,
+    required bool isUser,
+    String? emoji,
+    bool showTypingEffect = false,
+  }) {
+    final dialogueMessage = DialogueMessage(
+      text: message,
+      sender: isUser ? MessageSender.user : MessageSender.cat,
+      timestamp: DateTime.now(),
+      emotionType: EmotionType.neutral,
+    );
+
+    return ChatBubble(
+      key: key,
+      message: dialogueMessage,
+      showTypingEffect: showTypingEffect,
+    );
+  }
+
   @override
   State<ChatBubble> createState() => _ChatBubbleState();
 }
@@ -233,7 +255,7 @@ class _ChatBubbleState extends State<ChatBubble> with TickerProviderStateMixin {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.orange.withOpacity(0.3),
+            color: Colors.orange.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -256,7 +278,7 @@ class _ChatBubbleState extends State<ChatBubble> with TickerProviderStateMixin {
         shape: BoxShape.circle,
         gradient: LinearGradient(
           colors: [
-            Theme.of(context).primaryColor.withOpacity(0.8),
+            Theme.of(context).primaryColor.withValues(alpha: 0.8),
             Theme.of(context).primaryColor,
           ],
           begin: Alignment.topLeft,
@@ -264,7 +286,7 @@ class _ChatBubbleState extends State<ChatBubble> with TickerProviderStateMixin {
         ),
         boxShadow: [
           BoxShadow(
-            color: Theme.of(context).primaryColor.withOpacity(0.3),
+            color: Theme.of(context).primaryColor.withValues(alpha: 0.3),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -303,7 +325,7 @@ class _ChatBubbleState extends State<ChatBubble> with TickerProviderStateMixin {
             padding: const EdgeInsets.symmetric(horizontal: 6.0, vertical: 2.0),
             decoration: BoxDecoration(
               color: _getEmotionColor(widget.message.emotionType)
-                  .withOpacity(0.1),
+                  .withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Text(
@@ -376,17 +398,17 @@ class _ChatBubbleState extends State<ChatBubble> with TickerProviderStateMixin {
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
-              color.withOpacity(0.1),
-              color.withOpacity(0.2),
+              color.withValues(alpha: 0.1),
+              color.withValues(alpha: 0.2),
             ],
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
           ),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withOpacity(0.4), width: 1),
+          border: Border.all(color: color.withValues(alpha: 0.4), width: 1),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.2),
+              color: color.withValues(alpha: 0.2),
               blurRadius: 4,
               offset: const Offset(0, 2),
             ),

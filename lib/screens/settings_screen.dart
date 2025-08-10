@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../theme/app_theme.dart';
 import '../theme/artistic_theme.dart';
-import '../widgets/hand_drawn_card.dart';
 import '../widgets/artistic_button.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -313,7 +311,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     }
                   },
                   activeColor: ArtisticTheme.primaryColor,
-                  inactiveColor: ArtisticTheme.primaryColor.withOpacity(0.3),
+                  inactiveColor: ArtisticTheme.primaryColor.withValues(alpha: 0.3),
                 ),
               ),
               const Text('高', style: TextStyle(fontSize: 12)),

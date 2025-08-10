@@ -154,7 +154,7 @@ class _BackgroundRingPainter extends CustomPainter {
     final strokeWidth = size.width * 0.08;
 
     final paint = Paint()
-      ..color = ArtisticTheme.textHint.withOpacity(0.1)
+      ..color = ArtisticTheme.textHint.withValues(alpha: 0.1)
       ..style = PaintingStyle.stroke
       ..strokeWidth = strokeWidth
       ..strokeCap = StrokeCap.round;
@@ -188,9 +188,9 @@ class _ProgressRingPainter extends CustomPainter {
       startAngle: -math.pi / 2,
       endAngle: -math.pi / 2 + math.max(0.01, 2 * math.pi * progress), // 确保角度大于0
       colors: [
-        color.withOpacity(0.3),
+        color.withValues(alpha: 0.3),
         color,
-        color.withOpacity(0.8),
+        color.withValues(alpha: 0.8),
       ],
       stops: const [0.0, 0.5, 1.0],
     );
@@ -242,7 +242,7 @@ class _GlowDotPainter extends CustomPainter {
 
     // 外层光晕
     final glowPaint = Paint()
-      ..color = color.withOpacity(0.3)
+      ..color = color.withValues(alpha: 0.3)
       ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
 
     canvas.drawCircle(dotCenter, 12, glowPaint);
@@ -256,7 +256,7 @@ class _GlowDotPainter extends CustomPainter {
 
     // 中心高光
     final highlightPaint = Paint()
-      ..color = Colors.white.withOpacity(0.8)
+      ..color = Colors.white.withValues(alpha: 0.8)
       ..style = PaintingStyle.fill;
 
     canvas.drawCircle(dotCenter, 2, highlightPaint);
@@ -298,7 +298,7 @@ class ArtisticStatusCard extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(ArtisticTheme.spacingSmall),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(ArtisticTheme.radiusSmall),
               ),
               child: Icon(

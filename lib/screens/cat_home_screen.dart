@@ -4,7 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/cat_provider.dart';
 import '../widgets/cat_animation.dart';
 import '../widgets/common/loading_widget.dart';
-import '../widgets/common/error_widget.dart';
+
 import '../theme/app_theme.dart';
 import '../utils/page_transitions.dart';
 import '../utils/responsive_utils.dart';
@@ -288,10 +288,10 @@ class _CatHomeScreenState extends State<CatHomeScreen>
                         width: 120,
                         height: 120,
                         decoration: BoxDecoration(
-                          color: ArtisticTheme.joyColor.withOpacity(0.1),
+                          color: ArtisticTheme.joyColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(60),
                           border: Border.all(
-                            color: ArtisticTheme.joyColor.withOpacity(0.2),
+                            color: ArtisticTheme.joyColor.withValues(alpha: 0.2),
                             width: 2,
                           ),
                           boxShadow: ArtisticTheme.softShadow,
@@ -372,7 +372,7 @@ class _CatHomeScreenState extends State<CatHomeScreen>
                         Container(
                           padding: const EdgeInsets.all(ArtisticTheme.spacingSmall),
                           decoration: BoxDecoration(
-                            color: ArtisticTheme.getMoodColor(cat.mood.toString()).withOpacity(0.2),
+                            color: ArtisticTheme.getMoodColor(cat.mood.toString()).withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(ArtisticTheme.radiusSmall),
                           ),
                           child: Text(
@@ -449,11 +449,11 @@ class _CatHomeScreenState extends State<CatHomeScreen>
                                   child: Container(
                                     padding: const EdgeInsets.all(ArtisticTheme.spacingLarge),
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.3),
+                                      color: Colors.white.withValues(alpha: 0.3),
                                       borderRadius: BorderRadius.circular(ArtisticTheme.radiusXXLarge),
                                       boxShadow: [
                                         BoxShadow(
-                                          color: ArtisticTheme.getMoodColor(cat.mood.toString()).withOpacity(0.2),
+                                          color: ArtisticTheme.getMoodColor(cat.mood.toString()).withValues(alpha: 0.2),
                                           blurRadius: 30,
                                           offset: const Offset(0, 10),
                                         ),
@@ -567,10 +567,10 @@ class _CatHomeScreenState extends State<CatHomeScreen>
         vertical: 2,
       ),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(ArtisticTheme.radiusSmall),
         border: Border.all(
-          color: color.withOpacity(0.3),
+          color: color.withValues(alpha: 0.3),
           width: 1,
         ),
       ),

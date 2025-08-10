@@ -102,12 +102,9 @@ class TravelService {
       final records = await getAllRecords();
       final record = records.firstWhere((r) => r.id == id);
 
-      // 删除关联的媒体文件
-      for (final media in record.mediaItems) {
-        await _deleteMediaFile(media.path);
-        if (media.thumbnail != null) {
-          await _deleteMediaFile(media.thumbnail!);
-        }
+      // 删除关联的媒体文件 (Travel模型使用photos数组)
+      for (final photoPath in record.photos) {
+        await _deleteMediaFile(photoPath);
       }
 
       // 从列表中移除
@@ -323,12 +320,9 @@ class TravelService {
     }
 
     return MediaItem(
-      type: type,
+      type: type.toString().split('.').last,
       path: targetPath,
       thumbnail: thumbnailPath,
-      caption: caption,
-      duration: duration,
-      fileSize: fileSize,
     );
   }
 
@@ -392,6 +386,10 @@ class TravelService {
         monthlyDistribution: {},
         topCities: [],
         topTags: [],
+        totalPlaces: 0,
+        mostCommonMood: '',
+        mostVisitedPlaces: [],
+        mostUsedTags: [],
       );
     }
 
@@ -466,6 +464,11 @@ class TravelService {
         .toList()
       ..sort((a, b) => b.value.compareTo(a.value));
 
+    // Calculate additional stats
+    final mostCommonMood = moodCount.isNotEmpty
+        ? moodCount.entries.reduce((a, b) => a.value > b.value ? a : b).key
+        : '';
+
     return TravelStats(
       totalRecords: records.length,
       totalCities: cities.length,
@@ -476,6 +479,10 @@ class TravelService {
       monthlyDistribution: monthlyCount,
       topCities: topCities.take(10).map((e) => e.key).toList(),
       topTags: topTags.take(10).map((e) => e.key).toList(),
+      totalPlaces: cities.length,
+      mostCommonMood: mostCommonMood,
+      mostVisitedPlaces: topCities.take(5).map((e) => e.key).toList(),
+      mostUsedTags: topTags.take(5).map((e) => e.key).toList(),
     );
   }
 

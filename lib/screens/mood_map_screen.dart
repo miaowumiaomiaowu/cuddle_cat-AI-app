@@ -5,7 +5,7 @@ import '../providers/mood_provider.dart';
 import '../providers/travel_provider.dart';
 import '../widgets/hand_drawn_card.dart';
 import '../models/mood_record.dart';
-import '../models/travel.dart';
+
 import 'dart:math' as math;
 
 /// 心情地图页面 - 显示不同地点的心情记录
@@ -209,7 +209,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
                 Icon(
                   Icons.map_outlined,
                   size: 64,
-                  color: ArtisticTheme.textSecondary.withOpacity(0.5),
+                  color: ArtisticTheme.textSecondary.withValues(alpha: 0.5),
                 ),
                 const SizedBox(height: 16),
                 Text(
@@ -250,7 +250,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
                   end: Alignment.bottomRight,
                   colors: [
                     ArtisticTheme.backgroundColor,
-                    ArtisticTheme.surfaceColor.withOpacity(0.3),
+                    ArtisticTheme.surfaceColor.withValues(alpha: 0.3),
                   ],
                 ),
               ),
@@ -286,7 +286,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
           width: 60 + (entries.length * 2).toDouble().clamp(0, 20),
           height: 60 + (entries.length * 2).toDouble().clamp(0, 20),
           decoration: BoxDecoration(
-            color: color.withOpacity(0.8),
+            color: color.withValues(alpha: 0.8),
             borderRadius: BorderRadius.circular(30),
             border: Border.all(
               color: Colors.white,
@@ -294,7 +294,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
             ),
             boxShadow: [
               BoxShadow(
-                color: color.withOpacity(0.3),
+                color: color.withValues(alpha: 0.3),
                 blurRadius: 10,
                 spreadRadius: 2,
               ),
@@ -328,7 +328,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
         color: ArtisticTheme.surfaceColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -388,7 +388,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
   }
 
   List<MoodEntry> _getFilteredEntries(MoodProvider moodProvider) {
-    var entries = moodProvider.moodEntries.where((entry) => entry.location != null).toList();
+    var entries = moodProvider.moodEntries.where((entry) => entry.locationName != null).toList();
 
     // 时间过滤
     final now = DateTime.now();
@@ -419,8 +419,8 @@ class _MoodMapScreenState extends State<MoodMapScreen>
     final Map<String, List<MoodEntry>> groups = {};
     
     for (final entry in entries) {
-      if (entry.location != null) {
-        final location = entry.location!;
+      if (entry.locationName != null) {
+        final location = entry.locationName!;
         groups[location] = groups[location] ?? [];
         groups[location]!.add(entry);
       }
@@ -473,7 +473,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
                   height: 4,
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   decoration: BoxDecoration(
-                    color: ArtisticTheme.textSecondary.withOpacity(0.3),
+                    color: ArtisticTheme.textSecondary.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -535,7 +535,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
                           trailing: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: MoodTypeConfig.getMoodColor(entry.mood).withOpacity(0.2),
+                              color: MoodTypeConfig.getMoodColor(entry.mood).withValues(alpha: 0.2),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
@@ -570,7 +570,7 @@ class MoodMapPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     // 绘制背景网格
     final paint = Paint()
-      ..color = ArtisticTheme.textSecondary.withOpacity(0.1)
+      ..color = ArtisticTheme.textSecondary.withValues(alpha: 0.1)
       ..strokeWidth = 1;
 
     for (int i = 0; i < size.width; i += 50) {

@@ -373,7 +373,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: ArtisticTheme.primaryColor.withOpacity(0.1),
+            color: ArtisticTheme.primaryColor.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(20),
           ),
           child: Icon(icon, color: ArtisticTheme.primaryColor),

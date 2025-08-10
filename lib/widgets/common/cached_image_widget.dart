@@ -3,7 +3,7 @@ import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import '../../services/image_cache_service.dart';
 import 'loading_widget.dart';
-import 'error_widget.dart';
+
 
 /// 优化的缓存图片组件
 class CachedImageWidget extends StatefulWidget {
@@ -124,11 +124,23 @@ class _CachedImageWidgetState extends State<CachedImageWidget>
           );
     } else if (_hasError) {
       child = widget.errorWidget ??
-          CustomErrorWidget(
-            message: '图片加载失败',
-            details: _errorMessage,
-            onRetry: _retryLoad,
-            showRetryButton: true,
+          Container(
+            color: Colors.grey[200],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.error_outline, color: Colors.grey[600], size: 32),
+                const SizedBox(height: 8),
+                Text('图片加载失败', style: TextStyle(color: Colors.grey[600])),
+                if (_errorMessage != null)
+                  Text(_errorMessage!, style: TextStyle(color: Colors.grey[500], fontSize: 12)),
+                const SizedBox(height: 8),
+                TextButton(
+                  onPressed: _retryLoad,
+                  child: const Text('重试'),
+                ),
+              ],
+            ),
           );
     } else if (_image != null) {
       child = CustomPaint(
@@ -140,9 +152,16 @@ class _CachedImageWidgetState extends State<CachedImageWidget>
       );
     } else {
       child = widget.errorWidget ??
-          const CustomErrorWidget(
-            message: '图片不可用',
-            showRetryButton: false,
+          Container(
+            color: Colors.grey[200],
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.image_not_supported, color: Colors.grey[600], size: 32),
+                const SizedBox(height: 8),
+                Text('图片不可用', style: TextStyle(color: Colors.grey[600])),
+              ],
+            ),
           );
     }
 

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:geolocator/geolocator.dart';
+
 import '../theme/artistic_theme.dart';
 import '../providers/travel_provider.dart';
 import '../providers/mood_provider.dart';
@@ -98,7 +98,7 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
                 animation: _menuAnimation,
                 builder: (context, child) {
                   return Container(
-                    color: Colors.black.withOpacity(0.3 * _menuAnimation.value),
+                    color: Colors.black.withValues(alpha: 0.3 * _menuAnimation.value),
                   );
                 },
               ),
@@ -170,7 +170,7 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
                       icon: Icons.location_on,
                       label: '记录地点',
                       color: ArtisticTheme.primaryColor,
-                      onPressed: () => _quickAddTravel(context),
+                      onPressed: () => _quickAddTravel(context, mood: 'normal'),
                     ),
                   ),
                 ),
@@ -255,7 +255,7 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
     );
   }
 
-  Future<void> _quickAddTravel(BuildContext context) async {
+  Future<void> _quickAddTravel(BuildContext context, {String mood = 'normal'}) async {
     _closeMenu();
     setState(() {
       _isRecording = true;
@@ -286,7 +286,7 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
           isFavorite: false,
         );
 
-        await travelProvider.addRecord(record);
+        await travelProvider.addTravel(record);
         
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -382,10 +382,10 @@ class _MoodSelectionDialog extends StatelessWidget {
               onTap: () => Navigator.of(context).pop(moodType),
               child: Container(
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
+                  color: color.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: color.withOpacity(0.3),
+                    color: color.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Column(

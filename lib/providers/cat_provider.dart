@@ -14,6 +14,9 @@ class CatProvider extends BaseProvider {
   // 获取当前猫咪
   Cat? get cat => _cat;
 
+  // 添加 currentCat getter 以兼容测试
+  Cat? get currentCat => _cat;
+
   // 判断用户是否有猫咪
   bool get hasCat => _cat != null;
 
@@ -180,5 +183,12 @@ class CatProvider extends BaseProvider {
         debugPrint('CatProvider: 异步保存猫咪数据失败 - $e');
       });
     }
+  }
+
+  /// 从数据更新猫咪信息 - 兼容测试
+  void updateCatFromData(Cat cat) {
+    _cat = cat;
+    notifyListeners();
+    _saveCatAsync();
   }
 }

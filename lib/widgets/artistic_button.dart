@@ -11,6 +11,7 @@ class ArtisticButton extends StatefulWidget {
   final double? width;
   final double? height;
   final bool isLoading;
+  final double borderRadius;
 
   const ArtisticButton({
     super.key,
@@ -22,6 +23,7 @@ class ArtisticButton extends StatefulWidget {
     this.width,
     this.height,
     this.isLoading = false,
+    this.borderRadius = 12.0,
   });
 
   @override
@@ -156,23 +158,23 @@ class _ArtisticButtonState extends State<ArtisticButton>
                   begin: Alignment.topLeft,
                   end: Alignment.bottomRight,
                   colors: [
-                    color.withOpacity(0.9),
+                    color.withValues(alpha: 0.9),
                     color,
-                    color.withOpacity(0.8),
+                    color.withValues(alpha: 0.8),
                   ],
                 )
               : null,
-          color: isEnabled ? null : ArtisticTheme.textHint.withOpacity(0.3),
+          color: isEnabled ? null : ArtisticTheme.textHint.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(ArtisticTheme.radiusMedium),
           boxShadow: isEnabled
               ? [
                   BoxShadow(
-                    color: color.withOpacity(0.3 + _glowAnimation.value * 0.2),
+                    color: color.withValues(alpha: 0.3 + _glowAnimation.value * 0.2),
                     blurRadius: 12 + _glowAnimation.value * 8,
                     offset: const Offset(0, 4),
                   ),
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.1),
+                    color: Colors.white.withValues(alpha: 0.1),
                     blurRadius: 8,
                     offset: const Offset(0, -2),
                   ),
@@ -182,16 +184,16 @@ class _ArtisticButtonState extends State<ArtisticButton>
 
       case ArtisticButtonStyle.secondary:
         return BoxDecoration(
-          color: isEnabled ? color.withOpacity(0.1) : ArtisticTheme.textHint.withOpacity(0.1),
+          color: isEnabled ? color.withValues(alpha: 0.1) : ArtisticTheme.textHint.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(ArtisticTheme.radiusMedium),
           border: Border.all(
-            color: isEnabled ? color.withOpacity(0.3) : ArtisticTheme.textHint.withOpacity(0.3),
+            color: isEnabled ? color.withValues(alpha: 0.3) : ArtisticTheme.textHint.withValues(alpha: 0.3),
             width: 1.5,
           ),
           boxShadow: isEnabled
               ? [
                   BoxShadow(
-                    color: color.withOpacity(0.1 + _glowAnimation.value * 0.1),
+                    color: color.withValues(alpha: 0.1 + _glowAnimation.value * 0.1),
                     blurRadius: 8 + _glowAnimation.value * 4,
                     offset: const Offset(0, 2),
                   ),
@@ -204,7 +206,7 @@ class _ArtisticButtonState extends State<ArtisticButton>
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(ArtisticTheme.radiusMedium),
           border: Border.all(
-            color: isEnabled ? color.withOpacity(0.5) : ArtisticTheme.textHint.withOpacity(0.3),
+            color: isEnabled ? color.withValues(alpha: 0.5) : ArtisticTheme.textHint.withValues(alpha: 0.3),
             width: 1,
           ),
         );
@@ -212,27 +214,36 @@ class _ArtisticButtonState extends State<ArtisticButton>
       case ArtisticButtonStyle.glass:
         return BoxDecoration(
           color: isEnabled
-              ? ArtisticTheme.surfaceColor.withOpacity(0.8)
-              : ArtisticTheme.textHint.withOpacity(0.1),
+              ? ArtisticTheme.surfaceColor.withValues(alpha: 0.8)
+              : ArtisticTheme.textHint.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(ArtisticTheme.radiusMedium),
           border: Border.all(
-            color: isEnabled ? color.withOpacity(0.2) : ArtisticTheme.textHint.withOpacity(0.2),
+            color: isEnabled ? color.withValues(alpha: 0.2) : ArtisticTheme.textHint.withValues(alpha: 0.2),
             width: 1,
           ),
           boxShadow: isEnabled
               ? [
                   BoxShadow(
-                    color: Colors.white.withOpacity(0.2),
+                    color: Colors.white.withValues(alpha: 0.2),
                     blurRadius: 10,
                     offset: const Offset(-2, -2),
                   ),
                   BoxShadow(
-                    color: ArtisticTheme.textPrimary.withOpacity(0.1),
+                    color: ArtisticTheme.textPrimary.withValues(alpha: 0.1),
                     blurRadius: 10,
                     offset: const Offset(2, 2),
                   ),
                 ]
               : null,
+        );
+      case ArtisticButtonStyle.outline:
+        return BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          border: Border.all(
+            color: isEnabled ? (widget.color ?? ArtisticTheme.primaryColor) : ArtisticTheme.textHint,
+            width: 2,
+          ),
         );
     }
   }
@@ -246,6 +257,7 @@ class _ArtisticButtonState extends State<ArtisticButton>
       case ArtisticButtonStyle.secondary:
       case ArtisticButtonStyle.ghost:
       case ArtisticButtonStyle.glass:
+      case ArtisticButtonStyle.outline:
         return widget.color ?? ArtisticTheme.primaryColor;
     }
   }
@@ -256,6 +268,7 @@ enum ArtisticButtonStyle {
   secondary,
   ghost,
   glass,
+  outline,
 }
 
 /// 艺术感浮动按钮
@@ -336,12 +349,12 @@ class _ArtisticFloatingButtonState extends State<ArtisticFloatingButton>
                   borderRadius: BorderRadius.circular(widget.size / 2),
                   boxShadow: [
                     BoxShadow(
-                      color: buttonColor.withOpacity(0.4),
+                      color: buttonColor.withValues(alpha: 0.4),
                       blurRadius: 16,
                       offset: const Offset(0, 8),
                     ),
                     BoxShadow(
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                       blurRadius: 8,
                       offset: const Offset(0, -4),
                     ),

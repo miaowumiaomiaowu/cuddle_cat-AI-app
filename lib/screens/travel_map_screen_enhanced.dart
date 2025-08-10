@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/travel_provider.dart';
 import '../models/travel_record_model.dart';
+import '../models/travel.dart';
 import '../theme/artistic_theme.dart';
-import '../widgets/hand_drawn_card.dart';
+
 import '../widgets/travel_record_card.dart';
 import '../services/location_service.dart';
 import 'dart:math' as math;
@@ -175,8 +176,8 @@ class _TravelMapScreenEnhancedState extends State<TravelMapScreenEnhanced>
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              ArtisticTheme.backgroundColor.withOpacity(0.9),
-              ArtisticTheme.backgroundColor.withOpacity(0.7),
+              ArtisticTheme.backgroundColor.withValues(alpha: 0.9),
+              ArtisticTheme.backgroundColor.withValues(alpha: 0.7),
               Colors.transparent,
             ],
           ),
@@ -329,7 +330,7 @@ class _TravelMapScreenEnhancedState extends State<TravelMapScreenEnhanced>
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: ArtisticTheme.textSecondary.withOpacity(0.3),
+                      color: ArtisticTheme.textSecondary.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
@@ -355,7 +356,6 @@ class _TravelMapScreenEnhancedState extends State<TravelMapScreenEnhanced>
                       padding: const EdgeInsets.all(16),
                       child: TravelRecordCard(
                         record: _selectedRecord!,
-                        showFullDetails: true,
                       ),
                     ),
                   ),
@@ -425,6 +425,23 @@ class _TravelMapScreenEnhancedState extends State<TravelMapScreenEnhanced>
       ),
     );
   }
+
+  /// 将TravelRecord转换为Travel
+  Travel _convertToTravel(TravelRecord record) {
+    return Travel(
+      id: record.id,
+      title: record.title,
+      locationName: record.location.address,
+      latitude: record.location.latitude,
+      longitude: record.location.longitude,
+      mood: record.mood,
+      description: record.description,
+      tags: record.tags,
+      photos: record.photos,
+      date: record.createdAt,
+      isFavorite: record.rating != null && record.rating! >= 4.0,
+    );
+  }
 }
 
 // 彩铅手绘风格地图绘制器
@@ -482,7 +499,7 @@ class HandDrawnMapPainter extends CustomPainter {
     // 添加细微的纹理点
     final random = math.Random(42); // 固定种子确保一致性
     final texturePaint = Paint()
-      ..color = const Color(0xFFE8E6E0).withOpacity(0.3)
+      ..color = const Color(0xFFE8E6E0).withValues(alpha: 0.3)
       ..strokeWidth = 0.5;
     
     for (int i = 0; i < 200; i++) {
@@ -498,7 +515,7 @@ class HandDrawnMapPainter extends CustomPainter {
     
     // 外圈（脉动效果）
     final outerPaint = Paint()
-      ..color = ArtisticTheme.primaryColor.withOpacity(0.2)
+      ..color = ArtisticTheme.primaryColor.withValues(alpha: 0.2)
       ..style = PaintingStyle.fill;
     canvas.drawCircle(center, 20 + (scale * 5), outerPaint);
     
@@ -581,7 +598,7 @@ class HandDrawnMapPainter extends CustomPainter {
       
       // 阴影
       final shadowPaint = Paint()
-        ..color = Colors.black.withOpacity(0.2)
+        ..color = Colors.black.withValues(alpha: 0.2)
         ..style = PaintingStyle.fill;
       canvas.drawCircle(position + const Offset(2, 2), markerSize, shadowPaint);
       
@@ -632,7 +649,7 @@ class HandDrawnMapPainter extends CustomPainter {
     if (travelRecords.length < 2) return;
     
     final pathPaint = Paint()
-      ..color = ArtisticTheme.primaryColor.withOpacity(0.3)
+      ..color = ArtisticTheme.primaryColor.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2
       ..strokeCap = StrokeCap.round;
@@ -670,4 +687,5 @@ class HandDrawnMapPainter extends CustomPainter {
       size.height / 2 + radius * math.sin(angle),
     );
   }
+
 }

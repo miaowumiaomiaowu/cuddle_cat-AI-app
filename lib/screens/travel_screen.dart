@@ -4,16 +4,16 @@ import 'package:provider/provider.dart';
 // import 'package:amap_flutter_base/amap_flutter_base.dart';
 import '../providers/travel_provider.dart';
 import '../providers/cat_provider.dart';
-import '../models/travel.dart';
+import '../models/travel_record_model.dart';
 import '../widgets/travel_record_card.dart';
 import '../widgets/travel_stats_card.dart';
 import '../widgets/quick_travel_widget.dart';
-import '../widgets/common/loading_widget.dart';
+
 import '../widgets/common/error_widget.dart';
 import '../theme/app_theme.dart';
 import '../utils/page_transitions.dart';
 import '../utils/responsive_utils.dart';
-import '../utils/animation_utils.dart';
+
 import '../screens/add_travel_screen.dart';
 // import '../utils/map_utils.dart';
 
@@ -124,15 +124,15 @@ class _TravelScreenState extends State<TravelScreen>
   }
 
   /// 获取筛选后的记录列表
-  List<Travel> _getFilteredRecords(List<Travel> records) {
-    List<Travel> filtered = records;
+  List<TravelRecord> _getFilteredRecords(List<TravelRecord> records) {
+    List<TravelRecord> filtered = records;
 
     // 搜索筛选
     if (_searchQuery.isNotEmpty) {
       filtered = filtered
           .where((record) =>
               record.title.toLowerCase().contains(_searchQuery.toLowerCase()) ||
-              record.locationName
+              record.location.address
                   .toLowerCase()
                   .contains(_searchQuery.toLowerCase()) ||
               record.description
@@ -150,23 +150,23 @@ class _TravelScreenState extends State<TravelScreen>
           .toList();
     }
 
-    // 收藏筛选
-    if (_showFavoritesOnly) {
-      filtered = filtered.where((record) => record.isFavorite).toList();
-    }
+    // 收藏筛选 - TravelRecord doesn't have isFavorite, skip for now
+    // if (_showFavoritesOnly) {
+    //   filtered = filtered.where((record) => record.isFavorite).toList();
+    // }
 
     // 排序
     filtered.sort((a, b) {
       int comparison = 0;
       switch (_sortBy) {
         case 'date':
-          comparison = a.date.compareTo(b.date);
+          comparison = a.createdAt.compareTo(b.createdAt);
           break;
         case 'title':
           comparison = a.title.compareTo(b.title);
           break;
         case 'location':
-          comparison = a.locationName.compareTo(b.locationName);
+          comparison = a.location.address.compareTo(b.location.address);
           break;
       }
       return _sortAscending ? comparison : -comparison;
@@ -518,6 +518,10 @@ class _TravelScreenState extends State<TravelScreen>
                           monthlyDistribution: {},
                           topCities: [],
                           topTags: [],
+                          totalPlaces: 0,
+                          mostCommonMood: '',
+                          mostVisitedPlaces: [],
+                          mostUsedTags: [],
                         )),
                         const SizedBox(height: AppTheme.spacingMedium),
 

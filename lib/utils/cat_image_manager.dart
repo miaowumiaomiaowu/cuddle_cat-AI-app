@@ -125,7 +125,7 @@ class CatImageManager {
           ) : null,
           boxShadow: withShadow ? [
             BoxShadow(
-              color: Colors.brown.shade200.withOpacity(0.3),
+              color: Colors.brown.shade200.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(2, 4),
             ),

@@ -116,8 +116,8 @@ class _DialogueScreenState extends State<DialogueScreen>
                   tooltip: provider.useAI ? '使用AI聊天(已开启)' : '使用模板聊天(AI已关闭)',
                   style: IconButton.styleFrom(
                     backgroundColor: provider.useAI
-                        ? AppTheme.successColor.withOpacity(0.1)
-                        : AppTheme.warningColor.withOpacity(0.1),
+                        ? AppTheme.successColor.withValues(alpha: 0.1)
+                        : AppTheme.warningColor.withValues(alpha: 0.1),
                     foregroundColor: provider.useAI
                         ? AppTheme.successColor
                         : AppTheme.warningColor,
@@ -131,7 +131,7 @@ class _DialogueScreenState extends State<DialogueScreen>
             onPressed: () => _showApiInfoDialog(context),
             tooltip: 'API调试信息',
             style: IconButton.styleFrom(
-              backgroundColor: AppTheme.infoColor.withOpacity(0.1),
+              backgroundColor: AppTheme.infoColor.withValues(alpha: 0.1),
             ),
           ),
           const SizedBox(width: AppTheme.spacingSmall),
@@ -143,7 +143,7 @@ class _DialogueScreenState extends State<DialogueScreen>
             },
             tooltip: '开始新对话',
             style: IconButton.styleFrom(
-              backgroundColor: AppTheme.primaryColor.withOpacity(0.1),
+              backgroundColor: AppTheme.primaryColor.withValues(alpha: 0.1),
             ),
           ),
           const SizedBox(width: AppTheme.spacingSmall),
@@ -200,13 +200,13 @@ class _DialogueScreenState extends State<DialogueScreen>
                   ),
                   decoration: BoxDecoration(
                     color: dialogueProvider.useAI
-                        ? AppTheme.successColor.withOpacity(0.1)
-                        : AppTheme.warningColor.withOpacity(0.1),
+                        ? AppTheme.successColor.withValues(alpha: 0.1)
+                        : AppTheme.warningColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
                     border: Border.all(
                       color: dialogueProvider.useAI
-                          ? AppTheme.successColor.withOpacity(0.3)
-                          : AppTheme.warningColor.withOpacity(0.3),
+                          ? AppTheme.successColor.withValues(alpha: 0.3)
+                          : AppTheme.warningColor.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(

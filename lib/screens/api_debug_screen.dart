@@ -6,6 +6,8 @@ import '../models/cat.dart';
 
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../services/config_service.dart';
+import '../services/network_service.dart';
 
 /// API调试专用页面
 class ApiDebugScreen extends StatefulWidget {
@@ -19,6 +21,7 @@ class ApiDebugScreen extends StatefulWidget {
 
 class _ApiDebugScreenState extends State<ApiDebugScreen> {
   String _apiStatus = '未检测';
+  String _backendStatus = '未检测';
   bool _isLoading = false;
   String _rawResponse = '';
   final String _testInput = '你好，我是测试消息';
@@ -34,6 +37,40 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
   void dispose() {
     _inputController.dispose();
     super.dispose();
+  }
+
+  Future<void> _checkBackendHealth() async {
+    setState(() {
+      _isLoading = true;
+      _backendStatus = '检测中...';
+    });
+
+    final cfg = ConfigService.instance;
+    cfg.debugDump();
+    if (!cfg.isRemoteConfigured) {
+      setState(() {
+        _backendStatus = '未启用远程后端或未配置 SERVER_BASE_URL';
+        _isLoading = false;
+      });
+      return;
+    }
+    try {
+      final result = await NetworkService.instance.healthCheck();
+      setState(() {
+        _backendStatus = result.ok
+            ? '后端健康 (HTTP ${result.statusCode ?? '-'})'
+            : '后端异常: ${result.message ?? '未知错误'}';
+        _rawResponse = result.rawBody ?? '';
+      });
+    } catch (e) {
+      setState(() {
+        _backendStatus = '错误: $e';
+      });
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
   }
 
   Future<void> _checkApiConnection() async {
@@ -196,8 +233,45 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
                             fontSize: 18, fontWeight: FontWeight.bold)),
                     const Divider(),
                     const SizedBox(height: 8),
-                    _buildInfoRow('API密钥', _maskApiKey()),
-                    _buildInfoRow('API端点', _getApiEndpoint()),
+                    _buildInfoRow('AI API密钥', _maskApiKey()),
+                    _buildInfoRow('AI API端点', _getApiEndpoint()),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // 后端健康检查（阿里云ECS）
+            Card(
+              elevation: 4,
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('后端健康检查（ECS）',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const Divider(),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('状态: $_backendStatus'),
+                        ),
+                        ElevatedButton(
+                          onPressed: _isLoading ? null : _checkBackendHealth,
+                          child: _isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Text('检查后端'),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),

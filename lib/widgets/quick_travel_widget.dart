@@ -85,7 +85,7 @@ class _QuickTravelWidgetState extends State<QuickTravelWidget> {
                 emoji: '➕',
                 isPrimary: true,
                 isLoading: _isAdding,
-                onPressed: _isAdding ? null : _addQuickTravel,
+                onPressed: _isAdding ? null : () => _addQuickTravel(),
               ),
           ],
         ),
@@ -153,7 +153,7 @@ class _QuickTravelWidgetState extends State<QuickTravelWidget> {
     );
   }
 
-  Future<void> _addQuickTravel() async {
+  Future<void> _addQuickTravel({String mood = 'normal'}) async {
     if (_selectedDestination == null) return;
 
     setState(() {
@@ -168,7 +168,7 @@ class _QuickTravelWidgetState extends State<QuickTravelWidget> {
       );
 
       final provider = Provider.of<TravelProvider>(context, listen: false);
-      await provider.addRecord(travelRecord);
+      await provider.addTravel(travelRecord);
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

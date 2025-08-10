@@ -112,7 +112,7 @@ class CatIcons {
 
   // 将Color转换为16进制字符串
   static String _colorToHex(Color color) {
-    return '#${(color.alpha.toInt() << 24 | color.red.toInt() << 16 | color.green.toInt() << 8 | color.blue.toInt()).toRadixString(16).substring(2)}';
+    return '#${(color.a.toInt() << 24 | color.r.toInt() << 16 | color.g.toInt() << 8 | color.b.toInt()).toRadixString(16).substring(2)}';
   }
 
   // 根据装饰品ID获取SVG路径

@@ -165,7 +165,7 @@ class AppTheme {
       cardTheme: CardTheme(
         color: cardColor,
         elevation: 0,
-        shadowColor: Colors.black.withOpacity(0.08),
+        shadowColor: Colors.black.withValues(alpha: 0.08),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
         ),
@@ -178,7 +178,7 @@ class AppTheme {
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           elevation: 2,
-          shadowColor: primaryColor.withOpacity(0.3),
+          shadowColor: primaryColor.withValues(alpha: 0.3),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMedium),
           ),
@@ -209,7 +209,7 @@ class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: primaryColor,
-          side: BorderSide(color: primaryColor.withOpacity(0.5)),
+          side: BorderSide(color: primaryColor.withValues(alpha: 0.5)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(radiusMedium),
           ),
@@ -403,7 +403,7 @@ class AppTheme {
       // 芯片主题
       chipTheme: ChipThemeData(
         backgroundColor: Colors.grey.shade100,
-        selectedColor: primaryColor.withOpacity(0.2),
+        selectedColor: primaryColor.withValues(alpha: 0.2),
         disabledColor: Colors.grey.shade200,
         labelStyle: const TextStyle(
           color: textPrimary,
@@ -429,9 +429,9 @@ class AppTheme {
       // 滑块主题
       sliderTheme: SliderThemeData(
         activeTrackColor: primaryColor,
-        inactiveTrackColor: primaryColor.withOpacity(0.3),
+        inactiveTrackColor: primaryColor.withValues(alpha: 0.3),
         thumbColor: primaryColor,
-        overlayColor: primaryColor.withOpacity(0.2),
+        overlayColor: primaryColor.withValues(alpha: 0.2),
         valueIndicatorColor: primaryColor,
         valueIndicatorTextStyle: const TextStyle(
           color: Colors.white,
@@ -441,15 +441,15 @@ class AppTheme {
 
       // 开关主题
       switchTheme: SwitchThemeData(
-        thumbColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        thumbColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryColor;
           }
           return Colors.grey.shade400;
         }),
-        trackColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
-            return primaryColor.withOpacity(0.5);
+        trackColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
+            return primaryColor.withValues(alpha: 0.5);
           }
           return Colors.grey.shade300;
         }),
@@ -457,13 +457,13 @@ class AppTheme {
 
       // 复选框主题
       checkboxTheme: CheckboxThemeData(
-        fillColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryColor;
           }
           return Colors.transparent;
         }),
-        checkColor: MaterialStateProperty.all(Colors.white),
+        checkColor: WidgetStateProperty.all(Colors.white),
         side: BorderSide(color: Colors.grey.shade400),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(4),
@@ -472,8 +472,8 @@ class AppTheme {
 
       // 单选按钮主题
       radioTheme: RadioThemeData(
-        fillColor: MaterialStateProperty.resolveWith((states) {
-          if (states.contains(MaterialState.selected)) {
+        fillColor: WidgetStateProperty.resolveWith((states) {
+          if (states.contains(WidgetState.selected)) {
             return primaryColor;
           }
           return Colors.grey.shade400;
@@ -517,7 +517,7 @@ class AppTheme {
           borderRadius: BorderRadius.circular(radiusSmall),
         ),
         tileColor: Colors.transparent,
-        selectedTileColor: primaryColor.withOpacity(0.1),
+        selectedTileColor: primaryColor.withValues(alpha: 0.1),
         iconColor: textSecondary,
         textColor: textPrimary,
       ),

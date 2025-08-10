@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
+
 
 /// 艺术感UI主题配置类 - 参考现代优秀设计
 class ArtisticTheme {
@@ -65,13 +65,13 @@ class ArtisticTheme {
   // 艺术阴影系统
   static List<BoxShadow> get softShadow => [
     BoxShadow(
-      color: textPrimary.withOpacity(0.08),
+      color: textPrimary.withValues(alpha: 0.08),
       blurRadius: 20,
       offset: const Offset(0, 8),
       spreadRadius: 0,
     ),
     BoxShadow(
-      color: primaryColor.withOpacity(0.04),
+      color: primaryColor.withValues(alpha: 0.04),
       blurRadius: 40,
       offset: const Offset(0, 16),
       spreadRadius: 0,
@@ -80,13 +80,13 @@ class ArtisticTheme {
 
   static List<BoxShadow> get cardShadow => [
     BoxShadow(
-      color: textPrimary.withOpacity(0.06),
+      color: textPrimary.withValues(alpha: 0.06),
       blurRadius: 16,
       offset: const Offset(0, 4),
       spreadRadius: 0,
     ),
     BoxShadow(
-      color: primaryColor.withOpacity(0.03),
+      color: primaryColor.withValues(alpha: 0.03),
       blurRadius: 32,
       offset: const Offset(0, 8),
       spreadRadius: 0,
@@ -95,13 +95,13 @@ class ArtisticTheme {
 
   static List<BoxShadow> get elevatedShadow => [
     BoxShadow(
-      color: textPrimary.withOpacity(0.12),
+      color: textPrimary.withValues(alpha: 0.12),
       blurRadius: 24,
       offset: const Offset(0, 12),
       spreadRadius: 0,
     ),
     BoxShadow(
-      color: primaryColor.withOpacity(0.06),
+      color: primaryColor.withValues(alpha: 0.06),
       blurRadius: 48,
       offset: const Offset(0, 24),
       spreadRadius: 0,
@@ -213,6 +213,83 @@ class ArtisticTheme {
     color: textHint,
   );
 
+  // 添加缺失的文本样式
+  static const TextStyle headlineSmall = TextStyle(
+    fontSize: 18,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.15,
+    height: 1.4,
+    color: textPrimary,
+  );
+
+  static const TextStyle titleSmall = TextStyle(
+    fontSize: 14,
+    fontWeight: FontWeight.w500,
+    letterSpacing: 0.1,
+    height: 1.4,
+    color: textPrimary,
+  );
+
+  static const TextStyle bodySmall = TextStyle(
+    fontSize: 12,
+    fontWeight: FontWeight.w400,
+    letterSpacing: 0.4,
+    height: 1.3,
+    color: textSecondary,
+  );
+
+  // 添加缺失的颜色
+  static const Color successColor = Color(0xFF4CAF50);
+  static const Color warningColor = Color(0xFFFF9800);
+  static const Color errorColor = Color(0xFFF44336);
+  static const Color infoColor = Color(0xFF2196F3);
+
+  // 添加 lightTheme
+  static ThemeData get lightTheme {
+    return ThemeData(
+      useMaterial3: true,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: primaryColor,
+        brightness: Brightness.light,
+        surface: surfaceColor,
+      ),
+      scaffoldBackgroundColor: backgroundColor,
+      cardColor: cardColor,
+      primaryColor: primaryColor,
+      textTheme: const TextTheme(
+        displayLarge: displayLarge,
+        displayMedium: displayMedium,
+        headlineLarge: headlineLarge,
+        headlineMedium: headlineMedium,
+        headlineSmall: headlineSmall,
+        titleLarge: titleLarge,
+        titleMedium: titleMedium,
+        titleSmall: titleSmall,
+        bodyLarge: bodyLarge,
+        bodyMedium: bodyMedium,
+        bodySmall: bodySmall,
+        labelLarge: labelLarge,
+        labelMedium: labelMedium,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: surfaceColor,
+        foregroundColor: textPrimary,
+        elevation: 0,
+        centerTitle: true,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: primaryColor,
+          foregroundColor: Colors.white,
+          elevation: 2,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(radiusMedium),
+          ),
+        ),
+      ),
+    );
+  }
+
   /// 获取心情颜色 - 艺术化
   static Color getMoodColor(String mood) {
     switch (mood.toLowerCase()) {
@@ -259,7 +336,7 @@ class ArtisticTheme {
     borderRadius: BorderRadius.circular(radiusLarge),
     boxShadow: cardShadow,
     border: Border.all(
-      color: primaryColor.withOpacity(0.1),
+      color: primaryColor.withValues(alpha: 0.1),
       width: 1,
     ),
   );
@@ -271,20 +348,20 @@ class ArtisticTheme {
   );
 
   static BoxDecoration get glassEffect => BoxDecoration(
-    color: surfaceColor.withOpacity(0.8),
+    color: surfaceColor.withValues(alpha: 0.8),
     borderRadius: BorderRadius.circular(radiusLarge),
     border: Border.all(
-      color: primaryColor.withOpacity(0.2),
+      color: primaryColor.withValues(alpha: 0.2),
       width: 1,
     ),
     boxShadow: [
       BoxShadow(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white.withValues(alpha: 0.2),
         blurRadius: 10,
         offset: const Offset(-5, -5),
       ),
       BoxShadow(
-        color: textPrimary.withOpacity(0.1),
+        color: textPrimary.withValues(alpha: 0.1),
         blurRadius: 10,
         offset: const Offset(5, 5),
       ),

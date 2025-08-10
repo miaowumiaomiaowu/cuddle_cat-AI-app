@@ -92,7 +92,7 @@ class _LoadingPainter extends CustomPainter {
 
     // 背景圆环
     final backgroundPaint = Paint()
-      ..color = color.withOpacity(0.2)
+      ..color = color.withValues(alpha: 0.2)
       ..style = PaintingStyle.stroke
       ..strokeWidth = 3;
 
@@ -158,7 +158,7 @@ class PageLoadingWidget extends StatelessWidget {
 
     return showBackground
         ? Container(
-            color: AppTheme.backgroundColor.withOpacity(0.8),
+            color: AppTheme.backgroundColor.withValues(alpha: 0.8),
             child: content,
           )
         : content;

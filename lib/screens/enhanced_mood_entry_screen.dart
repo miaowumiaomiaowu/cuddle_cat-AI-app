@@ -200,13 +200,13 @@ class _EnhancedMoodEntryScreenState extends State<EnhancedMoodEntryScreen>
                     duration: const Duration(milliseconds: 200),
                     decoration: BoxDecoration(
                       color: isSelected 
-                          ? MoodTypeConfig.getMoodColor(mood).withOpacity(0.2)
+                          ? MoodTypeConfig.getMoodColor(mood).withValues(alpha: 0.2)
                           : ArtisticTheme.surfaceColor,
                       borderRadius: BorderRadius.circular(ArtisticTheme.radiusMedium),
                       border: Border.all(
                         color: isSelected 
                             ? MoodTypeConfig.getMoodColor(mood)
-                            : ArtisticTheme.textSecondary.withOpacity(0.2),
+                            : ArtisticTheme.textSecondary.withValues(alpha: 0.2),
                         width: isSelected ? 2 : 1,
                       ),
                     ),
@@ -396,13 +396,13 @@ class _EnhancedMoodEntryScreenState extends State<EnhancedMoodEntryScreen>
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
                       color: isSelected 
-                          ? ArtisticTheme.primaryColor.withOpacity(0.2)
+                          ? ArtisticTheme.primaryColor.withValues(alpha: 0.2)
                           : ArtisticTheme.backgroundColor,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
                         color: isSelected 
                             ? ArtisticTheme.primaryColor
-                            : ArtisticTheme.textSecondary.withOpacity(0.3),
+                            : ArtisticTheme.textSecondary.withValues(alpha: 0.3),
                       ),
                     ),
                     child: Text(
@@ -632,7 +632,7 @@ class _EnhancedMoodEntryScreenState extends State<EnhancedMoodEntryScreen>
             : _triggerController.text.trim(),
         gratitude: _gratitudeList,
         isPrivate: _isPrivate,
-        location: _currentLocation,
+        locationName: _currentLocation,
       );
 
       await moodProvider.addMoodEntry(entry);

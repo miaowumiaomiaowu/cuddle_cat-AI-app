@@ -4,7 +4,7 @@ import '../theme/artistic_theme.dart';
 import '../services/ai_psychology_service.dart';
 import '../providers/mood_provider.dart';
 import '../providers/user_provider.dart';
-import '../widgets/hand_drawn_card.dart';
+
 import '../models/mood_record.dart';
 
 /// AI心理支持聊天页面
@@ -83,7 +83,7 @@ class _AIChatScreenState extends State<AIChatScreen>
               width: 40,
               height: 40,
               decoration: BoxDecoration(
-                color: ArtisticTheme.primaryColor.withOpacity(0.1),
+                color: ArtisticTheme.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: const Center(
@@ -167,7 +167,7 @@ class _AIChatScreenState extends State<AIChatScreen>
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: ArtisticTheme.primaryColor.withOpacity(0.1),
+                color: ArtisticTheme.primaryColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(
@@ -222,7 +222,7 @@ class _AIChatScreenState extends State<AIChatScreen>
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: ArtisticTheme.accentColor.withOpacity(0.1),
+                color: ArtisticTheme.accentColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
               child: Center(
@@ -244,7 +244,7 @@ class _AIChatScreenState extends State<AIChatScreen>
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: ArtisticTheme.primaryColor.withOpacity(0.1),
+              color: ArtisticTheme.primaryColor.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
             ),
             child: const Center(
@@ -288,7 +288,7 @@ class _AIChatScreenState extends State<AIChatScreen>
           width: 6,
           height: 6,
           decoration: BoxDecoration(
-            color: ArtisticTheme.primaryColor.withOpacity(opacity),
+            color: ArtisticTheme.primaryColor.withValues(alpha: opacity),
             borderRadius: BorderRadius.circular(3),
           ),
         );
@@ -303,7 +303,7 @@ class _AIChatScreenState extends State<AIChatScreen>
         color: ArtisticTheme.surfaceColor,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),

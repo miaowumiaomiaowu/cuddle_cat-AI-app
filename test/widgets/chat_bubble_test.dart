@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:cuddle_cat/widgets/chat_bubble.dart';
+import 'package:cuddle_cat/models/dialogue.dart';
 
 void main() {
   group('Chat Bubble Widget Tests', () {
@@ -11,13 +12,10 @@ void main() {
     }) {
       return MaterialApp(
         home: Scaffold(
-          body: ChatBubble(
+          body: ChatBubble.legacy(
             message: message,
             isUser: isUser,
-            emoji: emoji,
-          ),
-        ),
-      );
+            emoji: emoji)));
     }
 
     testWidgets('Should display user message correctly',
@@ -26,14 +24,13 @@ void main() {
 
       await tester.pumpWidget(createTestWidget(
         message: testMessage,
-        isUser: true,
-      ));
+        isUser: true));
 
       expect(find.text(testMessage), findsOneWidget);
 
       // User messages should be aligned to the right
       final chatBubble = tester.widget<ChatBubble>(find.byType(ChatBubble));
-      expect(chatBubble.isUser, true);
+      expect(chatBubble.message.sender, MessageSender.user);
     });
 
     testWidgets('Should display AI message correctly',
@@ -44,15 +41,13 @@ void main() {
       await tester.pumpWidget(createTestWidget(
         message: testMessage,
         isUser: false,
-        emoji: testEmoji,
-      ));
+        emoji: testEmoji));
 
       expect(find.text(testMessage), findsOneWidget);
 
       // AI messages should be aligned to the left
       final chatBubble = tester.widget<ChatBubble>(find.byType(ChatBubble));
-      expect(chatBubble.isUser, false);
-      expect(chatBubble.emoji, testEmoji);
+      expect(chatBubble.message.sender, MessageSender.cat);
     });
 
     testWidgets('Should display emoji when provided',
@@ -63,8 +58,7 @@ void main() {
       await tester.pumpWidget(createTestWidget(
         message: testMessage,
         isUser: false,
-        emoji: testEmoji,
-      ));
+        emoji: testEmoji));
 
       expect(find.text(testMessage), findsOneWidget);
       expect(find.text(testEmoji), findsOneWidget);
@@ -78,8 +72,7 @@ void main() {
 
       await tester.pumpWidget(createTestWidget(
         message: longMessage,
-        isUser: true,
-      ));
+        isUser: true));
 
       expect(find.text(longMessage), findsOneWidget);
 
@@ -90,8 +83,7 @@ void main() {
     testWidgets('Should handle empty messages', (WidgetTester tester) async {
       await tester.pumpWidget(createTestWidget(
         message: '',
-        isUser: true,
-      ));
+        isUser: true));
 
       // Should handle empty message gracefully
       expect(find.byType(ChatBubble), findsOneWidget);
@@ -105,8 +97,7 @@ void main() {
       // Test user message
       await tester.pumpWidget(createTestWidget(
         message: testMessage,
-        isUser: true,
-      ));
+        isUser: true));
 
       final userBubble = find.byType(ChatBubble);
       expect(userBubble, findsOneWidget);
@@ -115,8 +106,7 @@ void main() {
       await tester.pumpWidget(createTestWidget(
         message: testMessage,
         isUser: false,
-        emoji: '🤖',
-      ));
+        emoji: '🤖'));
 
       final aiBubble = find.byType(ChatBubble);
       expect(aiBubble, findsOneWidget);
@@ -130,8 +120,7 @@ void main() {
       await tester.pumpWidget(createTestWidget(
         message: specialMessage,
         isUser: false,
-        emoji: '😊',
-      ));
+        emoji: '😊'));
 
       expect(find.text(specialMessage), findsOneWidget);
       expect(find.text('😊'), findsOneWidget);
@@ -146,13 +135,9 @@ void main() {
         home: Scaffold(
           body: GestureDetector(
             onTap: () => tapped = true,
-            child: ChatBubble(
+            child: ChatBubble.legacy(
               message: testMessage,
-              isUser: true,
-            ),
-          ),
-        ),
-      ));
+              isUser: true)))));
 
       await tester.tap(find.byType(ChatBubble));
       expect(tapped, true);
@@ -166,18 +151,13 @@ void main() {
         home: Scaffold(
           body: Column(
             children: [
-              ChatBubble(
+              ChatBubble.legacy(
                 message: testMessage,
-                isUser: true,
-              ),
+                isUser: true),
               Text(
                 DateTime.now().toString().substring(11, 16), // HH:MM format
-                style: const TextStyle(fontSize: 12, color: Colors.grey),
-              ),
-            ],
-          ),
-        ),
-      ));
+                style: const TextStyle(fontSize: 12, color: Colors.grey)),
+            ]))));
 
       expect(find.text(testMessage), findsOneWidget);
       expect(find.byType(Text), findsNWidgets(2)); // Message + timestamp
@@ -190,8 +170,7 @@ void main() {
       await tester.pumpWidget(createTestWidget(
         message: testMessage,
         isUser: false,
-        emoji: null,
-      ));
+        emoji: null));
 
       expect(find.text(testMessage), findsOneWidget);
       expect(tester.takeException(), isNull);
@@ -203,8 +182,7 @@ void main() {
 
       await tester.pumpWidget(createTestWidget(
         message: testMessage,
-        isUser: true,
-      ));
+        isUser: true));
 
       final chatBubble = find.byType(ChatBubble);
       expect(chatBubble, findsOneWidget);
@@ -226,8 +204,7 @@ void main() {
       for (final testCase in testCases) {
         await tester.pumpWidget(createTestWidget(
           message: testCase['message'] as String,
-          isUser: testCase['isUser'] as bool,
-        ));
+          isUser: testCase['isUser'] as bool));
 
         expect(find.text(testCase['message'] as String), findsOneWidget);
         expect(tester.takeException(), isNull);
@@ -241,8 +218,7 @@ void main() {
       await tester.pumpWidget(createTestWidget(
         message: testMessage,
         isUser: false,
-        emoji: '✨',
-      ));
+        emoji: '✨'));
 
       // Should appear without animation errors
       await tester.pumpAndSettle();
@@ -257,8 +233,7 @@ void main() {
       for (final message in messages) {
         await tester.pumpWidget(createTestWidget(
           message: message,
-          isUser: true,
-        ));
+          isUser: true));
 
         expect(find.text(message), findsOneWidget);
         await tester.pump();

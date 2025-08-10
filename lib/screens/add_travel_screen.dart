@@ -36,6 +36,8 @@ class _AddTravelScreenState extends State<AddTravelScreen> {
   LatLng? _selectedLocation;
   LocationInfo? _selectedLocationInfo;
   List<LocationSuggestion> _locationSuggestions = [];
+  List<String> _selectedTags = [];
+  List<String> _selectedPhotos = [];
   bool _isSearchingLocation = false;
 
   // 服务实例
@@ -193,9 +195,10 @@ class _AddTravelScreenState extends State<AddTravelScreen> {
 
       // 创建LocationInfo
       _selectedLocationInfo = LocationInfo(
-        coordinates: suggestion.coordinates,
-        name: suggestion.name,
         address: suggestion.address,
+        city: suggestion.name,
+        latitude: suggestion.latitude,
+        longitude: suggestion.longitude,
       );
     });
   }
@@ -214,18 +217,21 @@ class _AddTravelScreenState extends State<AddTravelScreen> {
       });
 
       try {
-        final newRecord = Travel(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
+        final newRecord = TravelRecord(
           title: _titleController.text,
-          locationName: _selectedLocationInfo?.name ?? _locationController.text,
-          latitude: _selectedLocation!.latitude,
-          longitude: _selectedLocation!.longitude,
-          mood: _selectedMood,
           description: _descriptionController.text,
-          tags: List.from(_tags),
-          photos: _photos.map((file) => file.path).toList(),
-          date: DateTime.now(),
-          isFavorite: false,
+          location: LocationInfo(
+            address: _locationController.text,
+            latitude: _selectedLocation!.latitude,
+            longitude: _selectedLocation!.longitude,
+          ),
+          mediaItems: _selectedPhotos.map((photo) => MediaItem(
+            path: photo,
+            type: 'photo',
+          )).toList(),
+          mood: _selectedMood,
+          tags: _selectedTags,
+          companions: [],
         );
 
         final provider = Provider.of<TravelProvider>(context, listen: false);

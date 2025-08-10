@@ -4,9 +4,9 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/cat_provider.dart';
 import '../utils/cat_emoji_expressions.dart';
-import '../utils/animation_utils.dart';
+
 import 'cat_interaction_animation.dart';
-import 'animated_hand_drawn_button.dart';
+
 
 class CatInteractionPanel extends StatefulWidget {
   final VoidCallback? onPetCat;
@@ -233,7 +233,7 @@ class _CatInteractionPanelState extends State<CatInteractionPanel>
                               onPressed();
                             }
                           : null,
-                      color: color.withOpacity(0.2),
+                      color: color.withValues(alpha: 0.2),
                       shape: const CircleBorder(),
                       elevation: isEnabled ? 3 : 0,
                       animationDuration: const Duration(milliseconds: 150),
@@ -264,7 +264,7 @@ class _CatInteractionPanelState extends State<CatInteractionPanel>
                     height: 50,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: Colors.grey.withOpacity(0.4),
+                      color: Colors.grey.withValues(alpha: 0.4),
                     ),
                     child: Stack(
                       alignment: Alignment.center,
@@ -279,13 +279,13 @@ class _CatInteractionPanelState extends State<CatInteractionPanel>
                                 value: _getCooldownProgress(cooldownText),
                                 strokeWidth: 4,
                                 backgroundColor:
-                                    Colors.grey.withOpacity(0.2),
+                                    Colors.grey.withValues(alpha: 0.2),
                                 valueColor: AlwaysStoppedAnimation<Color>(
                                   _getCooldownProgress(cooldownText) > 0.8
-                                      ? Colors.green.withOpacity(0.8)
+                                      ? Colors.green.withValues(alpha: 0.8)
                                       : _getCooldownProgress(cooldownText) > 0.5
-                                          ? Colors.orange.withOpacity(0.8)
-                                          : Colors.red.withOpacity(0.8),
+                                          ? Colors.orange.withValues(alpha: 0.8)
+                                          : Colors.red.withValues(alpha: 0.8),
                                 ),
                               ),
                               // 添加脉冲效果
@@ -304,7 +304,7 @@ class _CatInteractionPanelState extends State<CatInteractionPanel>
                                           shape: BoxShape.circle,
                                           border: Border.all(
                                             color: Colors.green
-                                                .withOpacity(0.3),
+                                                .withValues(alpha: 0.3),
                                             width: 2,
                                           ),
                                         ),
@@ -359,13 +359,13 @@ class _CatInteractionPanelState extends State<CatInteractionPanel>
                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: _getCooldownProgress(cooldownText) > 0.8
-                      ? Colors.green.withOpacity(0.15)
-                      : Colors.orange.withOpacity(0.15),
+                      ? Colors.green.withValues(alpha: 0.15)
+                      : Colors.orange.withValues(alpha: 0.15),
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(
                     color: _getCooldownProgress(cooldownText) > 0.8
-                        ? Colors.green.withOpacity(0.4)
-                        : Colors.orange.withOpacity(0.3),
+                        ? Colors.green.withValues(alpha: 0.4)
+                        : Colors.orange.withValues(alpha: 0.3),
                     width: 0.5,
                   ),
                 ),
@@ -495,7 +495,7 @@ class _CatInteractionPanelState extends State<CatInteractionPanel>
           width: 40,
           height: 6,
           decoration: BoxDecoration(
-            color: Colors.grey.withOpacity(0.3),
+            color: Colors.grey.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(3),
           ),
           child: FractionallySizedBox(
@@ -548,9 +548,9 @@ class _CatInteractionPanelState extends State<CatInteractionPanel>
                     gradient: LinearGradient(
                       colors: [
                         _getMoodColor(catProvider.cat!.mood)
-                            .withOpacity(0.1),
+                            .withValues(alpha: 0.1),
                         _getMoodColor(catProvider.cat!.mood)
-                            .withOpacity(0.05),
+                            .withValues(alpha: 0.05),
                       ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
@@ -558,7 +558,7 @@ class _CatInteractionPanelState extends State<CatInteractionPanel>
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: _getMoodColor(catProvider.cat!.mood)
-                          .withOpacity(0.3),
+                          .withValues(alpha: 0.3),
                       width: 1,
                     ),
                   ),
@@ -614,11 +614,11 @@ class _CatInteractionPanelState extends State<CatInteractionPanel>
                                         horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
                                       color:
-                                          Colors.orange.withOpacity(0.2),
+                                          Colors.orange.withValues(alpha: 0.2),
                                       borderRadius: BorderRadius.circular(8),
                                       border: Border.all(
                                         color: Colors.orange
-                                            .withOpacity(0.4),
+                                            .withValues(alpha: 0.4),
                                         width: 1,
                                       ),
                                     ),
@@ -825,22 +825,22 @@ class _CatInteractionPanelState extends State<CatInteractionPanel>
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.95),
+                              color: Colors.white.withValues(alpha: 0.95),
                               borderRadius: BorderRadius.circular(20),
                               border: Border.all(
                                 color: _getMoodColor(catProvider.cat!.mood)
-                                    .withOpacity(0.3),
+                                    .withValues(alpha: 0.3),
                                 width: 2,
                               ),
                               boxShadow: [
                                 BoxShadow(
                                   color: _getMoodColor(catProvider.cat!.mood)
-                                      .withOpacity(0.2),
+                                      .withValues(alpha: 0.2),
                                   blurRadius: 15,
                                   offset: const Offset(0, 5),
                                 ),
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.1),
+                                  color: Colors.black.withValues(alpha: 0.1),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),

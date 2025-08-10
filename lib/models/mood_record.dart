@@ -11,7 +11,7 @@ class MoodEntry {
   final List<String> tags; // 标签（工作、家庭、健康等）
   final String? trigger; // 触发事件
   final List<String> photos; // 照片路径
-  final String? location; // 地点（可选）
+  final String? locationName; // 地点（可选）
   final String? weather; // 天气（可选）
   final DateTime timestamp;
   final Color color; // 心情对应的颜色
@@ -33,7 +33,7 @@ class MoodEntry {
     this.tags = const [],
     this.trigger,
     this.photos = const [],
-    this.location,
+    this.locationName,
     this.weather,
     required this.timestamp,
     required this.color,
@@ -57,7 +57,7 @@ class MoodEntry {
       tags: List<String>.from(json['tags'] as List? ?? []),
       trigger: json['trigger'] as String?,
       photos: List<String>.from(json['photos'] as List? ?? []),
-      location: json['location'] as String?,
+      locationName: json['locationName'] as String?,
       weather: json['weather'] as String?,
       timestamp: DateTime.parse(json['timestamp'] as String),
       color: Color(json['color'] as int),
@@ -79,7 +79,7 @@ class MoodEntry {
       'tags': tags,
       'trigger': trigger,
       'photos': photos,
-      'location': location,
+      'locationName': locationName,
       'weather': weather,
       'timestamp': timestamp.toIso8601String(),
       'color': color.value,
@@ -100,7 +100,7 @@ class MoodEntry {
     List<String>? tags,
     String? trigger,
     List<String>? photos,
-    String? location,
+    String? locationName,
     String? weather,
     DateTime? timestamp,
     Color? color,
@@ -118,7 +118,7 @@ class MoodEntry {
       tags: tags ?? this.tags,
       trigger: trigger ?? this.trigger,
       photos: photos ?? this.photos,
-      location: location ?? this.location,
+      locationName: locationName ?? this.locationName,
       weather: weather ?? this.weather,
       timestamp: timestamp ?? this.timestamp,
       color: color ?? this.color,
@@ -340,7 +340,7 @@ class MoodTypeConfig {
     List<String> tags = const [],
     String? trigger,
     List<String> photos = const [],
-    String? location,
+    String? locationName,
     List<String> gratitude = const [],
     bool isPrivate = false,
   }) {
@@ -354,7 +354,7 @@ class MoodTypeConfig {
       tags: tags,
       trigger: trigger,
       photos: photos,
-      location: location,
+      locationName: locationName,
       timestamp: DateTime.now(),
       color: getMoodColor(moodType),
       gratitude: gratitude,
