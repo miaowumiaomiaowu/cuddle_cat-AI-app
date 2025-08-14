@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from typing import List, Dict, Optional
+from .models import get_emotion_analyzer, get_embedding_recommender, get_cache_manager
 
 app = FastAPI(title="Cuddle Cat AI Analysis Service")
 
@@ -29,40 +30,62 @@ class RecommendResponse(BaseModel):
 
 @app.post("/recommend/gifts", response_model=RecommendResponse)
 async def recommend_gifts(req: RecommendRequest):
-    # Enhanced rule-based recommendations with weather and mood context
-    gifts = []
-    emotes = ["calm"]
-    scores = {"calm": 0.7}
+    # 检查缓存
+    cache_manager = get_cache_manager()
+    cache_key = cache_manager.generate_key(req.dict())
+    cached_result = cache_manager.get(cache_key)
 
-    # Weather-based recommendations
-    weather_gifts = _get_weather_based_gifts(req.weather)
-    gifts.extend(weather_gifts)
+    if cached_result:
+        return RecommendResponse(**cached_result)
 
-    # Mood-based analysis and gifts
-    mood_analysis = _analyze_mood_patterns(req.moodRecords)
-    mood_gifts = _get_mood_based_gifts(mood_analysis)
-    gifts.extend(mood_gifts)
+    # AI模型分析
+    emotion_analyzer = get_emotion_analyzer()
+    embedding_recommender = get_embedding_recommender()
 
-    # Message-based context gifts
-    message_gifts = _get_message_based_gifts(req.recentMessages)
-    gifts.extend(message_gifts)
+    # 情感分析
+    all_text = " ".join(req.recentMessages + [r.description or "" for r in req.moodRecords])
+    emotion_scores = emotion_analyzer.analyze_emotion(all_text) if all_text.strip() else {"calm": 0.7}
 
-    # Default base gifts if nothing specific found
-    if not gifts:
-        gifts = _get_default_gifts()
+    # 获取候选礼物
+    candidate_gifts = []
+    candidate_gifts.extend(_get_weather_based_gifts(req.weather))
+    candidate_gifts.extend(_get_mood_based_gifts({"dominant_mood": max(emotion_scores, key=emotion_scores.get)}))
+    candidate_gifts.extend(_get_message_based_gifts(req.recentMessages))
+    candidate_gifts.extend(_get_default_gifts())
 
-    # Deduplicate and limit to 8
-    unique_gifts = _deduplicate_gifts(gifts)[:8]
+    # 基于嵌入的推荐
+    if all_text.strip() and candidate_gifts:
+        gift_texts = [f"{g.title} {g.description}" for g in candidate_gifts]
+        similar_indices = embedding_recommender.find_similar(all_text, gift_texts, top_k=8)
 
-    # Update emotions based on analysis
-    if mood_analysis.get("dominant_mood") == "anxious":
-        emotes = ["anxious"]
-        scores = {"anxious": 0.8}
-    elif mood_analysis.get("dominant_mood") == "happy":
-        emotes = ["happy"]
-        scores = {"happy": 0.9}
+        # 重新排序礼物
+        recommended_gifts = []
+        for idx, similarity in similar_indices:
+            if idx < len(candidate_gifts):
+                gift = candidate_gifts[idx]
+                # 可以根据相似度调整礼物属性
+                recommended_gifts.append(gift)
 
-    return RecommendResponse(emotions=emotes, scores=scores, gifts=unique_gifts)
+        unique_gifts = _deduplicate_gifts(recommended_gifts)[:8]
+    else:
+        unique_gifts = _deduplicate_gifts(candidate_gifts)[:8]
+
+    # 如果还是没有礼物，使用默认
+    if not unique_gifts:
+        unique_gifts = _get_default_gifts()[:8]
+
+    # 构建响应
+    dominant_emotion = max(emotion_scores, key=emotion_scores.get)
+    result = {
+        "emotions": [dominant_emotion],
+        "scores": emotion_scores,
+        "gifts": [gift.dict() for gift in unique_gifts]
+    }
+
+    # 缓存结果
+    cache_manager.set(cache_key, result, ttl=3600)  # 1小时缓存
+
+    return RecommendResponse(**result)
 
 def _get_weather_based_gifts(weather: Optional[Dict]) -> List[Gift]:
     """Generate gifts based on weather conditions"""
@@ -204,6 +227,31 @@ def _deduplicate_gifts(gifts: List[Gift]) -> List[Gift]:
             seen.add(gift.title)
             unique.append(gift)
     return unique
+
+@app.post("/feedback")
+async def submit_feedback(feedback_data: dict):
+    """接收用户反馈"""
+    from .analytics import analytics
+
+    user_id = feedback_data.get("user_id", "anonymous")
+    feedback = feedback_data.get("feedback", {})
+
+    # 记录反馈
+    analytics.log_user_feedback(
+        user_id=user_id,
+        recommendation_id=feedback.get("giftId", ""),
+        feedback=feedback
+    )
+
+    return {"status": "success", "message": "Feedback recorded"}
+
+@app.get("/analytics/stats")
+async def get_analytics_stats(days: int = 7):
+    """获取分析统计"""
+    from .analytics import analytics
+
+    stats = analytics.get_recommendation_stats(days=days)
+    return stats
 
 @app.get("/")
 async def root():

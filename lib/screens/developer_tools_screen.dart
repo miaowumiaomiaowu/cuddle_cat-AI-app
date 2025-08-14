@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/hand_drawn_card.dart';
 
 import '../widgets/settings/ai_analysis_settings_panel.dart';
+import '../widgets/settings/analytics_settings_panel.dart';
 
 /// 开发者工具界面
 class DeveloperToolsScreen extends StatefulWidget {
@@ -250,6 +251,24 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
         ],
       );
     }
+
+    Widget buildAnalyticsSettings() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text('用户反馈分析', style: ArtisticTheme.titleMedium),
+          const SizedBox(height: 8),
+          const Card(
+            elevation: 0,
+            child: Padding(
+              padding: EdgeInsets.all(16),
+              child: AnalyticsSettingsPanel(),
+            ),
+          ),
+        ],
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(ArtisticTheme.spacingMedium),
       child: Column(
@@ -284,6 +303,8 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
 
                   const SizedBox(height: 16),
                   buildAIAnalysisSettings(),
+                  const SizedBox(height: 16),
+                  buildAnalyticsSettings(),
                 ],
               ),
             ),

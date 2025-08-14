@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/happiness_provider.dart';
 import '../models/happiness_task.dart';
 import '../theme/artistic_theme.dart';
+import '../services/feedback_service.dart';
 
 
 class HappinessGiftView extends StatefulWidget {
@@ -22,6 +23,7 @@ class _HappinessGiftViewState extends State<HappinessGiftView>
   HappinessTask? _current;
   final _rng = Random();
   final List<String> _recent = [];
+  final FeedbackService _feedbackService = FeedbackService();
 
   @override
   void initState() {
@@ -83,6 +85,10 @@ class _HappinessGiftViewState extends State<HappinessGiftView>
 
   Future<void> _start(HappinessProvider hp) async {
     if (_current == null) return;
+
+    // 记录用户反馈
+    await _feedbackService.likegift(_current!.id, _current!.title);
+
     await hp.addOrUpdateTask(_current!);
     await hp.addRecommendationToToday(_current!);
     if (!mounted) return;
@@ -93,6 +99,10 @@ class _HappinessGiftViewState extends State<HappinessGiftView>
 
   Future<void> _complete(HappinessProvider hp) async {
     if (_current == null) return;
+
+    // 记录完成反馈
+    await _feedbackService.completeGift(_current!.id, _current!.title, rating: 5);
+
     await hp.completeTask(_current!);
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
