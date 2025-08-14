@@ -17,6 +17,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/location_service.dart';
 import '../services/weather_service.dart';
+import '../services/breakthrough_detector.dart';
 
 class HappinessProvider extends BaseProvider {
   @override
@@ -67,6 +68,7 @@ class HappinessProvider extends BaseProvider {
   HappinessStats? _stats;
   String? _error;
   String? _lastGiftOpenYmd;
+  final BreakthroughDetector _breakthroughDetector = BreakthroughDetector();
 
   HappinessProvider({
     required this.aiService,
@@ -271,6 +273,10 @@ class HappinessProvider extends BaseProvider {
     await _service.saveCheckin(c);
     _checkins = await _service.getAllCheckins();
     _stats = await _service.getStats();
+
+    // 检测突破模式
+    await _analyzeTaskBreakthrough(task);
+
     notifyListeners();
   }
 
@@ -310,6 +316,41 @@ class HappinessProvider extends BaseProvider {
   @override
   Future<void> onClearData() async {
     dialogueProvider.removeListener(_onDialogueChanged);
+  }
+
+  Future<void> _analyzeTaskBreakthrough(HappinessTask task) async {
+    try {
+      // 计算连续完成天数
+      final recentCheckins = _checkins
+          .where((c) => c.taskId == task.id)
+          .toList()
+        ..sort((a, b) => b.ymdDate.compareTo(a.ymdDate));
+
+      int consecutiveDays = 0;
+      final today = _ymd(DateTime.now());
+      String currentDate = today;
+
+      for (final checkin in recentCheckins) {
+        if (checkin.ymdDate == currentDate) {
+          consecutiveDays++;
+          // 计算前一天
+          final date = DateTime.parse('${currentDate}T00:00:00');
+          final prevDate = date.subtract(const Duration(days: 1));
+          currentDate = _ymd(prevDate);
+        } else {
+          break;
+        }
+      }
+
+      // 分析突破
+      await _breakthroughDetector.analyzeTaskCompletion(
+        taskTitle: task.title,
+        consecutiveDays: consecutiveDays,
+        category: task.category,
+      );
+    } catch (e) {
+      // 忽略分析错误
+    }
   }
 
   @override

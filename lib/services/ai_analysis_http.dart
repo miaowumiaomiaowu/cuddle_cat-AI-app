@@ -16,6 +16,7 @@ class AIAnalysisHttp implements AIAnalysisFacade {
             'recentMessages': input.recentMessages,
             'moodRecords': input.moodRecords,
             'stats': input.stats,
+            'weather': input.weather,
           }))
           .timeout(const Duration(seconds: 12));
       if (resp.statusCode == 200) {

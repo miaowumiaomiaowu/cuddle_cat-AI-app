@@ -5,9 +5,46 @@ import '../providers/mood_provider.dart';
 import '../theme/artistic_theme.dart';
 import 'happiness_task_edit_screen.dart';
 import '../widgets/happiness_gift_view.dart';
+import '../widgets/memory_review_card.dart';
+import '../services/memory_service.dart';
 
-class HappinessHomeScreen extends StatelessWidget {
+class HappinessHomeScreen extends StatefulWidget {
   const HappinessHomeScreen({super.key});
+
+  @override
+  State<HappinessHomeScreen> createState() => _HappinessHomeScreenState();
+}
+
+class _HappinessHomeScreenState extends State<HappinessHomeScreen> {
+  final MemoryService _memoryService = MemoryService();
+  List<MemoryEvent> _recentMemories = [];
+  bool _showMemoryReview = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _checkMemoryReview();
+  }
+
+  Future<void> _checkMemoryReview() async {
+    final shouldShow = await _memoryService.shouldShowReview();
+    if (shouldShow) {
+      final memories = await _memoryService.getRecentBreakthroughs();
+      if (memories.isNotEmpty) {
+        setState(() {
+          _recentMemories = memories;
+          _showMemoryReview = true;
+        });
+      }
+    }
+  }
+
+  void _dismissMemoryReview() async {
+    await _memoryService.markReviewShown();
+    setState(() {
+      _showMemoryReview = false;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,6 +62,16 @@ class HappinessHomeScreen extends StatelessWidget {
                   right: 16,
                   child: _buildHeader(context, hp),
                 ),
+                if (_showMemoryReview)
+                  Positioned(
+                    bottom: 100,
+                    left: 0,
+                    right: 0,
+                    child: MemoryReviewCard(
+                      memories: _recentMemories,
+                      onDismiss: _dismissMemoryReview,
+                    ),
+                  ),
               ],
             ),
           ),
