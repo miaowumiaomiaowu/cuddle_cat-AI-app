@@ -1,16 +1,19 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // 导入实现的页面
-import 'screens/cat_home_screen.dart';
-import 'screens/travel_map_screen_enhanced.dart';
+// import 'screens/cat_home_screen.dart';
+import 'screens/happiness_home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/dialogue_screen.dart';
 import 'screens/api_debug_screen.dart';
 import 'screens/data_debug_screen.dart';
+import 'screens/happiness_task_edit_screen.dart';
 
+import 'screens/immersive_chat_home_screen.dart';
 import 'screens/ai_chat_screen.dart';
 import 'screens/enhanced_mood_entry_screen.dart';
 import 'screens/mood_map_screen.dart';
@@ -22,11 +25,13 @@ import 'widgets/quick_record_fab.dart';
 import 'services/error_handling_service.dart';
 import 'providers/cat_provider.dart';
 import 'providers/dialogue_provider.dart';
-import 'providers/travel_provider.dart';
+
 import 'providers/mood_provider.dart';
 import 'providers/user_provider.dart';
 import 'services/provider_manager.dart';
 import 'services/auth_service.dart';
+import 'services/ai_psychology_service.dart';
+import 'providers/happiness_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'theme/artistic_theme.dart';
@@ -47,6 +52,9 @@ void main() async {
     debugPrint("环境变量加载失败: $e");
     // 继续运行，不阻止应用启动
   }
+
+  // 全局 HTTP 代理（方案B）：通过 .env 开关让所有网络走 10.0.2.2:7890 等代理
+  _maybeEnableGlobalProxyFromEnv();
 
   // 设置系统UI样式
   SystemChrome.setSystemUIOverlayStyle(
@@ -70,9 +78,16 @@ void main() async {
   // 创建Provider实例
   final catProvider = CatProvider();
   final dialogueProvider = DialogueProvider();
-  final travelProvider = TravelProvider();
+
   final userProvider = UserProvider(authService);
   final moodProvider = MoodProvider(userProvider);
+  // 幸福任务 Provider（AI联动）
+  final happinessProvider = HappinessProvider(
+    aiService: AIPsychologyService(),
+    dialogueProvider: dialogueProvider,
+    moodProvider: moodProvider,
+    userProvider: userProvider,
+  );
 
   // 创建Provider管理器
   final providerManager = ProviderManager();
@@ -85,13 +100,63 @@ void main() async {
         ChangeNotifierProvider.value(value: userProvider),
         ChangeNotifierProvider.value(value: catProvider),
         ChangeNotifierProvider.value(value: dialogueProvider),
-        ChangeNotifierProvider.value(value: travelProvider),
+
         ChangeNotifierProvider.value(value: moodProvider),
+        ChangeNotifierProvider.value(value: happinessProvider),
         Provider.value(value: providerManager),
       ],
       child: const MyApp(),
     ),
   );
+}
+
+void _maybeEnableGlobalProxyFromEnv() {
+  // 支持 USE_HTTP_PROXY=true / 1 / yes / on（大小写不敏感）
+  final raw = dotenv.env['USE_HTTP_PROXY']?.trim().toLowerCase();
+  final enable = raw == 'true' || raw == '1' || raw == 'yes' || raw == 'on';
+
+  if (!enable) {
+    debugPrint('未开启全局代理');
+    return;
+  }
+
+  // 支持 HTTP_PROXY=host:port 或 HTTP_PROXY_HOST + HTTP_PROXY_PORT
+  String? proxy = dotenv.env['HTTP_PROXY']?.trim();
+  final host = dotenv.env['HTTP_PROXY_HOST']?.trim();
+  final port = dotenv.env['HTTP_PROXY_PORT']?.trim();
+  if ((proxy == null || proxy.isEmpty) && host != null && host.isNotEmpty && port != null && port.isNotEmpty) {
+    proxy = '$host:$port';
+  }
+  if (proxy == null || proxy.isEmpty) {
+    debugPrint('已开启全局代理但未提供 HTTP_PROXY/HTTP_PROXY_HOST/HTTP_PROXY_PORT');
+    return;
+  }
+
+  // 是否忽略证书，仅开发调试使用
+  final insecureRaw = dotenv.env['HTTP_PROXY_INSECURE']?.trim().toLowerCase();
+  final insecure = insecureRaw == 'true' || insecureRaw == '1' || insecureRaw == 'yes' || insecureRaw == 'on';
+
+  HttpOverrides.global = _ProxyHttpOverrides(proxy, allowBadCertificate: insecure);
+  debugPrint('已启用全局代理 -> $proxy, 允许自签: $insecure');
+}
+
+class _ProxyHttpOverrides extends HttpOverrides {
+  final String proxyHostPort; // e.g. 10.0.2.2:7890
+  final bool allowBadCertificate;
+  _ProxyHttpOverrides(this.proxyHostPort, {this.allowBadCertificate = false});
+
+  @override
+  HttpClient createHttpClient(SecurityContext? context) {
+    final client = super.createHttpClient(context);
+    client.findProxy = (uri) {
+      // 让所有请求（http/https）走 HTTP 代理
+      return 'PROXY $proxyHostPort;';
+    };
+    if (allowBadCertificate) {
+      client.badCertificateCallback = (X509Certificate cert, String host, int port) => true;
+    }
+    return client;
+  }
 }
 
 class MyApp extends StatelessWidget {
@@ -118,6 +183,8 @@ class MyApp extends StatelessWidget {
         DeveloperToolsScreen.routeName: (ctx) => const DeveloperToolsScreen(),
         OnboardingScreen.routeName: (ctx) => const OnboardingScreen(),
         HelpCenterScreen.routeName: (ctx) => const HelpCenterScreen(),
+        HappinessTaskEditScreen.routeName: (ctx) => const HappinessTaskEditScreen(),
+
         '/splash': (ctx) => const SplashScreen(),
         '/main': (ctx) => const MainScreen(),
       },
@@ -159,10 +226,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   bool _isInitialized = false;
 
   // 主页面列表
-  final List<Widget> _screens = const [
-    CatHomeScreen(),
-    TravelMapScreenEnhanced(),
-    ProfileScreen(),
+  final List<Widget> _screens = [
+    const ImmersiveChatHomeScreen(),
+    const HappinessHomeScreen(),
+    const ProfileScreen(),
   ];
 
   @override
@@ -185,8 +252,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final catProvider = Provider.of<CatProvider>(context, listen: false);
       final dialogueProvider = Provider.of<DialogueProvider>(context, listen: false);
-      final travelProvider = Provider.of<TravelProvider>(context, listen: false);
+
       final moodProvider = Provider.of<MoodProvider>(context, listen: false);
+      final happinessProvider = Provider.of<HappinessProvider>(context, listen: false);
 
       // 首先初始化认证服务
       await authService.initialize();
@@ -197,9 +265,10 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
         dialogueProvider,
       ]);
 
-      // 单独初始化其他Provider
-      await travelProvider.initialize();
+      // 单独初始化其他Provider（先心情，再幸福，以便AI可用心情数据）
       await moodProvider.initialize();
+
+      await happinessProvider.initialize();
 
       _isInitialized = true;
       debugPrint("Provider管理器延迟初始化成功");
@@ -277,9 +346,9 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 label: '猫咪',
               ),
               BottomNavigationBarItem(
-                icon: Text('🗺️', style: TextStyle(fontSize: 24)),
-                activeIcon: Text('🗺️', style: TextStyle(fontSize: 28)),
-                label: '旅行',
+                icon: Text('🌿', style: TextStyle(fontSize: 24)),
+                activeIcon: Text('🌿', style: TextStyle(fontSize: 28)),
+                label: '幸福',
               ),
               BottomNavigationBarItem(
                 icon: Text('👤', style: TextStyle(fontSize: 24)),

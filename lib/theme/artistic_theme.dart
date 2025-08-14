@@ -213,6 +213,12 @@ class ArtisticTheme {
     color: textHint,
   );
 
+	  // 兼容别名（为旧组件提供向后兼容的样式名称）
+	  static TextStyle get bodyStyle => bodyMedium;
+	  static TextStyle get headingStyle => headlineMedium;
+	  static TextStyle get captionStyle => caption;
+
+
   // 添加缺失的文本样式
   static const TextStyle headlineSmall = TextStyle(
     fontSize: 18,

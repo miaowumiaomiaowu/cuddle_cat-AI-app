@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/artistic_theme.dart';
 import '../providers/mood_provider.dart';
-import '../providers/travel_provider.dart';
+
 import '../widgets/hand_drawn_card.dart';
 import '../models/mood_record.dart';
 
@@ -120,8 +120,8 @@ class _MoodMapScreenState extends State<MoodMapScreen>
   }
 
   Widget _buildStatsBar() {
-    return Consumer2<MoodProvider, TravelProvider>(
-      builder: (context, moodProvider, travelProvider, child) {
+    return Consumer<MoodProvider>(
+      builder: (context, moodProvider, child) {
         final filteredEntries = _getFilteredEntries(moodProvider);
         final positiveCount = filteredEntries.where((e) => e.isPositive).length;
         final negativeCount = filteredEntries.where((e) => e.isNegative).length;
@@ -196,10 +196,10 @@ class _MoodMapScreenState extends State<MoodMapScreen>
   }
 
   Widget _buildMoodMap() {
-    return Consumer2<MoodProvider, TravelProvider>(
-      builder: (context, moodProvider, travelProvider, child) {
+    return Consumer<MoodProvider>(
+      builder: (context, moodProvider, child) {
         final filteredEntries = _getFilteredEntries(moodProvider);
-        final locationGroups = _groupEntriesByLocation(filteredEntries, travelProvider);
+        final locationGroups = _groupEntriesByLocation(filteredEntries);
 
         if (locationGroups.isEmpty) {
           return Center(
@@ -415,9 +415,9 @@ class _MoodMapScreenState extends State<MoodMapScreen>
     return entries;
   }
 
-  Map<String, List<MoodEntry>> _groupEntriesByLocation(List<MoodEntry> entries, TravelProvider travelProvider) {
+  Map<String, List<MoodEntry>> _groupEntriesByLocation(List<MoodEntry> entries) {
     final Map<String, List<MoodEntry>> groups = {};
-    
+
     for (final entry in entries) {
       if (entry.locationName != null) {
         final location = entry.locationName!;
@@ -425,7 +425,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
         groups[location]!.add(entry);
       }
     }
-    
+
     return groups;
   }
 

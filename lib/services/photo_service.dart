@@ -35,10 +35,10 @@ class PhotoService {
 
       // 获取应用文档目录
       final Directory appDocDir = await getApplicationDocumentsDirectory();
-      final String travelPhotosDir = path.join(appDocDir.path, 'travel_photos');
+      final String photosDir = path.join(appDocDir.path, 'photos');
 
       // 创建目录（如果不存在）
-      final Directory photosDirectory = Directory(travelPhotosDir);
+      final Directory photosDirectory = Directory(photosDir);
       if (!await photosDirectory.exists()) {
         await photosDirectory.create(recursive: true);
       }
@@ -46,7 +46,7 @@ class PhotoService {
       // 生成新的文件名
       final String fileName =
           '${DateTime.now().millisecondsSinceEpoch}_compressed.jpg';
-      final String outputPath = path.join(travelPhotosDir, fileName);
+      final String outputPath = path.join(photosDir, fileName);
 
       // 压缩图片
       final compressedBytes = await FlutterImageCompress.compressWithFile(
@@ -124,14 +124,14 @@ class PhotoService {
     }
   }
 
-  /// 清理旅行照片目录中的孤立文件
+  /// 清理照片目录中的孤立文件
   ///
   /// [usedPhotoPaths] 当前使用中的照片路径列表
   Future<void> cleanupOrphanedPhotos(List<String> usedPhotoPaths) async {
     try {
       final Directory appDocDir = await getApplicationDocumentsDirectory();
-      final String travelPhotosDir = path.join(appDocDir.path, 'travel_photos');
-      final Directory photosDirectory = Directory(travelPhotosDir);
+      final String photosDir = path.join(appDocDir.path, 'photos');
+      final Directory photosDirectory = Directory(photosDir);
 
       if (!await photosDirectory.exists()) {
         return;
@@ -164,8 +164,8 @@ class PhotoService {
   Future<int> getPhotoStorageSize() async {
     try {
       final Directory appDocDir = await getApplicationDocumentsDirectory();
-      final String travelPhotosDir = path.join(appDocDir.path, 'travel_photos');
-      final Directory photosDirectory = Directory(travelPhotosDir);
+      final String photosDir = path.join(appDocDir.path, 'photos');
+      final Directory photosDirectory = Directory(photosDir);
 
       if (!await photosDirectory.exists()) {
         return 0;

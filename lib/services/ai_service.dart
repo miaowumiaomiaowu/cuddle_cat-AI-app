@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'dart:math';
 import 'dart:async';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/cat.dart';
 import '../models/dialogue.dart';
 import '../utils/cat_emoji_expressions.dart';
+import 'error_handling_service.dart';
 
 /// DeepSeek AI服务类
 class AIService {
@@ -15,6 +17,24 @@ class AIService {
   /// 单例模式工厂构造函数
   factory AIService() {
     return _instance;
+  }
+
+
+  // Simple circuit breaker to guard against repeated network failures
+  int _consecutiveFailures = 0;
+  DateTime? _openedUntil;
+
+  bool get _circuitOpen => _openedUntil != null && DateTime.now().isBefore(_openedUntil!);
+  void _noteSuccess() {
+    _consecutiveFailures = 0;
+    _openedUntil = null;
+  }
+
+  void _noteFailure({Duration openFor = const Duration(seconds: 60)}) {
+    _consecutiveFailures += 1;
+    if (_consecutiveFailures >= 3) {
+      _openedUntil = DateTime.now().add(openFor);
+    }
   }
 
   AIService._internal();
@@ -38,11 +58,12 @@ class AIService {
     required List<DialogueMessage> conversationHistory,
   }) async {
     try {
-      if (_apiKey == null) {
-        debugPrint('API密钥或端点未配置，请检查.env文件');
-        debugPrint(
-            'apiKey: ${_apiKey?.substring(0, 5)}..., endpoint: $_apiEndpoint');
+      if (_apiKey == null || _apiKey!.isEmpty) {
+        ErrorHandlingService().recordError('API密钥未配置', type: ErrorType.network);
         throw Exception('API密钥或端点未配置，请检查.env文件');
+      }
+      if (_circuitOpen) {
+        throw SocketException('网络暂时不可用，熔断中');
       }
 
       // 构建提示词系统消息
@@ -111,19 +132,15 @@ class AIService {
         // 解析响应
         debugPrint('收到API响应，状态码: ${response.statusCode}');
         if (response.statusCode == 200) {
-          debugPrint('API响应成功，解析回复内容');
+          _noteSuccess();
 
           // 使用utf8.decode确保正确处理中文字符
           final responseText = utf8.decode(response.bodyBytes);
           final responseData = jsonDecode(responseText);
-          debugPrint(
-              '响应数据: ${responseText.substring(0, min(100, responseText.length))}...');
 
           try {
             final String replyContent =
                 responseData['choices'][0]['message']['content'];
-            debugPrint(
-                '猫咪回复: ${replyContent.substring(0, min(50, replyContent.length))}...');
 
             // 分析回复的情感
             final emotionAnalysis = _analyzeReplyEmotion(replyContent, cat);
@@ -139,17 +156,17 @@ class AIService {
               emotionScore: emotionAnalysis.score,
             );
           } catch (e) {
-            debugPrint('解析API响应时出错: $e');
+            ErrorHandlingService().recordError('解析API响应失败: $e', type: ErrorType.network);
             throw Exception('解析API响应时出错: $e');
           }
         } else {
-          debugPrint('API请求失败: ${response.statusCode}');
-          debugPrint('错误响应体: ${response.body}');
+          _noteFailure();
+          ErrorHandlingService().recordNetworkError(_apiEndpoint, response.statusCode, response.body);
 
-          // 如果API请求失败，返回一个默认回复
+          // 如果API请求失败，返回一个默认回复（离线陪伴样式）
           final fallbackEmotion = EmotionType.confused;
           final fallbackText =
-              '喵？似乎我有点累了，能稍后再和我聊聊吗？(API错误: ${response.statusCode})';
+              '喵？网络有点不听话呢，我先陪你聊聊，等会儿再试试好不好？（错误码: ${response.statusCode}）';
           return DialogueMessage.fromCat(
             text: _enhanceReplyWithEmoji(fallbackText, fallbackEmotion, cat),
             emotionType: fallbackEmotion,
@@ -159,12 +176,31 @@ class AIService {
       } finally {
         client.close();
       }
-    } catch (e) {
-      debugPrint('生成猫咪回复时出错: $e');
-
-      // 发生异常时，返回一个安全的默认回复
+    } on SocketException catch (e) {
+      _noteFailure();
+      ErrorHandlingService().recordNetworkError(_apiEndpoint, null, 'SocketException: ${e.message}');
       final fallbackEmotion = EmotionType.confused;
-      final fallbackText = '喵呜...好像有什么地方不太对劲。${cat.name}需要休息一下。(错误: $e)';
+      final fallbackText = '喵呜...网络像在捉迷藏，我们先用离线陪伴模式聊聊吧。稍后我会再试试连线~';
+      return DialogueMessage.fromCat(
+        text: _enhanceReplyWithEmoji(fallbackText, fallbackEmotion, cat),
+        emotionType: fallbackEmotion,
+        emotionScore: 0.6,
+      );
+    } on TimeoutException catch (e) {
+      _noteFailure();
+      ErrorHandlingService().recordNetworkError(_apiEndpoint, null, 'Timeout: ${e.message}');
+      final fallbackEmotion = EmotionType.confused;
+      final fallbackText = '喵...线路有点慢，我们先慢慢聊，我会继续尝试连接的。';
+      return DialogueMessage.fromCat(
+        text: _enhanceReplyWithEmoji(fallbackText, fallbackEmotion, cat),
+        emotionType: fallbackEmotion,
+        emotionScore: 0.6,
+      );
+    } catch (e) {
+      _noteFailure();
+      ErrorHandlingService().recordError('生成猫咪回复时出错: $e', type: ErrorType.network);
+      final fallbackEmotion = EmotionType.confused;
+      final fallbackText = '喵呜...好像有什么地方不太对劲。${cat.name}需要休息一下。';
       return DialogueMessage.fromCat(
         text: _enhanceReplyWithEmoji(fallbackText, fallbackEmotion, cat),
         emotionType: fallbackEmotion,

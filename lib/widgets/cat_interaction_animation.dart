@@ -76,8 +76,9 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
+        final safeOpacity = _opacityAnimation.value.clamp(0.0, 1.0).toDouble();
         return Opacity(
-          opacity: _opacityAnimation.value,
+          opacity: safeOpacity,
           child: Transform.scale(
             scale: _scaleAnimation.value,
             child: SizedBox(
@@ -121,7 +122,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           top: -5 - (_controller.value * 10),
           right: -5,
           child: Opacity(
-            opacity: 1.0 - _controller.value,
+            opacity: (1.0 - _controller.value).clamp(0.0, 1.0).toDouble(),
             child: Text(
               '💕',
               style: TextStyle(
@@ -135,7 +136,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           top: -8 - (_controller.value * 15),
           left: -8,
           child: Opacity(
-            opacity: 0.8 - _controller.value,
+            opacity: (0.8 - _controller.value).clamp(0.0, 1.0).toDouble(),
             child: Text(
               '💖',
               style: TextStyle(
@@ -163,7 +164,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           top: -8 - (_controller.value * 12),
           right: -8,
           child: Opacity(
-            opacity: 1.0 - _controller.value,
+            opacity: (1.0 - _controller.value).clamp(0.0, 1.0).toDouble(),
             child: Text(
               '😋',
               style: TextStyle(
@@ -177,7 +178,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           top: -5 - (_controller.value * 8),
           left: -10,
           child: Opacity(
-            opacity: 0.9 - _controller.value,
+            opacity: (0.9 - _controller.value).clamp(0.0, 1.0).toDouble(),
             child: Text(
               '🍽️',
               style: TextStyle(
@@ -210,7 +211,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           child: Transform.scale(
             scale: 1.0 + (_controller.value * 0.5),
             child: Opacity(
-              opacity: 1.0 - _controller.value,
+              opacity: (1.0 - _controller.value).clamp(0.0, 1.0).toDouble(),
               child: Text(
                 '🎾',
                 style: TextStyle(
@@ -225,7 +226,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           top: -8 - (_controller.value * 15),
           right: -8,
           child: Opacity(
-            opacity: 0.8 - _controller.value,
+            opacity: (0.8 - _controller.value).clamp(0.0, 1.0).toDouble(),
             child: Text(
               '🎯',
               style: TextStyle(
@@ -255,7 +256,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           child: Transform.rotate(
             angle: _controller.value * math.pi,
             child: Opacity(
-              opacity: 1.0 - _controller.value,
+              opacity: (1.0 - _controller.value).clamp(0.0, 1.0).toDouble(),
               child: Text(
                 '✨',
                 style: TextStyle(
@@ -270,7 +271,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           top: -5 - (_controller.value * 8),
           left: -10,
           child: Opacity(
-            opacity: 0.9 - _controller.value,
+            opacity: (0.9 - _controller.value).clamp(0.0, 1.0).toDouble(),
             child: Text(
               '🧼',
               style: TextStyle(
@@ -284,7 +285,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           bottom: -5 - (_controller.value * 10),
           left: -5,
           child: Opacity(
-            opacity: 0.7 - _controller.value,
+            opacity: (0.7 - _controller.value).clamp(0.0, 1.0).toDouble(),
             child: Text(
               '🌟',
               style: TextStyle(
@@ -324,7 +325,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
         Positioned(
           top: -10 - (_controller.value * 15),
           child: Opacity(
-            opacity: 1.0 - _controller.value,
+            opacity: (1.0 - _controller.value).clamp(0.0, 1.0).toDouble(),
             child: Text(
               '🌟',
               style: TextStyle(
@@ -338,7 +339,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           top: -8 - (_controller.value * 10),
           right: -10,
           child: Opacity(
-            opacity: 0.8 - _controller.value,
+            opacity: (0.8 - _controller.value).clamp(0.0, 1.0).toDouble(),
             child: Text(
               '🎓',
               style: TextStyle(
@@ -352,7 +353,7 @@ class _CatInteractionAnimationState extends State<CatInteractionAnimation>
           bottom: -5 - (_controller.value * 8),
           left: -8,
           child: Opacity(
-            opacity: 0.7 - _controller.value,
+            opacity: (0.7 - _controller.value).clamp(0.0, 1.0).toDouble(),
             child: Text(
               '🏆',
               style: TextStyle(

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/cat_provider.dart';
 import '../utils/cat_emoji_expressions.dart';
+import '../screens/dialogue_screen.dart';
 
 import 'cat_interaction_animation.dart';
 
@@ -784,8 +785,7 @@ class _CatInteractionPanelState extends State<CatInteractionPanel>
                         color: Colors.teal,
                         label: '对话',
                         onPressed: () {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('对话功能即将开放！')));
+                          Navigator.pushNamed(context, DialogueScreen.routeName);
                         },
                         isEnabled: true,
                         cooldownText: '',

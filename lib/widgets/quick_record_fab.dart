@@ -3,13 +3,15 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../theme/artistic_theme.dart';
-import '../providers/travel_provider.dart';
 import '../providers/mood_provider.dart';
-import '../models/travel.dart';
 import '../models/mood_record.dart';
-import '../services/location_service.dart';
+
 import '../screens/enhanced_mood_entry_screen.dart';
-import '../screens/ai_chat_screen.dart';
+import '../screens/dialogue_screen.dart';
+import '../providers/happiness_provider.dart';
+import '../screens/happiness_task_edit_screen.dart';
+
+
 
 /// 快速记录浮动操作按钮
 class QuickRecordFAB extends StatefulWidget {
@@ -25,29 +27,29 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
   late AnimationController _menuController;
   late Animation<double> _fabAnimation;
   late Animation<double> _menuAnimation;
-  
+
   bool _isMenuOpen = false;
   bool _isRecording = false;
 
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _menuController = AnimationController(
       duration: const Duration(milliseconds: 400),
       vsync: this,
     );
-    
+
     _fabAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.elasticOut,
     );
-    
+
     _menuAnimation = CurvedAnimation(
       parent: _menuController,
       curve: Curves.easeInOutCubic,
@@ -65,13 +67,13 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
     setState(() {
       _isMenuOpen = !_isMenuOpen;
     });
-    
+
     if (_isMenuOpen) {
       _menuController.forward();
     } else {
       _menuController.reverse();
     }
-    
+
     HapticFeedback.lightImpact();
   }
 
@@ -104,7 +106,7 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
               ),
             ),
           ),
-        
+
         // 菜单项
         AnimatedBuilder(
           animation: _menuAnimation,
@@ -167,16 +169,31 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
                   child: Transform.scale(
                     scale: _menuAnimation.value,
                     child: _buildMenuButton(
-                      icon: Icons.location_on,
-                      label: '记录地点',
+                      icon: Icons.favorite,
+                      label: '幸福打卡',
                       color: ArtisticTheme.primaryColor,
-                      onPressed: () => _quickAddTravel(context, mood: 'normal'),
+                      onPressed: () => _quickHappiness(context),
                     ),
                   ),
                 ),
-                
+
+
+                // 添加幸福任务
+                Transform.translate(
+                  offset: Offset(0, -20 * _menuAnimation.value),
+                  child: Transform.scale(
+                    scale: _menuAnimation.value,
+                    child: _buildMenuButton(
+                      icon: Icons.add_task,
+                      label: '添加任务',
+                      color: ArtisticTheme.accentColor,
+                      onPressed: () => _createHappinessTask(context),
+                    ),
+                  ),
+                ),
+
                 const SizedBox(height: 16),
-                
+
                 // 主FAB
                 AnimatedBuilder(
                   animation: _fabAnimation,
@@ -185,8 +202,8 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
                       scale: _fabAnimation.value,
                       child: FloatingActionButton(
                         onPressed: _isRecording ? null : _toggleMenu,
-                        backgroundColor: _isMenuOpen 
-                          ? ArtisticTheme.errorColor 
+                        backgroundColor: _isMenuOpen
+                          ? ArtisticTheme.errorColor
                           : ArtisticTheme.primaryColor,
                         child: _isRecording
                           ? const SizedBox(
@@ -255,70 +272,50 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
     );
   }
 
-  Future<void> _quickAddTravel(BuildContext context, {String mood = 'normal'}) async {
+  Future<void> _quickHappiness(BuildContext context) async {
     _closeMenu();
-    setState(() {
-      _isRecording = true;
-    });
-
+    setState(() => _isRecording = true);
     try {
       HapticFeedback.mediumImpact();
-      
-      // 获取当前位置
-      final locationService = LocationService();
-      final position = await locationService.getCurrentPosition();
-      
-      if (position != null) {
-        final travelProvider = Provider.of<TravelProvider>(context, listen: false);
-        
-        // 创建快速旅行记录
-        final record = Travel(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          title: '快速记录',
-          locationName: '当前位置',
-          latitude: position.latitude,
-          longitude: position.longitude,
-          mood: '开心',
-          description: '通过快速记录添加',
-          tags: ['快速记录'],
-          photos: [],
-          date: DateTime.now(),
-          isFavorite: false,
+      final hp = Provider.of<HappinessProvider>(context, listen: false);
+      // 默认微幸福：4-7-8呼吸
+      await hp.quickMicroHappiness(title: '4-7-8 呼吸', emoji: '🫁', category: 'mind', estimatedMinutes: 3);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('🌿 已完成一件小幸福事'),
+            backgroundColor: ArtisticTheme.successColor,
+            behavior: SnackBarBehavior.floating,
+          ),
         );
-
-        await travelProvider.addTravel(record);
-        
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('📍 地点记录已添加'),
-              backgroundColor: ArtisticTheme.successColor,
-              behavior: SnackBarBehavior.floating,
-            ),
-          );
-        }
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('记录失败: $e'),
+            content: Text('操作失败: $e'),
             backgroundColor: ArtisticTheme.errorColor,
             behavior: SnackBarBehavior.floating,
           ),
         );
       }
     } finally {
-      setState(() {
-        _isRecording = false;
-      });
+      setState(() => _isRecording = false);
     }
   }
+
+  Future<void> _createHappinessTask(BuildContext context) async {
+    _closeMenu();
+    await Navigator.of(context).pushNamed(HappinessTaskEditScreen.routeName);
+  }
+
+
+  // 旅行功能已移除
 
   Future<void> _openAIChat(BuildContext context) async {
     _closeMenu();
 
-    Navigator.pushNamed(context, AIChatScreen.routeName);
+    Navigator.pushNamed(context, DialogueScreen.routeName);
   }
 
   Future<void> _openDetailedMoodEntry(BuildContext context) async {
@@ -340,7 +337,7 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
       final moodProvider = Provider.of<MoodProvider>(context, listen: false);
       await moodProvider.quickAddMood(selectedMood);
 
-      if (context.mounted) {
+      if (mounted && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('😊 心情记录已添加: ${MoodTypeConfig.getMoodName(selectedMood)}'),

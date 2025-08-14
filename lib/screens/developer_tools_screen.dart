@@ -4,7 +4,11 @@ import '../theme/artistic_theme.dart';
 // import '../services/performance_service.dart'; // 已删除
 // import '../services/testing_service.dart'; // 已删除
 // import '../services/health_check_service.dart'; // 已删除
+import 'package:shared_preferences/shared_preferences.dart';
+
 import '../widgets/hand_drawn_card.dart';
+
+import '../widgets/settings/ai_analysis_settings_panel.dart';
 
 /// 开发者工具界面
 class DeveloperToolsScreen extends StatefulWidget {
@@ -19,11 +23,11 @@ class DeveloperToolsScreen extends StatefulWidget {
 class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
     with TickerProviderStateMixin {
   late TabController _tabController;
-  
+
   // final PerformanceService _performanceService = PerformanceService(); // 已删除
   // final TestingService _testingService = TestingService(); // 已删除
   // final HealthCheckService _healthCheckService = HealthCheckService(); // 已删除
-  
+
   bool _isRunningTests = false;
   bool _isRunningHealthCheck = false;
   String _lastReport = '';
@@ -127,11 +131,11 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
             ),
           ),
           const SizedBox(height: ArtisticTheme.spacingLarge),
-          
+
           // 性能指标显示
           _buildPerformanceMetrics(),
           const SizedBox(height: ArtisticTheme.spacingLarge),
-          
+
           // 性能建议
           _buildPerformanceRecommendations(),
         ],
@@ -161,7 +165,7 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
                   const SizedBox(height: ArtisticTheme.spacingMedium),
                   ElevatedButton.icon(
                     onPressed: _isRunningTests ? null : _runAllTests,
-                    icon: _isRunningTests 
+                    icon: _isRunningTests
                         ? const SizedBox(
                             width: 16,
                             height: 16,
@@ -175,7 +179,7 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
             ),
           ),
           const SizedBox(height: ArtisticTheme.spacingLarge),
-          
+
           // 测试结果显示
           if (_lastReport.isNotEmpty) _buildTestResults(),
         ],
@@ -205,7 +209,7 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
                   const SizedBox(height: ArtisticTheme.spacingMedium),
                   ElevatedButton.icon(
                     onPressed: _isRunningHealthCheck ? null : _runHealthCheck,
-                    icon: _isRunningHealthCheck 
+                    icon: _isRunningHealthCheck
                         ? const SizedBox(
                             width: 16,
                             height: 16,
@@ -219,7 +223,7 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
             ),
           ),
           const SizedBox(height: ArtisticTheme.spacingLarge),
-          
+
           // 健康状态显示
           _buildHealthStatus(),
         ],
@@ -228,6 +232,24 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
   }
 
   Widget _buildSystemTab() {
+    // AI 分析配置面板
+    Widget buildAIAnalysisSettings() {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const SizedBox(height: 12),
+          Text('AI 分析配置', style: ArtisticTheme.titleMedium),
+          const SizedBox(height: 8),
+          Card(
+            elevation: 0,
+            child: const Padding(
+              padding: EdgeInsets.all(16),
+              child: AIAnalysisSettingsPanel(),
+            ),
+          ),
+        ],
+      );
+    }
     return SingleChildScrollView(
       padding: const EdgeInsets.all(ArtisticTheme.spacingMedium),
       child: Column(
@@ -241,19 +263,33 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    '系统信息',
+                    '系统信息 / AI 配置',
                     style: ArtisticTheme.headlineSmall.copyWith(
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(height: ArtisticTheme.spacingMedium),
                   _buildSystemInfo(),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () async {
+                      final prefs = await SharedPreferences.getInstance();
+                      await prefs.remove('last_gift_open_ymd');
+                      if (!mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('已重置今日礼物限制')));
+                    },
+                    icon: const Icon(Icons.restart_alt),
+                    label: const Text('重置今日礼物限制'),
+                  ),
+
+                  const SizedBox(height: 16),
+                  buildAIAnalysisSettings(),
                 ],
               ),
             ),
           ),
           const SizedBox(height: ArtisticTheme.spacingLarge),
-          
+
           // 调试工具
           _buildDebugTools(),
         ],
@@ -328,7 +364,7 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
   Widget _buildPerformanceRecommendations() {
     // final recommendations = _performanceService.getPerformanceRecommendations();
     final recommendations = <String>[]; // 模拟空推荐列表
-    
+
     return HandDrawnCard(
       child: Padding(
         padding: const EdgeInsets.all(ArtisticTheme.spacingLarge),
@@ -523,7 +559,7 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
   Future<void> _generatePerformanceReport() async {
     // final report = _performanceService.exportPerformanceData();
     final report = '性能监控功能已禁用'; // 模拟报告
-    
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
