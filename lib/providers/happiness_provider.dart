@@ -10,14 +10,17 @@ import 'user_provider.dart';
 
 /// AI驱动的幸福任务 Provider（第一版：骨架+核心流程）
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'base_provider.dart';
 import '../services/ai_analysis_facade.dart';
 import '../services/ai_analysis_http.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../services/location_service.dart';
-import '../services/weather_service.dart';
 import '../services/breakthrough_detector.dart';
+import '../services/achievement_service.dart';
+import '../services/smart_reminder_service.dart';
+import '../services/real_time_learning_service.dart';
+import '../models/achievement.dart' as achievement_model;
 
 class HappinessProvider extends BaseProvider {
   @override
@@ -69,6 +72,9 @@ class HappinessProvider extends BaseProvider {
   String? _error;
   String? _lastGiftOpenYmd;
   final BreakthroughDetector _breakthroughDetector = BreakthroughDetector();
+  final AchievementService _achievementService = AchievementService();
+  final SmartReminderService _reminderService = SmartReminderService();
+  final RealTimeLearningService _learningService = RealTimeLearningService();
 
   HappinessProvider({
     required this.aiService,
@@ -80,6 +86,7 @@ class HappinessProvider extends BaseProvider {
   List<HappinessTask> get tasks => List.unmodifiable(_tasks);
   List<HappinessTask> get todayTasks => List.unmodifiable(_todayTasks);
   List<HappinessTask> get recommendations => List.unmodifiable(_recommendations);
+  List<HappinessCheckin> get checkins => List.unmodifiable(_checkins);
   HappinessStats? get stats => _stats;
   String? get error => _error;
   bool get canOpenGiftToday {
@@ -98,6 +105,8 @@ class HappinessProvider extends BaseProvider {
   @override
   Future<void> onInitialize() async {
     await _loadAll();
+    await _achievementService.initialize();
+    await _reminderService.initialize();
     await refreshAIRecommendations(force: true);
     _subscribeDialogueChanges();
   }
@@ -153,18 +162,8 @@ class HappinessProvider extends BaseProvider {
             'completionRate7d': _stats?.completionRate7d ?? 0.0,
           },
         );
-        // 补充天气（Open-Meteo，失败忽略）
-        Map<String, dynamic>? weather;
-        try {
-          final pos = await LocationService.instance.getCurrentPosition();
-          if (pos != null) {
-            weather = await WeatherService.getOpenMeteoCurrentWeather(
-              lat: pos.latitude, lon: pos.longitude,
-            );
-          }
-        } catch (_) {}
-
-        final res = await facade.analyzeAndRecommend(signals.copyWith(weather: weather));
+        // 补充天气：已移除定位依赖（保留接口支持，可为空）
+        final res = await facade.analyzeAndRecommend(signals);
         final mapped = res.gifts.map((g) => g.toHappinessTask()).toList();
         _recommendations = mapped.take(8).toList();
       } catch (_) {
@@ -274,8 +273,17 @@ class HappinessProvider extends BaseProvider {
     _checkins = await _service.getAllCheckins();
     _stats = await _service.getStats();
 
-    // 检测突破模式
+    // 检测突破模式与成就
     await _analyzeTaskBreakthrough(task);
+    await _checkAchievements(task);
+
+    // 记录实时学习数据
+    await _learningService.recordTaskCompleted(
+      task,
+      satisfactionRating: rating,
+      moodBefore: before,
+      moodAfter: after,
+    );
 
     notifyListeners();
   }
@@ -352,6 +360,72 @@ class HappinessProvider extends BaseProvider {
       // 忽略分析错误
     }
   }
+
+  Future<void> _checkAchievements(HappinessTask task) async {
+    try {
+      // 检查任务完成成就
+      final newAchievements = await _achievementService.checkTaskCompletion(task);
+
+      // 检查连击成就
+      final currentStreak = _stats?.currentStreak ?? 0;
+      final streakAchievements = await _achievementService.checkStreakAchievements(currentStreak);
+      newAchievements.addAll(streakAchievements);
+
+      // 检查里程碑成就
+      final totalCompleted = _checkins.length;
+      final milestoneAchievements = await _achievementService.checkMilestoneAchievements(totalCompleted);
+      newAchievements.addAll(milestoneAchievements);
+
+      // 显示新解锁的成就
+      if (newAchievements.isNotEmpty) {
+        _showAchievementNotifications(newAchievements);
+      }
+
+      // 更新智能提醒
+      await _updateSmartReminders();
+    } catch (e) {
+      // 忽略成就检查错误
+    }
+  }
+
+  void _showAchievementNotifications(List<achievement_model.Achievement> achievements) {
+    // 这里可以触发成就解锁的UI通知
+    // 暂时简化处理，实际应该通过事件系统或回调通知UI
+    for (final achievement in achievements) {
+      // 使用debugPrint替代print，在生产环境中会被优化掉
+      debugPrint('🎉 解锁成就: ${achievement.emoji} ${achievement.title}');
+    }
+  }
+
+  Future<void> _updateSmartReminders() async {
+    try {
+      final currentStreak = _stats?.currentStreak ?? 0;
+      final lastCompletion = _checkins.isNotEmpty
+          ? DateTime.parse('${_checkins.last.ymdDate}T12:00:00')
+          : DateTime.now().subtract(const Duration(days: 1));
+
+      final recentMoods = moodProvider.moodEntries.take(10).toList();
+
+      await _reminderService.scheduleSmartReminders(
+        currentStreak: currentStreak,
+        lastCompletionDate: lastCompletion,
+        recentMoods: recentMoods,
+      );
+
+      // 分析用户行为模式
+      await _reminderService.analyzeBehaviorPattern(
+        checkins: _checkins.take(50).toList(),
+        moodRecords: recentMoods,
+      );
+    } catch (e) {
+      // 忽略提醒更新错误
+    }
+  }
+
+  // 公开方法供UI调用
+  AchievementService get achievementService => _achievementService;
+  SmartReminderService get reminderService => _reminderService;
+  RealTimeLearningService get learningService => _learningService;
 
   @override
   void dispose() {

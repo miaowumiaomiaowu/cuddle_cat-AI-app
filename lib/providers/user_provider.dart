@@ -141,20 +141,6 @@ class UserProvider extends ChangeNotifier {
     await updateUserStats(updatedStats);
   }
 
-  /// 增加旅行记录统计
-  Future<void> incrementTravelRecordCount() async {
-    if (currentUser == null) return;
-
-    final now = DateTime.now();
-    final currentStats = currentUser!.stats;
-    
-    final updatedStats = currentStats.copyWith(
-      totalTravelRecords: currentStats.totalTravelRecords + 1,
-      lastTravelRecord: now,
-    );
-
-    await updateUserStats(updatedStats);
-  }
 
   /// 添加成就
   Future<void> addAchievement(String achievementId) async {
@@ -205,7 +191,7 @@ class UserProvider extends ChangeNotifier {
   /// 获取总记录数
   int get totalRecords {
     if (currentUser == null) return 0;
-    return currentUser!.stats.totalMoodEntries + currentUser!.stats.totalTravelRecords;
+    return currentUser!.stats.totalMoodEntries;
   }
 
   /// 获取连续记录天数

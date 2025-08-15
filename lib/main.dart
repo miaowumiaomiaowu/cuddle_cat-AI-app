@@ -21,6 +21,11 @@ import 'screens/developer_tools_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/help_center_screen.dart';
+import 'screens/adopt_cat_screen.dart';
+import 'screens/more_stats_screen.dart';
+import 'screens/more_achievements_screen.dart';
+import 'screens/ai_prefs_screen.dart';
+import 'screens/ai_service_debug_screen.dart';
 import 'widgets/quick_record_fab.dart';
 import 'services/error_handling_service.dart';
 import 'providers/cat_provider.dart';
@@ -34,8 +39,17 @@ import 'services/ai_psychology_service.dart';
 import 'providers/happiness_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
-import 'theme/artistic_theme.dart';
+import 'theme/app_theme.dart';
+
 import 'utils/page_transitions.dart';
+import 'services/config_service.dart';
+
+Future<ConfigService> importConfigServiceAndSync() async {
+  final cfg = ConfigService.instance;
+  await cfg.syncFromPrefs();
+  return cfg;
+}
+
 
 void main() async {
   //初始化flutter绑定
@@ -51,6 +65,14 @@ void main() async {
   } catch (e) {
     debugPrint("环境变量加载失败: $e");
     // 继续运行，不阻止应用启动
+  }
+
+  // 同步运行时配置（SharedPreferences 覆盖 .env）
+  try {
+    await importConfigServiceAndSync();
+    debugPrint('[Bootstrap] 运行时配置已同步');
+  } catch (e) {
+    debugPrint('同步运行时配置失败: $e');
   }
 
   // 全局 HTTP 代理（方案B）：通过 .env 开关让所有网络走 10.0.2.2:7890 等代理
@@ -167,7 +189,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: '暖猫',
-      theme: ArtisticTheme.lightTheme,
+      theme: AppTheme.lightTheme,
       home: const SplashScreen(),
       routes: {
         LoginScreen.routeName: (ctx) => const LoginScreen(),
@@ -184,6 +206,11 @@ class MyApp extends StatelessWidget {
         OnboardingScreen.routeName: (ctx) => const OnboardingScreen(),
         HelpCenterScreen.routeName: (ctx) => const HelpCenterScreen(),
         HappinessTaskEditScreen.routeName: (ctx) => const HappinessTaskEditScreen(),
+        '/adopt_cat': (ctx) => const AdoptCatScreen(),
+        MoreStatsScreen.routeName: (ctx) => const MoreStatsScreen(),
+        MoreAchievementsScreen.routeName: (ctx) => const MoreAchievementsScreen(),
+        AIPrefsScreen.routeName: (ctx) => const AIPrefsScreen(),
+        AIServiceDebugScreen.routeName: (ctx) => const AIServiceDebugScreen(),
 
         '/splash': (ctx) => const SplashScreen(),
         '/main': (ctx) => const MainScreen(),
@@ -315,8 +342,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
       floatingActionButton: const QuickRecordFAB(),
       bottomNavigationBar: Container(
         decoration: BoxDecoration(
-          color: ArtisticTheme.surfaceColor,
-          boxShadow: ArtisticTheme.elevatedShadow,
+          color: AppTheme.surfaceColor,
+          boxShadow: AppTheme.elevatedShadow,
         ),
         child: SafeArea(
           child: BottomNavigationBar(
@@ -328,8 +355,8 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
             },
             elevation: 0,
             backgroundColor: Colors.transparent,
-            selectedItemColor: ArtisticTheme.primaryColor,
-            unselectedItemColor: ArtisticTheme.textSecondary,
+            selectedItemColor: AppTheme.primaryColor,
+            unselectedItemColor: AppTheme.textSecondary,
             type: BottomNavigationBarType.fixed,
             selectedLabelStyle: const TextStyle(
               fontSize: 12,

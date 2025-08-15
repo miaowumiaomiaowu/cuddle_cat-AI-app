@@ -36,14 +36,99 @@ class RecommendationAnalytics:
     
     def get_recommendation_stats(self, days: int = 7) -> Dict:
         """获取推荐统计"""
-        # 这里简化实现，实际应该从数据库查询
+        try:
+            # 模拟从缓存中获取统计数据
+            stats_key = f"rec_stats:{days}d"
+            cached_stats = self.cache_manager.get(stats_key)
+
+            if cached_stats:
+                return cached_stats
+
+            # 计算统计数据（简化版本）
+            stats = {
+                "total_recommendations": self._count_recommendations(days),
+                "user_engagement_rate": self._calculate_engagement_rate(days),
+                "avg_rating": self._calculate_avg_rating(days),
+                "popular_categories": self._get_popular_categories(days),
+                "improvement_suggestions": self._generate_suggestions(days),
+                "feedback_distribution": self._get_feedback_distribution(days),
+                "peak_usage_hours": self._get_peak_hours(days),
+                "user_retention_rate": self._calculate_retention_rate(days)
+            }
+
+            # 缓存统计结果
+            self.cache_manager.set(stats_key, stats, ttl=3600)  # 1小时缓存
+            return stats
+
+        except Exception as e:
+            return {
+                "total_recommendations": 0,
+                "user_engagement_rate": 0.0,
+                "avg_rating": 0.0,
+                "popular_categories": [],
+                "improvement_suggestions": ["数据收集中，请稍后查看"],
+                "error": str(e)
+            }
+
+    def _count_recommendations(self, days: int) -> int:
+        """统计推荐总数"""
+        # 简化实现，实际应该查询数据库
+        return 42  # 模拟数据
+
+    def _calculate_engagement_rate(self, days: int) -> float:
+        """计算用户参与率"""
+        # 参与率 = (收下礼物 + 完成任务) / 总推荐数
+        return 0.73  # 模拟73%的参与率
+
+    def _calculate_avg_rating(self, days: int) -> float:
+        """计算平均评分"""
+        return 4.2  # 模拟4.2/5的平均评分
+
+    def _get_popular_categories(self, days: int) -> List[Dict]:
+        """获取热门分类"""
+        return [
+            {"category": "放松", "count": 15, "engagement_rate": 0.85},
+            {"category": "运动", "count": 12, "engagement_rate": 0.67},
+            {"category": "创作", "count": 8, "engagement_rate": 0.92},
+            {"category": "社交", "count": 7, "engagement_rate": 0.58}
+        ]
+
+    def _generate_suggestions(self, days: int) -> List[str]:
+        """生成改进建议"""
+        suggestions = []
+
+        engagement_rate = self._calculate_engagement_rate(days)
+        if engagement_rate < 0.6:
+            suggestions.append("考虑优化推荐算法，提高礼物与用户需求的匹配度")
+
+        avg_rating = self._calculate_avg_rating(days)
+        if avg_rating < 4.0:
+            suggestions.append("收集更多用户反馈，改进礼物质量和描述")
+
+        popular_categories = self._get_popular_categories(days)
+        if len(popular_categories) > 0:
+            top_category = popular_categories[0]
+            if top_category["engagement_rate"] > 0.8:
+                suggestions.append(f"'{top_category['category']}'类别表现优秀，可增加此类推荐")
+
+        return suggestions if suggestions else ["系统运行良好，继续保持！"]
+
+    def _get_feedback_distribution(self, days: int) -> Dict[str, int]:
+        """获取反馈分布"""
         return {
-            "total_recommendations": 0,
-            "user_engagement_rate": 0.0,
-            "avg_rating": 0.0,
-            "popular_categories": [],
-            "improvement_suggestions": []
+            "like": 28,
+            "completed": 19,
+            "skipped": 8,
+            "dislike": 3
         }
+
+    def _get_peak_hours(self, days: int) -> List[int]:
+        """获取使用高峰时段"""
+        return [9, 14, 20]  # 9点、14点、20点为高峰
+
+    def _calculate_retention_rate(self, days: int) -> float:
+        """计算用户留存率"""
+        return 0.68  # 模拟68%的留存率
 
 class ABTestManager:
     """A/B测试管理器"""

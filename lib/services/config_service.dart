@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
 
 /// 统一的应用配置读取服务
 /// - 从 .env 读取阿里云 ECS 后端地址、开关与超时等
@@ -7,6 +9,25 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class ConfigService {
   ConfigService._();
   static final ConfigService instance = ConfigService._();
+
+  // Runtime overrides from user settings (SharedPreferences)
+  String? _overrideBaseUrl;
+  bool? _overrideEnableRemoteBackend;
+
+  // Load overrides from SharedPreferences; call this once at startup
+  Future<void> syncFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      _overrideEnableRemoteBackend = prefs.getBool('ai_analysis_enabled');
+      final baseUrl = prefs.getString('ai_analysis_base_url');
+      _overrideBaseUrl = (baseUrl != null && baseUrl.trim().isNotEmpty)
+          ? baseUrl.trim()
+          : null;
+      debugPrint('[Config] Synced overrides: enabled=$_overrideEnableRemoteBackend, url=${_overrideBaseUrl ?? '-'}');
+    } catch (e) {
+      debugPrint('[Config] syncFromPrefs error: $e');
+    }
+  }
 
   // 通用读取
   String _env(String key, [String fallback = '']) {
@@ -28,10 +49,19 @@ class ConfigService {
   }
 
   // 是否启用远程后端（ECS）
-  bool get enableRemoteBackend => _envBool('ENABLE_REMOTE_BACKEND', false);
+  bool get enableRemoteBackend {
+    if (_overrideEnableRemoteBackend != null) return _overrideEnableRemoteBackend!;
+    return _envBool('ENABLE_REMOTE_BACKEND', false);
+  }
 
   // 服务器基础 URL（例如 https://api.example.com 或 http://<ecs_ip>:8080）
-  String get serverBaseUrl => _env('SERVER_BASE_URL');
+  // 优先：用户设置（SharedPreferences）> SERVER_BASE_URL > AI_ANALYSIS_BASE_URL（兼容旧配置）
+  String get serverBaseUrl {
+    if (_overrideBaseUrl != null && _overrideBaseUrl!.isNotEmpty) return _overrideBaseUrl!;
+    final server = _env('SERVER_BASE_URL');
+    if (server.isNotEmpty) return server;
+    return _env('AI_ANALYSIS_BASE_URL');
+  }
 
   // 健康检查路径（可选，默认 /health）
   String get healthPath => _env('HEALTH_PATH', '/health');
@@ -51,8 +81,8 @@ class ConfigService {
   bool get isRemoteConfigured => enableRemoteBackend && serverBaseUrl.isNotEmpty;
 
   void debugDump() {
-    debugPrint('[Config] ENABLE_REMOTE_BACKEND=$enableRemoteBackend');
-    debugPrint('[Config] SERVER_BASE_URL=$serverBaseUrl');
+    debugPrint('[Config] ENABLE_REMOTE_BACKEND=$enableRemoteBackend (override=${_overrideEnableRemoteBackend != null})');
+    debugPrint('[Config] SERVER_BASE_URL=$serverBaseUrl (override=${_overrideBaseUrl != null})');
     debugPrint('[Config] HEALTH_PATH=$healthPath');
     debugPrint('[Config] TIMEOUTS: c=$connectTimeoutMs r=$receiveTimeoutMs s=$sendTimeoutMs');
   }

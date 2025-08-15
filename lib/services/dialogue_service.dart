@@ -99,35 +99,18 @@ class DialogueService {
     // 生成猫咪回复
     DialogueMessage catReply;
 
-    // 根据设置选择使用AI生成还是模板生成
-    debugPrint('AI模式状态: ${useAI ? "已开启" : "已关闭"}');
-    if (useAI) {
-      try {
-        debugPrint('尝试使用AI服务生成回复...');
-        // 使用AI服务生成回复
-        catReply = await _aiService.generateCatReply(
-          userMessage: userMessage,
-          cat: cat,
-          conversationHistory: _activeSession!.messages,
-        );
-        debugPrint(
-            'AI回复生成成功: ${catReply.text.substring(0, min(30, catReply.text.length))}...');
-      } catch (e) {
-        debugPrint('AI生成回复失败: $e');
-        // 如果AI生成失败，回退到模板生成
-        debugPrint('回退到模板回复生成...');
-        catReply = await _generateTemplateReply(
-          userMessage: userMessage,
-          cat: cat,
-        );
-      }
-    } else {
-      // 使用模板生成回复
-      debugPrint('使用模板生成回复...');
-      catReply = await _generateTemplateReply(
+    // 统一使用 AI 生成；失败则抛出异常，由上层展示“无网络/服务异常”
+    try {
+      debugPrint('尝试使用AI服务生成回复...');
+      catReply = await _aiService.generateCatReply(
         userMessage: userMessage,
         cat: cat,
+        conversationHistory: _activeSession!.messages,
       );
+      debugPrint('AI回复生成成功: ${catReply.text.substring(0, min(30, catReply.text.length))}...');
+    } catch (e) {
+      debugPrint('AI生成回复失败: $e');
+      rethrow;
     }
 
     // 添加猫咪回复到会话
@@ -137,67 +120,6 @@ class DialogueService {
     await saveSessions();
 
     return catReply;
-  }
-
-  /// 使用模板生成猫咪回复（作为备用方案）
-  Future<DialogueMessage> _generateTemplateReply({
-    required DialogueMessage userMessage,
-    required Cat cat,
-  }) async {
-    // 根据用户情感和猫咪状态生成回复
-
-    // 根据猫咪的心情和用户的情感类型选择不同的回复方式
-    String reply = '';
-    EmotionType catEmotion;
-
-    // 获取合适的回复模板
-    switch (userMessage.emotionType) {
-      case EmotionType.happy:
-        reply = _getHappyReply(cat);
-        catEmotion = cat.mood == CatMoodState.happy
-            ? EmotionType.happy
-            : EmotionType.neutral;
-        break;
-      case EmotionType.sad:
-        reply = _getSadReply(cat);
-        catEmotion = EmotionType.loving;
-        break;
-      case EmotionType.angry:
-        reply = _getAngryReply(cat);
-        catEmotion = cat.mood == CatMoodState.happy
-            ? EmotionType.loving
-            : EmotionType.neutral;
-        break;
-      case EmotionType.anxious:
-        reply = _getAnxiousReply(cat);
-        catEmotion = EmotionType.loving;
-        break;
-      case EmotionType.confused:
-        reply = _getConfusedReply(cat);
-        catEmotion = EmotionType.neutral;
-        break;
-      case EmotionType.surprised:
-        reply = _getSurprisedReply(cat);
-        catEmotion = EmotionType.surprised;
-        break;
-      case EmotionType.loving:
-        reply = _getLovingReply(cat);
-        catEmotion = EmotionType.loving;
-        break;
-      case EmotionType.neutral:
-        reply = _getNeutralReply(cat);
-        catEmotion = cat.mood == CatMoodState.happy
-            ? EmotionType.happy
-            : EmotionType.neutral;
-        break;
-    }
-
-    // 创建猫咪回复消息
-    return DialogueMessage.fromCat(
-      text: reply,
-      emotionType: catEmotion,
-      emotionScore: _getEmotionScore(catEmotion, userMessage.emotionType),
-    );
   }
 
   /// 分析用户消息情感
@@ -395,147 +317,8 @@ class DialogueService {
     return EmotionType.neutral;
   }
 
-  /// 获取开心回复
-  String _getHappyReply(Cat cat) {
-    final replies = [
-      '喵~ 看到你这么开心，我也很开心呢！要一起玩游戏吗？',
-      '喵喵！你的笑容真暖人心！我最喜欢看到你笑了~',
-      '喵呜~ 开心的日子就是要一起分享才更快乐！',
-      '呼噜呼噜~（${cat.name}蹭蹭你）我也觉得今天特别棒！',
-      '喵喵喵！（${cat.name}兴奋地转圈）我们一起开心吧！',
-      '喵~！好心情应该要庆祝一下，要不要摸摸我的头？',
-    ];
+  // 移除模板聊天逻辑，统一由 AIService 生成
 
-    return _getRandomReply(replies);
-  }
 
-  /// 获取悲伤回复
-  String _getSadReply(Cat cat) {
-    final replies = [
-      '喵... 别难过了，${cat.name}在这里陪着你呢。（轻轻蹭你）',
-      '喵？怎么了，不开心吗？要不要抱抱${cat.name}？',
-      '喵呜~（${cat.name}轻轻靠在你身边）我会一直陪着你的。',
-      '喵..（${cat.name}担心地看着你）不管发生什么，都会好起来的。',
-      '喵喵？（${cat.name}用头轻轻顶你的手）别担心，有我在呢。',
-      '喵呜~心情不好的时候，抚摸猫咪会让你感觉好些哦。',
-    ];
 
-    return _getRandomReply(replies);
-  }
-
-  /// 获取生气回复
-  String _getAngryReply(Cat cat) {
-    final replies = [
-      '喵？（${cat.name}警觉地看着你）发生什么事了？深呼吸，慢慢说。',
-      '喵..别生气了，生气对身体不好。摸摸${cat.name}的毛，会平静下来的。',
-      '喵呜？（${cat.name}小心地靠近）无论发生什么，我都站在你这边。',
-      '喵喵..（${cat.name}安静地坐在你旁边）等你平静下来，我们再聊好吗？',
-      '喵？生气的时候，不如和${cat.name}玩一会儿，心情会好很多的。',
-      '喵呜..（${cat.name}轻轻舔你的手）别担心，一切都会好起来的。',
-    ];
-
-    return _getRandomReply(replies);
-  }
-
-  /// 获取焦虑回复
-  String _getAnxiousReply(Cat cat) {
-    final replies = [
-      '喵~（${cat.name}靠在你身边）放轻松，一切都会好起来的。',
-      '喵呜？有什么在困扰你吗？${cat.name}会一直陪着你的。',
-      '喵..（${cat.name}蹭蹭你的手）深呼吸，慢慢来，我在这里。',
-      '喵？别担心太多，现在抚摸我，会让你感觉好些的。',
-      '喵喵~（${cat.name}温柔地看着你）无论遇到什么困难，我们一起面对。',
-      '喵呜..焦虑的时候，摸摸猫咪的毛，听听呼噜声，会感觉安心很多。',
-    ];
-
-    return _getRandomReply(replies);
-  }
-
-  /// 获取困惑回复
-  String _getConfusedReply(Cat cat) {
-    final replies = [
-      '喵？（${cat.name}歪头看着你）我虽然不太懂，但我会认真听你说。',
-      '喵呜？（${cat.name}好奇地望着你）有什么疑问吗？也许我能帮上忙。',
-      '喵..（${cat.name}眨眨眼）虽然我只是一只猫，但可以陪你一起想办法。',
-      '喵？困惑的时候，不妨休息一下，和${cat.name}玩一会儿，也许答案就出现了。',
-      '喵喵？有时候，答案不在思考中，而在放松时突然出现。不如先摸摸我？',
-      '喵呜~（${cat.name}用爪子轻轻拍你）别想太多了，休息一下再思考吧。',
-    ];
-
-    return _getRandomReply(replies);
-  }
-
-  /// 获取惊讶回复
-  String _getSurprisedReply(Cat cat) {
-    final replies = [
-      '喵！（${cat.name}竖起耳朵）发生了什么惊人的事情吗？',
-      '喵呜？！（${cat.name}警觉地看着你）怎么了？是好事还是坏事？',
-      '喵？！（${cat.name}跳到你身边）看你这么惊讶，是有什么大新闻吗？',
-      '喵喵！（${cat.name}好奇地围着你转）快告诉我发生了什么！',
-      '喵！惊讶的事情总是令人难忘，不过别忘了喵星人也很好奇呢！',
-      '喵呜！（${cat.name}瞪大眼睛）我也很想知道发生了什么！',
-    ];
-
-    return _getRandomReply(replies);
-  }
-
-  /// 获取关爱回复
-  String _getLovingReply(Cat cat) {
-    final replies = [
-      '喵~（${cat.name}幸福地蹭你）我也很爱你，你是我最好的朋友！',
-      '呼噜呼噜~（${cat.name}满足地闭上眼睛）有你在身边真幸福。',
-      '喵喵~（${cat.name}用头顶你的手）我永远都会陪在你身边的。',
-      '喵呜~（${cat.name}舔你的手指）你对我这么好，我好开心！',
-      '喵~（${cat.name}蜷缩在你腿上）和你在一起的每一刻都很珍贵。',
-      '呼噜呼噜~你的关心是${cat.name}最大的幸福，我会一直爱你！',
-    ];
-
-    return _getRandomReply(replies);
-  }
-
-  /// 获取中性回复
-  String _getNeutralReply(Cat cat) {
-    final replies = [
-      '喵~（${cat.name}好奇地看着你）今天过得怎么样？',
-      '喵？有什么想和${cat.name}分享的吗？我很乐意听你说话。',
-      '喵喵~（${cat.name}轻轻摇摆尾巴）今天的天气不错，适合小憩一会儿。',
-      '喵呜~（${cat.name}伸了个懒腰）有时候放空一下思绪也很不错。',
-      '喵？（${cat.name}眨眨眼）要不要摸摸我的毛？会让你心情变好哦。',
-      '喵~（${cat.name}安静地坐在你旁边）无论你想做什么，我都陪着你。',
-    ];
-
-    return _getRandomReply(replies);
-  }
-
-  /// 随机获取一条回复
-  String _getRandomReply(List<String> replies) {
-    final random = Random();
-    return replies[random.nextInt(replies.length)];
-  }
-
-  /// 根据情感类型获取情感强度分数
-  double _getEmotionScore(EmotionType catEmotion, EmotionType userEmotion) {
-    // 根据猫咪回复的情感类型和用户情感类型计算强度
-    switch (catEmotion) {
-      case EmotionType.happy:
-        return userEmotion == EmotionType.happy ? 0.9 : 0.7;
-      case EmotionType.loving:
-        return userEmotion == EmotionType.sad ||
-                userEmotion == EmotionType.anxious
-            ? 0.9
-            : 0.8;
-      case EmotionType.sad:
-        return 0.7;
-      case EmotionType.anxious:
-        return 0.6;
-      case EmotionType.confused:
-        return 0.6;
-      case EmotionType.surprised:
-        return 0.8;
-      case EmotionType.angry:
-        return 0.7;
-      case EmotionType.neutral:
-        return 0.5;
-    }
-  }
 }

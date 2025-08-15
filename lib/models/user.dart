@@ -335,34 +335,26 @@ class PrivacySettings {
 /// 用户统计数据
 class UserStats {
   final int totalMoodEntries; // 总心情记录数
-  final int totalTravelRecords; // 总旅行记录数
   final int consecutiveDays; // 连续记录天数
   final int longestStreak; // 最长连续记录
   final DateTime? lastMoodEntry; // 最后一次心情记录
-  final DateTime? lastTravelRecord; // 最后一次旅行记录
   final List<String> achievements; // 成就列表
 
   UserStats({
     this.totalMoodEntries = 0,
-    this.totalTravelRecords = 0,
     this.consecutiveDays = 0,
     this.longestStreak = 0,
     this.lastMoodEntry,
-    this.lastTravelRecord,
     this.achievements = const [],
   });
 
   factory UserStats.fromJson(Map<String, dynamic> json) {
     return UserStats(
       totalMoodEntries: json['totalMoodEntries'] as int? ?? 0,
-      totalTravelRecords: json['totalTravelRecords'] as int? ?? 0,
       consecutiveDays: json['consecutiveDays'] as int? ?? 0,
       longestStreak: json['longestStreak'] as int? ?? 0,
-      lastMoodEntry: json['lastMoodEntry'] != null 
-          ? DateTime.parse(json['lastMoodEntry'] as String) 
-          : null,
-      lastTravelRecord: json['lastTravelRecord'] != null 
-          ? DateTime.parse(json['lastTravelRecord'] as String) 
+      lastMoodEntry: json['lastMoodEntry'] != null
+          ? DateTime.parse(json['lastMoodEntry'] as String)
           : null,
       achievements: List<String>.from(json['achievements'] as List? ?? []),
     );
@@ -371,31 +363,25 @@ class UserStats {
   Map<String, dynamic> toJson() {
     return {
       'totalMoodEntries': totalMoodEntries,
-      'totalTravelRecords': totalTravelRecords,
       'consecutiveDays': consecutiveDays,
       'longestStreak': longestStreak,
       'lastMoodEntry': lastMoodEntry?.toIso8601String(),
-      'lastTravelRecord': lastTravelRecord?.toIso8601String(),
       'achievements': achievements,
     };
   }
 
   UserStats copyWith({
     int? totalMoodEntries,
-    int? totalTravelRecords,
     int? consecutiveDays,
     int? longestStreak,
     DateTime? lastMoodEntry,
-    DateTime? lastTravelRecord,
     List<String>? achievements,
   }) {
     return UserStats(
       totalMoodEntries: totalMoodEntries ?? this.totalMoodEntries,
-      totalTravelRecords: totalTravelRecords ?? this.totalTravelRecords,
       consecutiveDays: consecutiveDays ?? this.consecutiveDays,
       longestStreak: longestStreak ?? this.longestStreak,
       lastMoodEntry: lastMoodEntry ?? this.lastMoodEntry,
-      lastTravelRecord: lastTravelRecord ?? this.lastTravelRecord,
       achievements: achievements ?? this.achievements,
     );
   }

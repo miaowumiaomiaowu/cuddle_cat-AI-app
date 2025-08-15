@@ -5,14 +5,12 @@ import '../theme/artistic_theme.dart';
 /// 功能气泡菜单组件
 class FunctionBubbleMenu extends StatefulWidget {
   final VoidCallback onMoodRecord;
-  final VoidCallback onTravelRecord;
   final VoidCallback onSettings;
   final VoidCallback onClose;
 
   const FunctionBubbleMenu({
     super.key,
     required this.onMoodRecord,
-    required this.onTravelRecord,
     required this.onSettings,
     required this.onClose,
   });
@@ -34,12 +32,6 @@ class _FunctionBubbleMenuState extends State<FunctionBubbleMenu>
       label: '心情记录',
       color: Colors.pink,
       emoji: '💭',
-    ),
-    FunctionItem(
-      icon: Icons.map,
-      label: '旅行记录',
-      color: Colors.blue,
-      emoji: '🗺️',
     ),
     FunctionItem(
       icon: Icons.settings,
@@ -230,9 +222,6 @@ class _FunctionBubbleMenuState extends State<FunctionBubbleMenu>
         widget.onMoodRecord();
         break;
       case 1:
-        widget.onTravelRecord();
-        break;
-      case 2:
         widget.onSettings();
         break;
     }

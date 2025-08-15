@@ -82,13 +82,16 @@ class DialogueProvider extends BaseProvider {
     await _loadActiveSession();
   }
 
-  /// 切换AI模式
+  /// 切换AI模式（统一使用AI，此方法保留但不再切换状态）
   void toggleAIMode() {
-    batchUpdate(() {
-      _useAI = !_useAI;
-      markPropertyChanged('useAI');
-    });
-    saveData(); // 异步保存
+    // 强制保持 AI 模式
+    if (!_useAI) {
+      batchUpdate(() {
+        _useAI = true;
+        markPropertyChanged('useAI');
+      });
+      saveData();
+    }
   }
 
   /// 加载活跃会话

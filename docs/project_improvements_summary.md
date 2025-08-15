@@ -147,11 +147,6 @@ Future<void> _saveSettings() async {
 
 #### 清理内容
 - **移除重复文件**：
-  - `travel_map_screen_custom.dart`
-  - `travel_map_screen_final.dart`
-
-- **代码整合**：
-  - 统一使用 `travel_map_screen_enhanced.dart`
   - 创建简化的气泡组件 `simple_chat_bubble.dart`
 
 - **依赖优化**：
@@ -160,10 +155,9 @@ Future<void> _saveSettings() async {
 
 ## 新增文件列表
 
-1. `lib/screens/travel_map_screen_enhanced.dart` - 增强版旅行地图
-2. `lib/screens/settings_screen.dart` - 完整设置页面
-3. `lib/widgets/simple_chat_bubble.dart` - 简化气泡组件
-4. `docs/project_improvements_summary.md` - 本改进总结文档
+1. `lib/screens/settings_screen.dart` - 完整设置页面
+2. `lib/widgets/simple_chat_bubble.dart` - 简化气泡组件
+3. `docs/project_improvements_summary.md` - 本改进总结文档
 
 ## 技术特性
 
@@ -176,7 +170,6 @@ Future<void> _saveSettings() async {
 ### 状态管理
 - 手势识别状态
 - 设置数据持久化
-- 旅行记录筛选状态
 - 猫咪交互状态
 
 ### 用户体验

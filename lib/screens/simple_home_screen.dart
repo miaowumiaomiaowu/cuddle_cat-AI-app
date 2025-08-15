@@ -1,7 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/cat_provider.dart';
-import '../providers/mood_provider.dart';
 import '../theme/artistic_theme.dart';
 import '../widgets/quick_mood_record_sheet.dart';
 

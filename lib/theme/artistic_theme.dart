@@ -4,21 +4,24 @@ import 'package:flutter/material.dart';
 /// 艺术感UI主题配置类 - 参考现代优秀设计
 class ArtisticTheme {
   // 莫兰迪艺术色系 - 更精致的配色
-  static const Color primaryColor = Color(0xFFD4A574); // 暖米色
-  static const Color primaryColorLight = Color(0xFFE8C4A0); // 浅暖米色
-  static const Color primaryColorDark = Color(0xFFB8956A); // 深暖米色
-  static const Color accentColor = Color(0xFF9ABEAA); // 薄荷绿
+  // 森系绿色主题（方案B）
+  // 莫奈睡莲色系
+  // 采用用户提供的绿色系调色板
+  static const Color primaryColor = Color(0xFF329363); // 深翠绿
+  static const Color primaryColorLight = Color(0xFF98CCBB); // 雾青绿
+  static const Color primaryColorDark = Color(0xFF398D37); // 深叶绿
+  static const Color accentColor = Color(0xFF80BC6B); // 浅叶绿
 
-  // 艺术背景色系
-  static const Color backgroundColor = Color(0xFFF8F5F0); // 艺术纸张色
-  static const Color surfaceColor = Color(0xFFFCFAF7); // 画布色
-  static const Color cardColor = Color(0xFFF2EFE8); // 卡片色
+  // 背景/表面/卡片
+  static const Color backgroundColor = Color(0xFFF4F8F8); // 极浅雾青白
+  static const Color surfaceColor = Color(0xFFFCFEFD); // 近白
+  static const Color cardColor = Color(0xFFE6F1EE); // 浅雾青卡片
 
   // 艺术文字色系
-  static const Color textPrimary = Color(0xFF3D3530); // 深墨色
-  static const Color textSecondary = Color(0xFF6B5D52); // 中墨色
-  static const Color textHint = Color(0xFF9B8B7D); // 浅墨色
-  static const Color textAccent = Color(0xFF8B7355); // 强调色
+  static const Color textPrimary = Color(0xFF2F3A40); // 墨蓝灰
+  static const Color textSecondary = Color(0xFF5B6A73); // 次级墨蓝
+  static const Color textHint = Color(0xFF9AA8B1); // 提示灰蓝
+  static const Color textAccent = Color(0xFF728390); // 强调灰蓝
 
   // 情感色彩 - 艺术化
   static const Color joyColor = Color(0xFFE8C4A0); // 喜悦 - 温暖金
@@ -33,9 +36,9 @@ class ArtisticTheme {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFFE8C4A0),
-      Color(0xFFD4A574),
-      Color(0xFFB8956A),
+      Color(0xFFDDEAE4), // light water green
+      Color(0xFF89A89E), // water green
+      Color(0xFF4F6F66), // deep pool green
     ],
     stops: [0.0, 0.5, 1.0],
   );
@@ -44,9 +47,9 @@ class ArtisticTheme {
     begin: Alignment.topLeft,
     end: Alignment.bottomRight,
     colors: [
-      Color(0xFFB8D4C6),
-      Color(0xFF9ABEAA),
-      Color(0xFF7FA08F),
+      Color(0xFFB5B3C5), // lilac gray
+      Color(0xFFCCB8C2), // misty rose
+      Color(0xFF89A89E), // water green
     ],
     stops: [0.0, 0.5, 1.0],
   );
@@ -55,9 +58,9 @@ class ArtisticTheme {
     begin: Alignment.topCenter,
     end: Alignment.bottomCenter,
     colors: [
-      Color(0xFFFCFAF7),
-      Color(0xFFF8F5F0),
-      Color(0xFFF2EFE8),
+      Color(0xFFFAFCF6),
+      Color(0xFFF6F8F2),
+      Color(0xFFEFF5E8),
     ],
     stops: [0.0, 0.6, 1.0],
   );

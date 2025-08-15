@@ -307,11 +307,6 @@ class FirestoreService {
     return usersCollection.doc(userId).collection('conversations');
   }
 
-  // 用户旅行记录
-  CollectionReference getUserTravels(String userId) {
-    return usersCollection.doc(userId).collection('travels');
-  }
-
   // 用户情绪记录
   CollectionReference getUserEmotions(String userId) {
     return usersCollection.doc(userId).collection('emotions');

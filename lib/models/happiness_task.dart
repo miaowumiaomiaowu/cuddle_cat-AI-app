@@ -5,7 +5,8 @@ class HappinessTask {
   final String title;
   final String emoji;
   final String category; // body/mind/social/selfcare/creative
-  final String description;
+  final String description; // 任务补充描述
+  final String? reason; // AI生成的原因/鼓励语（小字号展示）
   final int? difficulty; // 1..5
   final int? estimatedMinutes; // 5/10/15...
   final String frequency; // once/daily/weekly/workdays/custom
@@ -21,6 +22,7 @@ class HappinessTask {
     this.emoji = '🌿',
     this.category = 'selfcare',
     this.description = '',
+    this.reason,
     this.difficulty,
     this.estimatedMinutes,
     this.frequency = 'daily',
@@ -39,6 +41,7 @@ class HappinessTask {
       emoji: json['emoji'] as String? ?? '🌿',
       category: json['category'] as String? ?? 'selfcare',
       description: json['description'] as String? ?? '',
+      reason: json['reason'] as String?,
       difficulty: json['difficulty'] as int?,
       estimatedMinutes: json['estimatedMinutes'] as int?,
       frequency: json['frequency'] as String? ?? 'daily',
@@ -56,6 +59,7 @@ class HappinessTask {
         'emoji': emoji,
         'category': category,
         'description': description,
+        'reason': reason,
         'difficulty': difficulty,
         'estimatedMinutes': estimatedMinutes,
         'frequency': frequency,
@@ -72,6 +76,7 @@ class HappinessTask {
     String? emoji,
     String? category,
     String? description,
+    String? reason,
     int? difficulty,
     int? estimatedMinutes,
     String? frequency,
@@ -87,6 +92,7 @@ class HappinessTask {
       emoji: emoji ?? this.emoji,
       category: category ?? this.category,
       description: description ?? this.description,
+      reason: reason ?? this.reason,
       difficulty: difficulty ?? this.difficulty,
       estimatedMinutes: estimatedMinutes ?? this.estimatedMinutes,
       frequency: frequency ?? this.frequency,

@@ -15,13 +15,15 @@ class GiftingTask {
   final String emoji;
   final String category;
   final String description;
+  final String? reason; // 新增：生成原因/鼓励
   final int? estimatedMinutes;
-  GiftingTask({required this.title, required this.emoji, required this.category, required this.description, this.estimatedMinutes});
+  GiftingTask({required this.title, required this.emoji, required this.category, required this.description, this.reason, this.estimatedMinutes});
   HappinessTask toHappinessTask() => HappinessTask(
     title: title,
     emoji: emoji,
     category: category,
     description: description,
+    reason: reason,
     estimatedMinutes: estimatedMinutes,
     frequency: 'once',
   );

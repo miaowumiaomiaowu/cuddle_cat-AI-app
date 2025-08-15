@@ -61,9 +61,9 @@ class CatProvider extends BaseProvider {
   }
 
   // 领养新猫咪
-  Future<void> adoptCat({required String name, required CatBreed breed}) async {
+  Future<void> adoptCat({required String name, required CatBreed breed, CatPersonality personality = CatPersonality.playful}) async {
     await executeWithErrorHandling(() async {
-      _cat = await _catService.adoptCat(name: name, breed: breed);
+      _cat = await _catService.adoptCat(name: name, breed: breed, personality: personality);
       markPropertyChanged('cat');
       await saveData(immediate: true);
     }, errorMessage: '领养猫咪失败');

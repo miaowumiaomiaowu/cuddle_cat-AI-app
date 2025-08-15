@@ -4,48 +4,52 @@ import 'package:flutter/services.dart';
 /// 应用主题配置类 - 手绘风格
 class AppTheme {
   // 莫兰迪色系主色调配置 - 手绘彩铅风格
-  static const Color primaryColor = Color(0xFFD4A574); // 暖米色
-  static const Color primaryColorLight = Color(0xFFE8C4A0); // 浅暖米色
-  static const Color primaryColorDark = Color(0xFFB8956A); // 深暖米色
-  static const Color accentColor = Color(0xFF9ABEAA); // 薄荷绿
-  static const Color secondaryColor = Color(0xFF9ABEAA); // 次要颜色（薄荷绿）
+  // 森系绿色主题（方案B）
+  // 莫奈睡莲色系（柔和水绿 + 雾蓝 + 淡紫）
+  // 采用用户提供的配色（梵高·绿色原野调色盘）
+  // #329363 深翠绿、#98CCBB 雾青绿、#398D37 深叶绿、#80BC6B 浅叶绿、#C2D4D6 雾蓝灰
+  static const Color primaryColor = Color(0xFF329363); // 深翠绿（主色）
+  static const Color primaryColorLight = Color(0xFF98CCBB); // 雾青绿（浅）
+  static const Color primaryColorDark = Color(0xFF398D37); // 深叶绿（深）
+  static const Color accentColor = Color(0xFF80BC6B); // 浅叶绿（强调）
+  static const Color secondaryColor = Color(0xFFC2D4D6); // 雾蓝灰（次要）
 
-  // 莫兰迪色系背景色配置
-  static const Color backgroundColor = Color(0xFFF5F1EB); // 奶白色
-  static const Color surfaceColor = Color(0xFFFAF7F2); // 浅奶白色
-  static const Color cardColor = Color(0xFFEFEAE2); // 卡片背景
+  // 画布与卡片采用更浅的雾蓝/雾青系，保证可读性
+  static const Color backgroundColor = Color(0xFFF4F8F8); // 极浅雾青白
+  static const Color surfaceColor = Color(0xFFFCFEFD); // 近白
+  static const Color cardColor = Color(0xFFE6F1EE); // 浅雾青卡片
 
-  // 莫兰迪色系文本色配置
-  static const Color textPrimary = Color(0xFF5D4E37); // 深棕色
-  static const Color textSecondary = Color(0xFF8B7355); // 中棕色
-  static const Color textHint = Color(0xFFB5A490); // 浅棕色
-  static const Color textColor = Color(0xFF5D4E37); // 主文本颜色（与textPrimary相同）
+  // 文本色更偏墨蓝灰，提升高级感
+  static const Color textPrimary = Color(0xFF2F3A40); // 墨蓝灰
+  static const Color textSecondary = Color(0xFF5B6A73); // 次级墨蓝
+  static const Color textHint = Color(0xFF9AA8B1); // 提示灰蓝
+  static const Color textColor = Color(0xFF2F3A40); // 主文本颜色（与textPrimary相同）
 
-  // 莫兰迪色系功能色配置
-  static const Color successColor = Color(0xFF8FA68E); // 柔和绿
-  static const Color warningColor = Color(0xFFD4B896); // 柔和橙
-  static const Color errorColor = Color(0xFFCB9CA1); // 柔和红
-  static const Color infoColor = Color(0xFF9BB0C1); // 柔和蓝
+  // 功能色：依睡莲系微调
+  static const Color successColor = Color(0xFF7FB8A7); // 柔水绿
+  static const Color warningColor = Color(0xFFE3C48E); // 柔金杏
+  static const Color errorColor = Color(0xFFCE9AA5); // 玫瑰灰
+  static const Color infoColor = Color(0xFFA8BBCB); // 雾蓝
 
-  // 猫咪心情莫兰迪色系
-  static const Color happyColor = Color(0xFFE8C4A0); // 开心 - 温暖米色
-  static const Color playfulColor = Color(0xFF9ABEAA); // 顽皮 - 薄荷绿
-  static const Color calmColor = Color(0xFF9BB0C1); // 平静 - 柔和蓝
-  static const Color sleepyColor = Color(0xFFB5A490); // 困倦 - 浅棕色
-  static const Color hungryColor = Color(0xFFD4B896); // 饥饿 - 柔和橙
-  static const Color sadColor = Color(0xFFCB9CA1); // 伤心 - 柔和红
+  // 猫咪心情色（与新系一致）
+  static const Color happyColor = Color(0xFFF0EEC8); // 开心 - 淡暖米黄
+  static const Color playfulColor = Color(0xFF89A89E); // 顽皮 - 水绿
+  static const Color calmColor = Color(0xFFA8BBCB); // 平静 - 雾蓝
+  static const Color sleepyColor = Color(0xFFB5B3C5); // 困倦 - 淡紫灰
+  static const Color hungryColor = Color(0xFFE7D4C2); // 饥饿 - 奶茶米
+  static const Color sadColor = Color(0xFF9FADB8); // 伤心 - 灰蓝
 
   // 手绘风格阴影配置 - 更柔和、更自然
   static List<BoxShadow> get cardShadow => [
         BoxShadow(
-          color: const Color(0xFF8B7355).withValues(alpha: 0.15),
-          blurRadius: 12,
+          color: textPrimary.withValues(alpha: 0.10), // 墨蓝灰阴影
+          blurRadius: 14,
           offset: const Offset(2, 3),
           spreadRadius: 1,
         ),
         BoxShadow(
-          color: const Color(0xFFFFB74D).withValues(alpha: 0.05),
-          blurRadius: 6,
+          color: accentColor.withValues(alpha: 0.06), // 淡紫灰冷光
+          blurRadius: 8,
           offset: const Offset(-1, -1),
         ),
       ];
@@ -89,21 +93,23 @@ class AppTheme {
     boxShadow: cardShadow,
   );
 
-  /// 获取手绘风格的按钮装饰
+  /// 获取手绘风格的按钮装饰（睡莲渐变）
   static BoxDecoration get handDrawnButton => BoxDecoration(
-    gradient: LinearGradient(
+    gradient: const LinearGradient(
       colors: [
-        primaryColor,
-        primaryColorDark,
+        Color(0xFFDDEAE4), // light water green
+        Color(0xFF89A89E), // water green
+        Color(0xFF4F6F66), // deep pool green
       ],
       begin: Alignment.topLeft,
       end: Alignment.bottomRight,
+      stops: [0.0, 0.5, 1.0],
     ),
     borderRadius: BorderRadius.circular(radiusLarge),
     boxShadow: [
       BoxShadow(
-        color: primaryColor.withValues(alpha: 0.4),
-        blurRadius: 8,
+        color: primaryColor.withValues(alpha: 0.35),
+        blurRadius: 10,
         offset: const Offset(2, 4),
       ),
     ],

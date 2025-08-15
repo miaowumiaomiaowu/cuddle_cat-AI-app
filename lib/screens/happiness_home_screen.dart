@@ -56,11 +56,12 @@ class _HappinessHomeScreenState extends State<HappinessHomeScreen> {
             child: Stack(
               children: [
                 const HappinessGiftView(),
+                // 顶部今日幸福清单栏目已移除，改为说明与自定义入口
                 Positioned(
                   top: 12,
                   left: 16,
                   right: 16,
-                  child: _buildHeader(context, hp),
+                  child: _buildExplainer(context),
                 ),
                 if (_showMemoryReview)
                   Positioned(
@@ -80,8 +81,7 @@ class _HappinessHomeScreenState extends State<HappinessHomeScreen> {
     );
   }
 
-  Widget _buildHeader(BuildContext context, HappinessProvider hp) {
-    final stats = hp.stats;
+  Widget _buildExplainer(BuildContext context) {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -90,33 +90,35 @@ class _HappinessHomeScreenState extends State<HappinessHomeScreen> {
         boxShadow: ArtisticTheme.softShadow,
       ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('🌿', style: TextStyle(fontSize: 28)),
+          const Text('💡', style: TextStyle(fontSize: 24)),
           const SizedBox(width: 8),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('今日幸福清单', style: ArtisticTheme.titleMedium.copyWith(fontWeight: FontWeight.bold)),
-                const SizedBox(height: 4),
-                Text(stats == null
-                    ? '和我一起做一件小幸福事吧'
-                    : '连续: ${stats.currentStreak} 天 · 近7天完成率: ${(stats.completionRate7d*100).toStringAsFixed(0)}%'),
+                Text(
+                  '幸福清单基于你的状态由AI分析生成，你也可以自定义哦',
+                  style: ArtisticTheme.bodyMedium,
+                ),
+                const SizedBox(height: 8),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: () => Navigator.of(context).pushNamed(HappinessTaskEditScreen.routeName),
+                    icon: const Icon(Icons.tune),
+                    label: const Text('自定义清单'),
+                  ),
+                )
               ],
             ),
-          ),
-          const SizedBox(width: 8),
-          ElevatedButton.icon(
-            onPressed: () => Navigator.of(context).pushNamed(HappinessTaskEditScreen.routeName),
-            icon: const Icon(Icons.add),
-            label: const Text('新建任务'),
           ),
         ],
       ),
     );
   }
 
-  // 推荐列表不再作为主 UI 展示，保留顶部卡片与礼物体验
-
+  // 推荐列表不再作为主 UI 展示，保留礼物体验
 }
 

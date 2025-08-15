@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/cat_provider.dart';
-import '../providers/mood_provider.dart';
-import '../services/ai_psychology_service.dart';
-import '../models/mood_record.dart';
+import '../services/ai_service.dart';
+import '../models/cat.dart';
+import '../models/dialogue.dart';
 import '../theme/artistic_theme.dart';
 import '../widgets/floating_cat_assistant.dart';
 import '../widgets/immersive_chat_widget.dart';
@@ -40,7 +40,7 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
   late Animation<Color?> _backgroundColorAnimation;
   
   // 服务
-  final AIPsychologyService _aiService = AIPsychologyService();
+  final AIService _aiService = AIService();
 
   @override
   void initState() {
@@ -367,7 +367,6 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
         scale: _menuScaleAnimation,
         child: FunctionBubbleMenu(
           onMoodRecord: _openMoodRecord,
-          onTravelRecord: _openTravelRecord,
           onSettings: _openSettings,
           onClose: _toggleFunctionMenu,
         ),
@@ -409,44 +408,65 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
     _scrollToBottom();
 
     try {
-      // 智能判断消息类型并选择合适的回复方式
-      final messageType = _analyzeMessageType(text);
+      // 统一使用 AI 生成回复
       String response;
-      ChatMessageType responseType;
+      ChatMessageType responseType = ChatMessageType.normal;
 
-      final moodProvider = Provider.of<MoodProvider>(context, listen: false);
-      final catProvider = Provider.of<CatProvider>(context, listen: false);
-
-      switch (messageType) {
+      switch (_analyzeMessageType(text)) {
         case UserMessageType.psychology:
-          // 心理支持回复
-          final currentMood = moodProvider.moodEntries.isNotEmpty
-              ? moodProvider.moodEntries.first.mood
-              : MoodType.neutral;
-          response = await _aiService.getChatResponse(
-            text,
-            currentMood,
-            moodProvider.moodEntries.take(10).toList(),
+          // 心理支持回复（接入 DeepSeek 实时对话）
+          final history = _messages
+              .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
+              .toList();
+          final aiMsg = await _aiService.generateCatReply(
+            userMessage: DialogueMessage.fromUser(text: text),
+            cat: Provider.of<CatProvider>(context, listen: false).cat ?? Cat(name: '小暖', breed: CatBreed.random),
+            conversationHistory: history,
           );
+          response = aiMsg.text;
           responseType = ChatMessageType.psychology;
           break;
 
         case UserMessageType.catInteraction:
-          // 猫咪互动回复
-          response = await _generateCatInteractionResponse(text, catProvider.cat);
+          // 猫咪互动也统一走 AI 生成
+          final history = _messages
+              .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
+              .toList();
+          final aiMsgInteraction = await _aiService.generateCatReply(
+            userMessage: DialogueMessage.fromUser(text: text),
+            cat: Provider.of<CatProvider>(context, listen: false).cat ?? Cat(name: '小暖', breed: CatBreed.random),
+            conversationHistory: history,
+          );
+          response = aiMsgInteraction.text;
           responseType = ChatMessageType.normal;
           break;
 
         case UserMessageType.casual:
-          // 日常聊天回复
-          response = await _generateCasualResponse(text);
+          // 日常聊天也走 AI，对闲聊做更自然的生成；失败时由 AIService 内部兜底
+          final history = _messages
+              .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
+              .toList();
+          final aiMsgCasual = await _aiService.generateCatReply(
+            userMessage: DialogueMessage.fromUser(text: text),
+            cat: Provider.of<CatProvider>(context, listen: false).cat ?? Cat(name: '小暖', breed: CatBreed.random),
+            conversationHistory: history,
+          );
+          response = aiMsgCasual.text;
           responseType = ChatMessageType.normal;
           break;
 
         case UserMessageType.functional:
-          // 功能性回复
-          response = _generateFunctionalResponse(text);
-          responseType = ChatMessageType.system;
+          // 功能性询问也统一走 AI 生成
+          final history = _messages
+              .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
+              .toList();
+          final aiMsgFunctional = await _aiService.generateCatReply(
+            userMessage: DialogueMessage.fromUser(text: text),
+            cat: Provider.of<CatProvider>(context, listen: false).cat ?? Cat(name: '小暖', breed: CatBreed.random),
+            conversationHistory: history,
+          );
+          response = aiMsgFunctional.text;
+          responseType = ChatMessageType.normal;
           break;
       }
 
@@ -466,7 +486,7 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
     } catch (e) {
       setState(() {
         _messages.add(ChatMessage(
-          text: '抱歉，我现在有点忙，请稍后再试。但请记住，你的感受很重要，我会一直在这里支持你。💙',
+          text: '当前网络不可用或服务异常，请检查网络连接后重试。',
           isUser: false,
           timestamp: DateTime.now(),
           avatar: '🤖',
@@ -495,7 +515,7 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
 
     // 功能性关键词
     final functionalKeywords = [
-      '记录', '旅行', '心情记录', '设置', '帮助', '功能', '怎么用',
+      '记录', '心情记录', '设置', '帮助', '功能', '怎么用',
       '如何', '教程', '指南'
     ];
 
@@ -517,56 +537,6 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
     // 默认为日常聊天
     return UserMessageType.casual;
   }
-
-  /// 生成猫咪互动回复
-  Future<String> _generateCatInteractionResponse(String message, cat) async {
-    if (cat == null) {
-      return '喵~ 我还没有遇到我的猫咪伙伴呢！你想帮我找一只可爱的猫咪吗？🐱';
-    }
-
-    final responses = [
-      '${cat.name}听到你的声音就开心地摇尾巴~ 喵喵！🐱',
-      '喵~ ${cat.name}想要和你一起玩耍！你想做什么呢？',
-      '${cat.name}轻轻蹭了蹭你的手，表示很喜欢你~ 💕',
-      '喵呜~ ${cat.name}觉得和你聊天很开心！',
-      '${cat.name}伸了个懒腰，然后跳到你身边坐下~ 🐾',
-    ];
-
-    return responses[DateTime.now().millisecond % responses.length];
-  }
-
-  /// 生成日常聊天回复
-  Future<String> _generateCasualResponse(String message) async {
-    final responses = [
-      '听起来很有趣！能告诉我更多吗？😊',
-      '我很喜欢和你聊天！你今天过得怎么样？',
-      '这让我想到了很多有趣的事情~ ✨',
-      '你的想法很棒！我们继续聊聊吧~',
-      '谢谢你和我分享这些！我很开心能听到你的声音 💙',
-    ];
-
-    return responses[DateTime.now().millisecond % responses.length];
-  }
-
-  /// 生成功能性回复
-  String _generateFunctionalResponse(String message) {
-    final lowerMessage = message.toLowerCase();
-
-    if (lowerMessage.contains('心情记录') || lowerMessage.contains('记录心情')) {
-      return '你可以点击右下角的悬浮猫咪，然后选择"心情记录"来记录你的心情哦！这样我就能更好地了解你的感受~ 💭';
-    }
-
-    if (lowerMessage.contains('旅行') || lowerMessage.contains('旅行记录')) {
-      return '想记录旅行吗？点击悬浮猫咪选择"旅行记录"，或者切换到旅行页面，那里有美丽的地图等着你！🗺️';
-    }
-
-    if (lowerMessage.contains('设置') || lowerMessage.contains('功能')) {
-      return '你可以通过悬浮猫咪菜单访问各种功能，或者在"我的"页面查看更多设置选项~ ⚙️';
-    }
-
-    return '我可以帮你记录心情、聊天陪伴、分享旅行故事！点击右下角的悬浮猫咪查看更多功能~ ✨';
-  }
-
   /// 获取回复头像
   String _getResponseAvatar(ChatMessageType type) {
     switch (type) {
@@ -605,10 +575,6 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
     );
   }
 
-  void _openTravelRecord() {
-    _toggleFunctionMenu();
-    Navigator.pushNamed(context, '/travel_record');
-  }
 
   void _openSettings() {
     _toggleFunctionMenu();

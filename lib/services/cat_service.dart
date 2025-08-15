@@ -46,10 +46,11 @@ class CatService {
   }
 
   /// 领养新猫咪
-  Future<Cat> adoptCat({required String name, required CatBreed breed}) async {
+  Future<Cat> adoptCat({required String name, required CatBreed breed, CatPersonality personality = CatPersonality.playful}) async {
     final newCat = Cat(
       name: name,
       breed: breed,
+      personality: personality,
     );
 
     await saveCat(newCat);

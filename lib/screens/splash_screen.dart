@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../theme/artistic_theme.dart';
 // import '../services/performance_service.dart'; // 已删除
@@ -14,6 +15,14 @@ class SplashScreen extends StatefulWidget {
 
 class _SplashScreenState extends State<SplashScreen>
     with TickerProviderStateMixin {
+  Future<bool> _checkHasCat() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.containsKey('cat_data');
+    } catch (_) {
+      return false;
+    }
+  }
   late AnimationController _logoController;
   late AnimationController _textController;
   late AnimationController _progressController;
@@ -143,16 +152,16 @@ class _SplashScreenState extends State<SplashScreen>
       _updateLoadingMessage(4);
       await Future.delayed(const Duration(milliseconds: 800));
       
-      // 导航到主界面
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/main');
-      }
+      // 导航：有猫进主界面，无猫进领养
+      final next = (await _checkHasCat()) ? '/main' : '/adopt_cat';
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(next);
     } catch (e) {
       debugPrint('初始化失败: $e');
       // 即使初始化失败也要继续
-      if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/main');
-      }
+      final next = (await _checkHasCat()) ? '/main' : '/adopt_cat';
+      if (!mounted) return;
+      Navigator.of(context).pushReplacementNamed(next);
     }
   }
 

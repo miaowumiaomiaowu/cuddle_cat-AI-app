@@ -30,7 +30,6 @@ class DataPersistenceService {
 
   // 数据键常量
   static const String _catDataKey = 'cat_data';
-  static const String _travelRecordsKey = 'travel_records';
   static const String _dialogueSessionsKey = 'dialogue_sessions';
   static const String _appStateKey = 'app_state';
   static const String _userPreferencesKey = 'user_preferences';
@@ -428,15 +427,6 @@ class DataPersistenceService {
         }
       }
 
-      // 验证旅行记录数据
-      final travelData = await loadData<List<dynamic>>(_travelRecordsKey);
-      if (travelData != null) {
-        final repairedTravelData = _repairTravelData(travelData);
-        if (repairedTravelData.length != travelData.length) {
-          await saveData(_travelRecordsKey, repairedTravelData);
-          needsRepair = true;
-        }
-      }
 
       // 验证对话数据
       final dialogueData = await loadData<List<dynamic>>(_dialogueSessionsKey);
@@ -490,21 +480,6 @@ class DataPersistenceService {
     return repaired;
   }
 
-  /// 修复旅行记录数据
-  List<dynamic> _repairTravelData(List<dynamic> data) {
-    return data.where((item) {
-      if (item is! Map<String, dynamic>) return false;
-
-      final requiredFields = [
-        'id',
-        'title',
-        'locationName',
-        'latitude',
-        'longitude'
-      ];
-      return requiredFields.every((field) => item.containsKey(field));
-    }).toList();
-  }
 
   /// 修复对话数据
   List<dynamic> _repairDialogueData(List<dynamic> data) {

@@ -49,7 +49,7 @@ class _ApiDebugScreenState extends State<ApiDebugScreen> {
     cfg.debugDump();
     if (!cfg.isRemoteConfigured) {
       setState(() {
-        _backendStatus = '未启用远程后端或未配置 SERVER_BASE_URL';
+        _backendStatus = '未启用远程后端或未配置 SERVER_BASE_URL/AI_ANALYSIS_BASE_URL';
         _isLoading = false;
       });
       return;

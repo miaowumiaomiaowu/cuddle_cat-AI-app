@@ -307,7 +307,11 @@ class _HappinessBlindBoxState extends State<HappinessBlindBox>
                   Text(task.title, style: ArtisticTheme.titleMedium),
                   const SizedBox(height: 4),
                   Text(
-                    (task.description.isNotEmpty ? task.description : '${task.estimatedMinutes ?? 5}分钟 · ${task.category}'),
+                    ((task.reason != null && task.reason!.isNotEmpty)
+                        ? task.reason!
+                        : (task.description.isNotEmpty
+                            ? task.description
+                            : '${task.estimatedMinutes ?? 5}分钟 · ${task.category}')),
                     style: ArtisticTheme.caption,
                   ),
                 ],
@@ -322,19 +326,19 @@ class _HappinessBlindBoxState extends State<HappinessBlindBox>
             OutlinedButton.icon(
               onPressed: () => _shuffle(hp),
               icon: const Icon(Icons.autorenew),
-              label: const Text('换一换'),
+              label: const Text('再来一个🔀'),
             ),
             const SizedBox(width: 12),
             TextButton.icon(
               onPressed: () => _startCurrent(hp),
               icon: const Icon(Icons.play_arrow),
-              label: const Text('开始执行'),
+              label: const Text('就选这个！🎁'),
             ),
             const SizedBox(width: 12),
             ElevatedButton.icon(
               onPressed: () => _completeCurrent(hp),
               icon: const Icon(Icons.check_circle),
-              label: const Text('完成打卡'),
+              label: const Text('搞定！✨'),
             ),
           ],
         )

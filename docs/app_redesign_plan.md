@@ -71,28 +71,6 @@ lib/modules/psychology/
     └── health_report_screen.dart  # 健康报告
 ```
 
-#### 3. 旅行记录模块 (TravelModule)
-```
-lib/modules/travel/
-├── models/
-│   ├── travel_record_model.dart  # 旅行记录模型
-│   ├── location_model.dart       # 地理位置模型
-│   ├── media_model.dart          # 多媒体内容模型
-│   └── travel_stats_model.dart   # 旅行统计模型
-├── providers/
-│   ├── travel_provider.dart      # 旅行记录管理
-│   ├── location_provider.dart    # 位置服务管理
-│   └── media_provider.dart       # 媒体文件管理
-├── services/
-│   ├── location_service.dart     # 定位服务
-│   ├── map_service.dart          # 地图服务
-│   ├── media_service.dart        # 媒体处理服务
-│   └── travel_stats_service.dart # 统计分析服务
-└── screens/
-    ├── travel_map_screen.dart    # 旅行地图
-    ├── record_edit_screen.dart   # 记录编辑
-    └── travel_stats_screen.dart  # 旅行统计
-```
 
 #### 4. 猫咪陪伴模块 (CompanionModule) - 简化版
 ```

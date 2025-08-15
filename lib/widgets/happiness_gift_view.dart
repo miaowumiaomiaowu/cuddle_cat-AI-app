@@ -15,11 +15,16 @@ class HappinessGiftView extends StatefulWidget {
 }
 
 class _HappinessGiftViewState extends State<HappinessGiftView>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scaleAnim;
   late Animation<double> _rotateAnim;
   late Animation<double> _glowAnim;
+
+  late AnimationController _burstController;
+  late Animation<double> _burstOpacity;
+  late Animation<double> _burstScale;
+
   HappinessTask? _current;
   final _rng = Random();
   final List<String> _recent = [];
@@ -41,11 +46,16 @@ class _HappinessGiftViewState extends State<HappinessGiftView>
       CurvedAnimation(parent: _controller, curve: const Interval(0.2, 0.6, curve: Curves.easeInOut)),
     );
     _glowAnim = CurvedAnimation(parent: _controller, curve: const Interval(0.5, 1.0, curve: Curves.easeOut));
+
+    _burstController = AnimationController(vsync: this, duration: const Duration(milliseconds: 900));
+    _burstOpacity = CurvedAnimation(parent: _burstController, curve: Curves.easeOutCubic);
+    _burstScale = Tween<double>(begin: 0.6, end: 1.4).animate(CurvedAnimation(parent: _burstController, curve: Curves.easeOutBack));
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _burstController.dispose();
     super.dispose();
   }
 
@@ -75,6 +85,8 @@ class _HappinessGiftViewState extends State<HappinessGiftView>
     final next = _pick(hp);
     await _controller.forward(from: 0);
     setState(() => _current = next);
+    // 显示奖励爆发动画
+    await _burstController.forward(from: 0);
   }
 
   Future<void> _shuffle(HappinessProvider hp) async {
@@ -86,8 +98,10 @@ class _HappinessGiftViewState extends State<HappinessGiftView>
   Future<void> _start(HappinessProvider hp) async {
     if (_current == null) return;
 
-    // 记录用户反馈
+    // 记录用户反馈和实时学习
     await _feedbackService.likegift(_current!.id, _current!.title);
+    await hp.learningService.recordTaskLiked(_current!);
+    await hp.learningService.recordTaskStarted(_current!);
 
     await hp.addOrUpdateTask(_current!);
     await hp.addRecommendationToToday(_current!);
@@ -108,6 +122,8 @@ class _HappinessGiftViewState extends State<HappinessGiftView>
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(content: Text('哇你真的很厉害！继续保持这份力量吧 ✨')),
     );
+    // 完成时也触发一次爆发动画
+    await _burstController.forward(from: 0);
     setState(() => _current = null);
     _controller.reset();
   }
@@ -157,25 +173,26 @@ class _HappinessGiftViewState extends State<HappinessGiftView>
       );
     }
 
-    final canOpen = hp.canOpenGiftToday;
     return GestureDetector(
-      onTap: canOpen ? () async { await _open(hp); hp.markGiftOpenedToday(); } : null,
+      onTap: () async { await _open(hp); },
       child: Stack(
         alignment: Alignment.center,
         children: [
-          if (!canOpen)
-            Positioned(
-              bottom: 28,
-              left: 0,
-              right: 0,
-              child: Center(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: const Color(0x66000000), borderRadius: BorderRadius.circular(12)),
-                  child: const Text('今天已开启，明天再来新的小礼物吧～', style: TextStyle(color: Colors.white)),
+          // 奖励粒子/光束爆发层
+          AnimatedBuilder(
+            animation: _burstController,
+            builder: (context, _) {
+              final v = _burstOpacity.value;
+              if (v <= 0.001) return const SizedBox.shrink();
+              return Transform.scale(
+                scale: _burstScale.value,
+                child: Opacity(
+                  opacity: v,
+                  child: _rewardBurst(),
                 ),
-              ),
-            ),
+              );
+            },
+          ),
           AnimatedBuilder(
             animation: _glowAnim,
             builder: (context, _) {
@@ -209,6 +226,40 @@ class _HappinessGiftViewState extends State<HappinessGiftView>
           const Positioned(bottom: 0, child: Text('嗨！做一点小事让今天更好吧！', style: TextStyle(color: Colors.grey))),
         ],
       ),
+    );
+  }
+
+  Widget _rewardBurst() {
+    // 简单的星星与条纹爆发
+    return Stack(
+      alignment: Alignment.center,
+      children: [
+        // 条纹光束
+        ...List.generate(12, (i) {
+          final angle = (pi * 2 / 12) * i;
+          return Transform.rotate(
+            angle: angle,
+            child: Container(
+              width: 3,
+              height: 120,
+              decoration: BoxDecoration(
+                color: ArtisticTheme.accentColor.withAlpha(120),
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          );
+        }),
+        // 星星
+        ...List.generate(8, (i) {
+          final angle = (pi * 2 / 8) * i;
+          final dx = 40 * cos(angle);
+          final dy = 40 * sin(angle);
+          return Transform.translate(
+            offset: Offset(dx, dy),
+            child: const Icon(Icons.star, color: Colors.amber, size: 18),
+          );
+        }),
+      ],
     );
   }
 
@@ -272,22 +323,25 @@ class _HappinessGiftViewState extends State<HappinessGiftView>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('🎁 今日礼物', style: ArtisticTheme.titleMedium),
-          const SizedBox(height: 8),
+          // 新文案排版：大字号任务 + 小字号AI理由/鼓励
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Text(task.emoji, style: const TextStyle(fontSize: 36)),
+              Text(task.emoji, style: const TextStyle(fontSize: 40)),
               const SizedBox(width: 12),
               Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(task.title, style: ArtisticTheme.titleMedium),
-                    const SizedBox(height: 4),
+                    Text(task.title, style: ArtisticTheme.headlineLarge), // 大字号
+                    const SizedBox(height: 6),
                     Text(
-                      task.description.isNotEmpty ? task.description : '${task.estimatedMinutes ?? 5}分钟 · ${task.category}',
-                      style: ArtisticTheme.caption,
+                      (task.reason != null && task.reason!.isNotEmpty)
+                          ? task.reason!
+                          : (task.description.isNotEmpty
+                              ? task.description
+                              : '${task.estimatedMinutes ?? 5}分钟 · ${task.category}'),
+                      style: ArtisticTheme.caption, // 小字号
                     ),
                   ],
                 ),
@@ -300,9 +354,9 @@ class _HappinessGiftViewState extends State<HappinessGiftView>
             spacing: 12,
             runSpacing: 8,
             children: [
-              OutlinedButton.icon(onPressed: () => _shuffle(hp), icon: const Icon(Icons.autorenew), label: const Text('换一换')),
-              TextButton.icon(onPressed: () => _start(hp), icon: const Icon(Icons.play_arrow), label: const Text('收下礼物')),
-              ElevatedButton.icon(onPressed: () => _complete(hp), icon: const Icon(Icons.check_circle), label: const Text('完成打卡')),
+              OutlinedButton.icon(onPressed: () => _shuffle(hp), icon: const Icon(Icons.autorenew), label: const Text('再来一个🔀')),
+              TextButton.icon(onPressed: () => _start(hp), icon: const Icon(Icons.play_arrow), label: const Text('就选这个！🎁')),
+              ElevatedButton.icon(onPressed: () => _complete(hp), icon: const Icon(Icons.check_circle), label: const Text('搞定！✨')),
             ],
           )
         ],

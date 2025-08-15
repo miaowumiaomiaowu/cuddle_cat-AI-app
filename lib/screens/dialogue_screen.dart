@@ -81,51 +81,6 @@ class _DialogueScreenState extends State<DialogueScreen>
               ),
         ),
         actions: [
-          Consumer<DialogueProvider>(
-            builder: (context, provider, child) {
-              return Container(
-                margin: const EdgeInsets.only(right: AppTheme.spacingSmall),
-                child: IconButton(
-                  icon: Icon(
-                    provider.useAI ? Icons.smart_toy : Icons.chat_bubble,
-                  ),
-                  onPressed: () {
-                    provider.toggleAIMode();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        content: Row(
-                          children: [
-                            Icon(
-                              provider.useAI
-                                  ? Icons.smart_toy
-                                  : Icons.chat_bubble,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                            const SizedBox(width: AppTheme.spacingSmall),
-                            Text(provider.useAI ? 'AI模式已开启' : 'AI模式已关闭'),
-                          ],
-                        ),
-                        backgroundColor: provider.useAI
-                            ? AppTheme.successColor
-                            : AppTheme.warningColor,
-                        duration: const Duration(seconds: 2),
-                      ),
-                    );
-                  },
-                  tooltip: provider.useAI ? '使用AI聊天(已开启)' : '使用模板聊天(AI已关闭)',
-                  style: IconButton.styleFrom(
-                    backgroundColor: provider.useAI
-                        ? AppTheme.successColor.withValues(alpha: 0.1)
-                        : AppTheme.warningColor.withValues(alpha: 0.1),
-                    foregroundColor: provider.useAI
-                        ? AppTheme.successColor
-                        : AppTheme.warningColor,
-                  ),
-                ),
-              );
-            },
-          ),
           IconButton(
             icon: const Text('ℹ️', style: TextStyle(fontSize: 20)),
             onPressed: () => _showApiInfoDialog(context),
@@ -185,53 +140,6 @@ class _DialogueScreenState extends State<DialogueScreen>
                     onTap: () {
                       catProvider.petCat();
                     },
-                  ),
-                ),
-
-                // AI模式状态指示
-                Container(
-                  margin: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.spacingMedium,
-                    vertical: AppTheme.spacingSmall,
-                  ),
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: AppTheme.spacingMedium,
-                    vertical: AppTheme.spacingSmall,
-                  ),
-                  decoration: BoxDecoration(
-                    color: dialogueProvider.useAI
-                        ? AppTheme.successColor.withValues(alpha: 0.1)
-                        : AppTheme.warningColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(AppTheme.radiusLarge),
-                    border: Border.all(
-                      color: dialogueProvider.useAI
-                          ? AppTheme.successColor.withValues(alpha: 0.3)
-                          : AppTheme.warningColor.withValues(alpha: 0.3),
-                    ),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        dialogueProvider.useAI
-                            ? Icons.smart_toy
-                            : Icons.chat_bubble,
-                        size: 16,
-                        color: dialogueProvider.useAI
-                            ? AppTheme.successColor
-                            : AppTheme.warningColor,
-                      ),
-                      const SizedBox(width: AppTheme.spacingSmall),
-                      Text(
-                        dialogueProvider.useAI ? 'AI智能对话模式' : '模板对话模式',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: dialogueProvider.useAI
-                                  ? AppTheme.successColor
-                                  : AppTheme.warningColor,
-                              fontWeight: FontWeight.w500,
-                            ),
-                      ),
-                    ],
                   ),
                 ),
 

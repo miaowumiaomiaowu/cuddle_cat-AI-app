@@ -28,6 +28,7 @@ class AIAnalysisHttp implements AIAnalysisFacade {
             emoji: (m['emoji'] as String?) ?? '🎁',
             category: (m['category'] as String?) ?? 'gift',
             description: (m['description'] as String?) ?? '',
+            reason: (m['reason'] as String?) ?? m['why'] as String?,
             estimatedMinutes: (m['estimatedMinutes'] as num?)?.toInt(),
           );
         }).toList() ?? [];

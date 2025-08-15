@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../theme/artistic_theme.dart';
 // import '../services/performance_service.dart'; // 已删除
 // import '../services/testing_service.dart'; // 已删除
@@ -10,6 +11,16 @@ import '../widgets/hand_drawn_card.dart';
 
 import '../widgets/settings/ai_analysis_settings_panel.dart';
 import '../widgets/settings/analytics_settings_panel.dart';
+import '../widgets/settings/reminder_settings_panel.dart';
+import '../widgets/analytics_dashboard.dart';
+import '../widgets/learning_dashboard.dart';
+import '../widgets/system_health_panel.dart';
+import '../providers/happiness_provider.dart';
+import '../providers/mood_provider.dart';
+import '../services/config_service.dart';
+import '../services/network_service.dart';
+import '../services/error_handling_service.dart';
+import 'ai_service_debug_screen.dart';
 
 /// 开发者工具界面
 class DeveloperToolsScreen extends StatefulWidget {
@@ -36,7 +47,7 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
 
     // 启动性能监控 (已禁用)
     // _performanceService.startMonitoring();
@@ -71,6 +82,7 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
             Tab(icon: Icon(Icons.speed), text: '性能'),
             Tab(icon: Icon(Icons.bug_report), text: '测试'),
             Tab(icon: Icon(Icons.health_and_safety), text: '健康'),
+            Tab(icon: Icon(Icons.analytics_outlined), text: 'AI分析'),
             Tab(icon: Icon(Icons.info), text: '系统'),
           ],
         ),
@@ -81,6 +93,7 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
           _buildPerformanceTab(),
           _buildTestingTab(),
           _buildHealthTab(),
+          _buildAIAnalysisTab(),
           _buildSystemTab(),
         ],
       ),
@@ -269,6 +282,117 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
       );
     }
 
+    Widget buildReminderSettings() {
+      return Consumer<HappinessProvider>(
+        builder: (context, hp, _) => Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('智能提醒设置', style: ArtisticTheme.titleMedium),
+            const SizedBox(height: 8),
+            Card(
+              elevation: 0,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: ReminderSettingsPanel(
+                  reminderService: hp.reminderService,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget buildAdvancedAnalyticsButton() {
+      return Consumer2<HappinessProvider, MoodProvider>(
+        builder: (context, hp, mp, _) => Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('高级AI分析', style: ArtisticTheme.titleMedium),
+                const SizedBox(height: 8),
+                const Text('查看用户行为聚类、心情预测模型和深度数据分析'),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AnalyticsDashboard(
+                          moodRecords: mp.moodEntries,
+                          checkins: hp.checkins,
+                          userStats: {
+                            'totalTasks': hp.tasks.length,
+                            'totalGifts': hp.recommendations.length,
+                            'currentStreak': hp.stats?.currentStreak ?? 0,
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.analytics),
+                  label: const Text('打开分析面板'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    Widget buildLearningDashboardButton() {
+      return Consumer<HappinessProvider>(
+        builder: (context, hp, _) => Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('实时学习系统', style: ArtisticTheme.titleMedium),
+                const SizedBox(height: 8),
+                const Text('查看在线学习模型状态、策略权重调整和性能监控'),
+                const SizedBox(height: 12),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => LearningDashboard(
+                          learningService: hp.learningService,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.psychology),
+                  label: const Text('打开学习面板'),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
+    Widget buildSystemHealthPanel() {
+      return Card(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('系统健康检查', style: ArtisticTheme.titleMedium),
+              const SizedBox(height: 8),
+              const Text('检查系统状态、数据完整性和服务连接'),
+              const SizedBox(height: 12),
+              const SystemHealthPanel(),
+            ],
+          ),
+        ),
+      );
+    }
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(ArtisticTheme.spacingMedium),
       child: Column(
@@ -305,6 +429,14 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
                   buildAIAnalysisSettings(),
                   const SizedBox(height: 16),
                   buildAnalyticsSettings(),
+                  const SizedBox(height: 16),
+                  buildReminderSettings(),
+                  const SizedBox(height: 16),
+                  buildAdvancedAnalyticsButton(),
+                  const SizedBox(height: 16),
+                  buildLearningDashboardButton(),
+                  const SizedBox(height: 16),
+                  buildSystemHealthPanel(),
                 ],
               ),
             ),
@@ -563,6 +695,17 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
                   icon: const Icon(Icons.restart_alt),
                   label: const Text('重启应用'),
                 ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const AIServiceDebugScreen(),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.psychology),
+                  label: const Text('AI服务诊断'),
+                ),
               ],
             ),
           ],
@@ -695,4 +838,112 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
       });
     }
   }
+
+  Widget _buildAIAnalysisTab() {
+    final cfg = ConfigService.instance;
+    final err = ErrorHandlingService();
+
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(ArtisticTheme.spacingMedium),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          HandDrawnCard(
+            child: Padding(
+              padding: const EdgeInsets.all(ArtisticTheme.spacingLarge),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('AI 服务连接', style: ArtisticTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Expanded(child: Text(cfg.isRemoteConfigured
+                          ? '远程已配置: ${cfg.serverBaseUrl}'
+                          : '未启用远程后端或地址缺失')),
+                      ElevatedButton.icon(
+                        onPressed: () async {
+                          final result = await NetworkService.instance.healthCheck();
+                          if (!mounted) return;
+                          final msg = result.ok
+                              ? '后端健康 (HTTP ${result.statusCode ?? '-'})'
+                              : '后端异常: ${result.message ?? '未知错误'}';
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+                        },
+                        icon: const Icon(Icons.health_and_safety),
+                        label: const Text('Ping /health'),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          HandDrawnCard(
+            child: Padding(
+              padding: const EdgeInsets.all(ArtisticTheme.spacingLarge),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('AI 聊天测试', style: ArtisticTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  const Text('请在“API调试工具”中进行更全面的对话测试'),
+                  const SizedBox(height: 8),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/api-debug');
+                    },
+                    icon: const Icon(Icons.open_in_new),
+                    label: const Text('打开 API 调试工具'),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          HandDrawnCard(
+            child: Padding(
+              padding: const EdgeInsets.all(ArtisticTheme.spacingLarge),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('最近错误', style: ArtisticTheme.titleMedium),
+                  const SizedBox(height: 8),
+                  Builder(
+                    builder: (_) {
+                      final list = err.getErrorHistory().reversed.take(20).toList();
+                      if (list.isEmpty) return const Text('暂无错误');
+                      return Column(
+                        children: list.map((e) => ListTile(
+                          dense: true,
+                          title: Text(e.message, maxLines: 1, overflow: TextOverflow.ellipsis),
+                          subtitle: Text('${e.timestamp} • ${e.context ?? ''}'),
+                          leading: const Icon(Icons.error_outline),
+                        )).toList(),
+                      );
+                    }
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      ElevatedButton.icon(
+                        onPressed: () { err.clearErrorHistory(); setState(() {}); },
+                        icon: const Icon(Icons.delete),
+                        label: const Text('清除错误'),
+                      ),
+                    ],
+                  )
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+
 }

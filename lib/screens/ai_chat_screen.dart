@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../theme/artistic_theme.dart';
+import '../services/ai_service.dart';
 import '../services/ai_psychology_service.dart';
 import '../providers/mood_provider.dart';
 import '../providers/user_provider.dart';
 
 import '../models/mood_record.dart';
+import '../models/cat.dart';
+import '../models/dialogue.dart';
 
 /// AI心理支持聊天页面
 class AIChatScreen extends StatefulWidget {
@@ -21,8 +24,9 @@ class _AIChatScreenState extends State<AIChatScreen>
     with TickerProviderStateMixin {
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final AIPsychologyService _aiService = AIPsychologyService();
-  
+  final AIService _aiService = AIService();
+  final AIPsychologyService _psychService = AIPsychologyService();
+
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
   
@@ -354,9 +358,7 @@ class _AIChatScreenState extends State<AIChatScreen>
     final text = _messageController.text.trim();
     if (text.isEmpty || _isTyping) return;
 
-    final userProvider = Provider.of<UserProvider>(context, listen: false);
-    final moodProvider = Provider.of<MoodProvider>(context, listen: false);
-    
+
     // 添加用户消息
     setState(() {
       _messages.add(ChatMessage(
@@ -372,14 +374,16 @@ class _AIChatScreenState extends State<AIChatScreen>
     _scrollToBottom();
 
     try {
-      // 获取当前心情和历史记录
-      final recentEntries = moodProvider.moodEntries.take(10).toList();
-      final currentMood = recentEntries.isNotEmpty 
-          ? recentEntries.first.mood 
-          : MoodType.neutral;
-
-      // 获取AI回复
-      final response = await _aiService.getChatResponse(text, currentMood, recentEntries);
+      // 获取AI回复（DeepSeek 实时对话）
+      final dialogueMessage = DialogueMessage.fromUser(text: text);
+      final aiReply = await _aiService.generateCatReply(
+        userMessage: dialogueMessage,
+        cat: Cat(name: '小暖', breed: CatBreed.random),
+        conversationHistory: _messages
+          .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
+          .toList(),
+      );
+      final response = aiReply.text;
 
       // 添加AI回复
       setState(() {
@@ -396,7 +400,7 @@ class _AIChatScreenState extends State<AIChatScreen>
     } catch (e) {
       setState(() {
         _messages.add(ChatMessage(
-          text: '抱歉，我现在有点忙，请稍后再试。但请记住，你的感受很重要，我会一直在这里支持你。',
+          text: '当前网络不可用或服务异常，请检查网络连接后重试。',
           isUser: false,
           timestamp: DateTime.now(),
           avatar: '🤖',
@@ -448,8 +452,8 @@ class _AIChatScreenState extends State<AIChatScreen>
     );
 
     try {
-      final insight = await _aiService.analyzeMoodPattern(
-        moodProvider.moodEntries, 
+      final insight = await _psychService.analyzeMoodPattern(
+        moodProvider.moodEntries,
         userProvider.currentUser!,
       );
 
@@ -504,7 +508,7 @@ class _AIChatScreenState extends State<AIChatScreen>
         ? moodProvider.moodEntries.first.mood 
         : MoodType.neutral;
     
-    final meditations = await _aiService.recommendMeditation(currentMood, 5);
+    final meditations = await _psychService.recommendMeditation(currentMood, 5);
 
     if (mounted) {
       showDialog(

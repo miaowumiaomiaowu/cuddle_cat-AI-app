@@ -5,7 +5,6 @@ import '../providers/mood_provider.dart';
 import '../providers/user_provider.dart';
 import '../widgets/hand_drawn_card.dart';
 import '../models/mood_record.dart';
-import '../services/location_service.dart';
 
 /// 增强的心情记录页面
 class EnhancedMoodEntryScreen extends StatefulWidget {
@@ -30,12 +29,10 @@ class _EnhancedMoodEntryScreenState extends State<EnhancedMoodEntryScreen>
   final List<String> _selectedTags = [];
   final List<String> _gratitudeList = [];
   final TextEditingController _gratitudeController = TextEditingController();
-  String? _currentLocation;
   bool _isPrivate = false;
-  bool _isLoadingLocation = false;
 
   final List<String> _availableTags = [
-    '工作', '家庭', '健康', '学习', '社交', '运动', '娱乐', '旅行', '购物', '天气'
+    '工作', '家庭', '健康', '学习', '社交', '运动', '娱乐', '购物', '天气'
   ];
 
   @override
@@ -61,7 +58,6 @@ class _EnhancedMoodEntryScreenState extends State<EnhancedMoodEntryScreen>
     ));
     
     _animationController.forward();
-    _getCurrentLocation();
   }
 
   @override
@@ -73,30 +69,6 @@ class _EnhancedMoodEntryScreenState extends State<EnhancedMoodEntryScreen>
     super.dispose();
   }
 
-  Future<void> _getCurrentLocation() async {
-    setState(() {
-      _isLoadingLocation = true;
-    });
-
-    try {
-      final locationService = LocationService();
-      final position = await locationService.getCurrentPosition();
-      
-      if (position != null) {
-        // 简化实现：使用坐标作为位置名称
-        // 实际项目中应该使用地理编码服务获取地址
-        setState(() {
-          _currentLocation = '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}';
-        });
-      }
-    } catch (e) {
-      debugPrint('获取位置失败: $e');
-    } finally {
-      setState(() {
-        _isLoadingLocation = false;
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -148,8 +120,6 @@ class _EnhancedMoodEntryScreenState extends State<EnhancedMoodEntryScreen>
                   _buildTagSelector(),
                   const SizedBox(height: ArtisticTheme.spacingLarge),
                   _buildGratitudeSection(),
-                  const SizedBox(height: ArtisticTheme.spacingLarge),
-                  _buildLocationSection(),
                   const SizedBox(height: ArtisticTheme.spacingLarge),
                   _buildPrivacySettings(),
                   const SizedBox(height: ArtisticTheme.spacingLarge),
@@ -501,51 +471,6 @@ class _EnhancedMoodEntryScreenState extends State<EnhancedMoodEntryScreen>
     );
   }
 
-  Widget _buildLocationSection() {
-    return HandDrawnCard(
-      child: Padding(
-        padding: const EdgeInsets.all(ArtisticTheme.spacingLarge),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.location_on, color: ArtisticTheme.primaryColor),
-                const SizedBox(width: 8),
-                Text(
-                  '位置信息',
-                  style: ArtisticTheme.titleMedium.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const Spacer(),
-                if (_isLoadingLocation)
-                  const SizedBox(
-                    width: 16,
-                    height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                else
-                  IconButton(
-                    icon: const Icon(Icons.refresh),
-                    onPressed: _getCurrentLocation,
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _currentLocation ?? '未获取到位置信息',
-              style: ArtisticTheme.bodyMedium.copyWith(
-                color: _currentLocation != null 
-                    ? ArtisticTheme.textPrimary
-                    : ArtisticTheme.textSecondary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   Widget _buildPrivacySettings() {
     return HandDrawnCard(
@@ -632,7 +557,6 @@ class _EnhancedMoodEntryScreenState extends State<EnhancedMoodEntryScreen>
             : _triggerController.text.trim(),
         gratitude: _gratitudeList,
         isPrivate: _isPrivate,
-        locationName: _currentLocation,
       );
 
       await moodProvider.addMoodEntry(entry);

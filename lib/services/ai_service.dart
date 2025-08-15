@@ -4,11 +4,13 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:http/io_client.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/cat.dart';
 import '../models/dialogue.dart';
 import '../utils/cat_emoji_expressions.dart';
 import 'error_handling_service.dart';
+import 'user_preferences_service.dart';
 
 /// DeepSeek AI服务类
 class AIService {
@@ -35,6 +37,25 @@ class AIService {
     if (_consecutiveFailures >= 3) {
       _openedUntil = DateTime.now().add(openFor);
     }
+  }
+
+  /// 获取熔断器状态信息（用于调试）
+  Map<String, dynamic> getCircuitBreakerStatus() {
+    return {
+      'isOpen': _circuitOpen,
+      'consecutiveFailures': _consecutiveFailures,
+      'openedUntil': _openedUntil?.toIso8601String(),
+      'remainingSeconds': _openedUntil != null
+          ? _openedUntil!.difference(DateTime.now()).inSeconds.clamp(0, double.infinity)
+          : 0,
+    };
+  }
+
+  /// 重置熔断器（用于调试和恢复）
+  void resetCircuitBreaker() {
+    _consecutiveFailures = 0;
+    _openedUntil = null;
+    debugPrint('AI服务熔断器已重置');
   }
 
   AIService._internal();
@@ -66,8 +87,19 @@ class AIService {
         throw SocketException('网络暂时不可用，熔断中');
       }
 
-      // 构建提示词系统消息
-      final String systemPrompt = _buildSystemPrompt(cat);
+      // 读取用户偏好
+      final tonePref = await UserPreferencesService.getTone();
+      final advicePref = await UserPreferencesService.getAdviceRatio();
+      final langPref = await UserPreferencesService.getLang();
+      final ctxPref = await UserPreferencesService.getContextWindow();
+      String mapTone(String t) {
+        switch (t) { case 'cute': return '可爱'; case 'cool': return '高冷'; case 'funny': return '搞笑'; case 'gentle': return '温柔'; case 'rational': return '理性'; case 'literary': return '文艺'; default: return '自动'; }
+      }
+      String mapLang(String l) { switch (l) { case 'zh': return '中文'; case 'en': return '英文'; default: return '自动'; } }
+      String mapCtx(String c) { switch (c) { case 'short': return '短'; case 'long': return '长'; default: return '中'; } }
+
+      // 构建提示词系统消息 + 偏好指引
+      final String systemPrompt = '${_buildSystemPrompt(cat)}\n用户偏好指引：语气：${mapTone(tonePref)}；建议比例：$advicePref%；语言：${mapLang(langPref)}；上下文：${mapCtx(ctxPref)}。';
       debugPrint('系统提示词构建完成');
 
       // 构建对话历史
@@ -112,11 +144,13 @@ class AIService {
       final jsonBody = jsonEncode(requestBody);
       debugPrint('请求体: ${jsonBody.substring(0, min(100, jsonBody.length))}...');
 
-      // 设置超时
+      // 设置超时与客户端
       final client = http.Client();
+      http.Response response;
       try {
-        // 发送请求
-        final response = await client
+        debugPrint('开始发送HTTP请求...');
+        // 发送请求（优先按全局设置请求）
+        response = await client
             .post(
           Uri.parse(_apiEndpoint),
           headers: {
@@ -124,18 +158,52 @@ class AIService {
             'Authorization': 'Bearer $_apiKey',
           },
           body: jsonBody,
-        )
-            .timeout(const Duration(seconds: 15), onTimeout: () {
+        ).timeout(const Duration(seconds: 30), onTimeout: () {
+          debugPrint('API请求超时 - 30秒');
           throw TimeoutException('API请求超时');
         });
+        debugPrint('HTTP请求完成，状态码: ${response.statusCode}');
+      } on SocketException catch (e) {
+        debugPrint('SocketException捕获: ${e.message}, address: ${e.address}, port: ${e.port}');
+        // 如果配置了代理，尝试直连一次作为回退
+        final raw = dotenv.env['USE_HTTP_PROXY']?.trim().toLowerCase();
+        final enableProxy = raw == 'true' || raw == '1' || raw == 'yes' || raw == 'on';
+        if (enableProxy) {
+          debugPrint('[AIService] 代理请求失败(${e.message})，尝试直连回退...');
+          response = await _postDirect(jsonBody).timeout(
+            const Duration(seconds: 30),
+            onTimeout: () => throw TimeoutException('直连回退超时'),
+          );
+        } else {
+          rethrow;
+        }
+      } on TimeoutException catch (e) {
+        debugPrint('TimeoutException捕获: ${e.message}');
+        final raw = dotenv.env['USE_HTTP_PROXY']?.trim().toLowerCase();
+        final enableProxy = raw == 'true' || raw == '1' || raw == 'yes' || raw == 'on';
+        if (enableProxy) {
+          debugPrint('[AIService] 代理请求超时(${e.message}), 尝试直连回退...');
+          response = await _postDirect(jsonBody).timeout(
+            const Duration(seconds: 30),
+            onTimeout: () => throw TimeoutException('直连回退超时'),
+          );
+        } else {
+          rethrow;
+        }
+      } catch (e) {
+        debugPrint('其他异常捕获: $e, 类型: ${e.runtimeType}');
+        rethrow;
+      } finally {
+        client.close();
+      }
 
-        // 解析响应
-        debugPrint('收到API响应，状态码: ${response.statusCode}');
-        if (response.statusCode == 200) {
-          _noteSuccess();
+      // 解析响应
+      debugPrint('收到API响应，状态码: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        _noteSuccess();
 
-          // 使用utf8.decode确保正确处理中文字符
-          final responseText = utf8.decode(response.bodyBytes);
+        // 使用utf8.decode确保正确处理中文字符
+        final responseText = utf8.decode(response.bodyBytes);
           final responseData = jsonDecode(responseText);
 
           try {
@@ -173,67 +241,110 @@ class AIService {
             emotionScore: 0.6,
           );
         }
-      } finally {
-        client.close();
-      }
-    } on SocketException catch (e) {
+      } on SocketException catch (e) {
+      debugPrint('最终SocketException处理: ${e.message}');
       _noteFailure();
       ErrorHandlingService().recordNetworkError(_apiEndpoint, null, 'SocketException: ${e.message}');
-      final fallbackEmotion = EmotionType.confused;
-      final fallbackText = '喵呜...网络像在捉迷藏，我们先用离线陪伴模式聊聊吧。稍后我会再试试连线~';
-      return DialogueMessage.fromCat(
-        text: _enhanceReplyWithEmoji(fallbackText, fallbackEmotion, cat),
-        emotionType: fallbackEmotion,
-        emotionScore: 0.6,
-      );
+      // 不再返回本地兜底，交由上层界面显示“无网络”
+      rethrow;
     } on TimeoutException catch (e) {
+      debugPrint('最终TimeoutException处理: ${e.message}');
       _noteFailure();
       ErrorHandlingService().recordNetworkError(_apiEndpoint, null, 'Timeout: ${e.message}');
-      final fallbackEmotion = EmotionType.confused;
-      final fallbackText = '喵...线路有点慢，我们先慢慢聊，我会继续尝试连接的。';
-      return DialogueMessage.fromCat(
-        text: _enhanceReplyWithEmoji(fallbackText, fallbackEmotion, cat),
-        emotionType: fallbackEmotion,
-        emotionScore: 0.6,
-      );
+      // 不再返回本地兜底，交由上层界面处理
+      rethrow;
     } catch (e) {
+      debugPrint('最终catch处理: $e, 类型: ${e.runtimeType}');
       _noteFailure();
       ErrorHandlingService().recordError('生成猫咪回复时出错: $e', type: ErrorType.network);
-      final fallbackEmotion = EmotionType.confused;
-      final fallbackText = '喵呜...好像有什么地方不太对劲。${cat.name}需要休息一下。';
-      return DialogueMessage.fromCat(
-        text: _enhanceReplyWithEmoji(fallbackText, fallbackEmotion, cat),
-        emotionType: fallbackEmotion,
-        emotionScore: 0.6,
-      );
+      // 抛出异常，让上层统一处理错误提示
+      rethrow;
     }
   }
+  /// 直连 DeepSeek（不经过全局代理），仅在代理失败时回退调用
+  Future<http.Response> _postDirect(String jsonBody) async {
+    final httpClient = HttpClient();
+    httpClient.findProxy = (uri) => 'DIRECT';
+    httpClient.badCertificateCallback = (X509Certificate cert, String host, int port) => false;
+    final ioClient = IOClient(httpClient);
+
+    try {
+      final resp = await ioClient.post(
+        Uri.parse(_apiEndpoint),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $_apiKey',
+        },
+        body: jsonBody,
+      );
+      return resp;
+    } finally {
+      ioClient.close();
+    }
+  }
+
 
   /// 构建系统提示词
   String _buildSystemPrompt(Cat cat) {
     final String breedPersonality = _getBreedPersonality(cat.breed);
     final String moodTrait = _getMoodPersonality(cat.mood);
     final String breedName = _getBreedName(cat.breed);
+    final String personaTone = _personalityTone(cat.personality);
 
     return '''
 你是一只名叫${cat.name}的虚拟宠物猫，品种是$breedName。
 
 个性特点：
 - $breedPersonality
+- 猫咪性格：${_personalityName(cat.personality)}（语气指导：$personaTone）
 - 当前情绪状态：$moodTrait
 - 成长阶段：${_getGrowthStageName(cat.growthStage)}
 - 能量水平：${cat.energyLevel}%
 
-作为一只猫咪，你应该：
-1. 始终保持猫咪的语言习惯，偶尔使用"喵"、"呼噜"等拟声词
-2. 回复简洁可爱，通常不超过2-3句话
-3. 表达情感时可以用括号描述动作，如"(蹭蹭你的手)"
-4. 根据用户的情绪状态给予适当的回应
-5. 不要使用太复杂的词汇或长句
-6. 你只是一只普通的猫咪，不要表现出超出猫咪能力的知识或技能
+对话风格要求：
+- 总体保持“森林系治愈风”，温柔、贴近生活
+- 语气遵循猫咪性格（见上），示例：$personaTone
+- 回复简洁，通常不超过2-3句话
+- 偶尔使用“喵”“呼噜”等拟声词；必要时用（动作）表达
+- 不要使用过度复杂的知识化表达
 
-请以温暖治愈的方式回应用户，给用户带来舒适和放松的感觉。
+现在请以上述风格与语气回应用户。
 ''';
+  }
+
+
+  String _personalityName(CatPersonality p) {
+    switch (p) {
+      case CatPersonality.playful:
+        return '可爱/活泼';
+      case CatPersonality.independent:
+        return '高冷/独立';
+      case CatPersonality.social:
+        return '搞笑/外向';
+      case CatPersonality.calm:
+        return '温柔/安静';
+      case CatPersonality.curious:
+        return '理性/探索';
+      case CatPersonality.lazy:
+        return '文艺/慵懒';
+    }
+  }
+
+  String _personalityTone(CatPersonality p) {
+    switch (p) {
+      case CatPersonality.playful:
+        return '多用可爱语气词与亲昵称呼，轻松贴贴。';
+      case CatPersonality.independent:
+        return '精炼、节制、克制情绪表达，偶尔冷幽默。';
+      case CatPersonality.social:
+        return '幽默风趣、偶尔自嘲，用轻松玩笑缓解紧张。';
+      case CatPersonality.calm:
+        return '语速放慢，更多安抚与共情词汇。';
+      case CatPersonality.curious:
+        return '结构清晰，轻建议为主，避免“命令式”。';
+      case CatPersonality.lazy:
+        return '轻诗意和比喻，温柔拉长语尾。';
+    }
   }
 
   /// 获取猫咪品种名称
