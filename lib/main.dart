@@ -24,8 +24,10 @@ import 'screens/help_center_screen.dart';
 import 'screens/adopt_cat_screen.dart';
 import 'screens/more_stats_screen.dart';
 import 'screens/more_achievements_screen.dart';
-import 'screens/ai_prefs_screen.dart';
 import 'screens/ai_service_debug_screen.dart';
+import 'screens/smart_analysis_screen.dart';
+import 'screens/reminder_settings_screen.dart';
+import 'screens/reminder_plans_screen.dart';
 import 'widgets/quick_record_fab.dart';
 import 'services/error_handling_service.dart';
 import 'providers/cat_provider.dart';
@@ -209,7 +211,8 @@ class MyApp extends StatelessWidget {
         '/adopt_cat': (ctx) => const AdoptCatScreen(),
         MoreStatsScreen.routeName: (ctx) => const MoreStatsScreen(),
         MoreAchievementsScreen.routeName: (ctx) => const MoreAchievementsScreen(),
-        AIPrefsScreen.routeName: (ctx) => const AIPrefsScreen(),
+        ReminderSettingsScreen.routeName: (ctx) => const ReminderSettingsScreen(),
+        ReminderPlansScreen.routeName: (ctx) => const ReminderPlansScreen(),
         AIServiceDebugScreen.routeName: (ctx) => const AIServiceDebugScreen(),
 
         '/splash': (ctx) => const SplashScreen(),
@@ -256,6 +259,7 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
   final List<Widget> _screens = [
     const ImmersiveChatHomeScreen(),
     const HappinessHomeScreen(),
+    const SmartAnalysisScreen(),
     const ProfileScreen(),
   ];
 
@@ -376,6 +380,11 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
                 icon: Text('🌿', style: TextStyle(fontSize: 24)),
                 activeIcon: Text('🌿', style: TextStyle(fontSize: 28)),
                 label: '幸福',
+              ),
+              BottomNavigationBarItem(
+                icon: Icon(Icons.analytics_outlined, size: 24),
+                activeIcon: Icon(Icons.analytics, size: 28),
+                label: '智能分析',
               ),
               BottomNavigationBarItem(
                 icon: Text('👤', style: TextStyle(fontSize: 24)),

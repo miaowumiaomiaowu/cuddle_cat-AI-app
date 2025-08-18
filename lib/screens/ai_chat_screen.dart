@@ -3,12 +3,19 @@ import 'package:provider/provider.dart';
 import '../theme/artistic_theme.dart';
 import '../services/ai_service.dart';
 import '../services/ai_psychology_service.dart';
+import '../services/chat_reply_api_client.dart';
+import '../services/feedback_api_client.dart';
 import '../providers/mood_provider.dart';
 import '../providers/user_provider.dart';
 
 import '../models/mood_record.dart';
 import '../models/cat.dart';
 import '../models/dialogue.dart';
+
+import 'package:shared_preferences/shared_preferences.dart';
+
+import '../services/reminders_api_client.dart';
+import '../services/reminder_service.dart';
 
 /// AI心理支持聊天页面
 class AIChatScreen extends StatefulWidget {
@@ -26,17 +33,23 @@ class _AIChatScreenState extends State<AIChatScreen>
   final ScrollController _scrollController = ScrollController();
   final AIService _aiService = AIService();
   final AIPsychologyService _psychService = AIPsychologyService();
+  final ChatReplyApiClient _chatApi = ChatReplyApiClient();
+  final RemindersApiClient _remindersApi = RemindersApiClient();
+  final ReminderService _reminderService = ReminderService();
+  bool _useServerChat = false; // feature flag
+
 
   final List<ChatMessage> _messages = [];
+
   bool _isTyping = false;
-  
+
   late AnimationController _fadeController;
   late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    
+
     _fadeController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
@@ -45,9 +58,9 @@ class _AIChatScreenState extends State<AIChatScreen>
       parent: _fadeController,
       curve: Curves.easeInOut,
     );
-    
+
     _fadeController.forward();
-    
+
     // 添加欢迎消息
     _addWelcomeMessage();
   }
@@ -63,7 +76,7 @@ class _AIChatScreenState extends State<AIChatScreen>
   void _addWelcomeMessage() {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final userName = userProvider.displayName;
-    
+
     setState(() {
       _messages.add(ChatMessage(
         text: '你好，$userName！我是你的AI心理支持助手小暖。我在这里倾听你的感受，提供情绪支持和建议。你今天感觉怎么样？',
@@ -121,6 +134,11 @@ class _AIChatScreenState extends State<AIChatScreen>
             tooltip: '心理洞察',
           ),
           IconButton(
+            icon: Icon(_useServerChat ? Icons.cloud_done : Icons.cloud_off),
+            onPressed: () => setState(() => _useServerChat = !_useServerChat),
+            tooltip: _useServerChat ? '使用服务器聊天(开)' : '使用服务器聊天(关)',
+          ),
+          IconButton(
             icon: const Icon(Icons.self_improvement),
             onPressed: _showMeditationDialog,
             tooltip: '冥想指导',
@@ -150,7 +168,7 @@ class _AIChatScreenState extends State<AIChatScreen>
         if (index == _messages.length && _isTyping) {
           return _buildTypingIndicator();
         }
-        
+
         final message = _messages[index];
         return _buildMessageBubble(message);
       },
@@ -161,8 +179,8 @@ class _AIChatScreenState extends State<AIChatScreen>
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
-        mainAxisAlignment: message.isUser 
-            ? MainAxisAlignment.end 
+        mainAxisAlignment: message.isUser
+            ? MainAxisAlignment.end
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -190,8 +208,8 @@ class _AIChatScreenState extends State<AIChatScreen>
                 vertical: ArtisticTheme.spacingSmall,
               ),
               decoration: BoxDecoration(
-                color: message.isUser 
-                    ? ArtisticTheme.primaryColor 
+                color: message.isUser
+                    ? ArtisticTheme.primaryColor
                     : ArtisticTheme.surfaceColor,
                 borderRadius: BorderRadius.circular(ArtisticTheme.radiusMedium),
                 boxShadow: ArtisticTheme.softShadow,
@@ -202,17 +220,21 @@ class _AIChatScreenState extends State<AIChatScreen>
                   Text(
                     message.text,
                     style: ArtisticTheme.bodyMedium.copyWith(
-                      color: message.isUser 
-                          ? Colors.white 
+                      color: message.isUser
+                          ? Colors.white
                           : ArtisticTheme.textPrimary,
                     ),
                   ),
                   const SizedBox(height: 4),
+                      if (!message.isUser) ...[
+                        const SizedBox(height: 8),
+                        _buildAssistantExtras(message),
+                      ],
                   Text(
                     _formatTime(message.timestamp),
                     style: ArtisticTheme.caption.copyWith(
-                      color: message.isUser 
-                          ? Colors.white70 
+                      color: message.isUser
+                          ? Colors.white70
                           : ArtisticTheme.textSecondary,
                     ),
                   ),
@@ -287,7 +309,7 @@ class _AIChatScreenState extends State<AIChatScreen>
         final delay = index * 0.2;
         final animValue = ((value + delay) % 1.0);
         final opacity = (animValue < 0.5) ? animValue * 2 : (1 - animValue) * 2;
-        
+
         return Container(
           width: 6,
           height: 6,
@@ -374,16 +396,76 @@ class _AIChatScreenState extends State<AIChatScreen>
     _scrollToBottom();
 
     try {
-      // 获取AI回复（DeepSeek 实时对话）
-      final dialogueMessage = DialogueMessage.fromUser(text: text);
-      final aiReply = await _aiService.generateCatReply(
-        userMessage: dialogueMessage,
-        cat: Cat(name: '小暖', breed: CatBreed.random),
-        conversationHistory: _messages
-          .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
-          .toList(),
-      );
-      final response = aiReply.text;
+      String response;
+      Map<String, dynamic>? serverData;
+      if (_useServerChat) {
+        serverData = await _chatApi.reply(
+          messages: _messages
+              .map((m) => {"role": m.isUser ? "user" : "assistant", "content": m.text})
+              .toList()
+            ..add({"role": "user", "content": text}),
+          topK: 3,
+        );
+        response = (serverData != null ? (serverData["text"] as String? ?? "") : "").trim();
+        // 智能目标识别 -> 用户确认 -> 安排提醒
+        try {
+          final extracted = (serverData != null ? (serverData['extracted_goals'] as List? ?? []) : [])
+              .cast<Map<String, dynamic>>();
+          if (extracted.isNotEmpty) {
+            final goalText = (extracted.first['content'] as String?)?.trim();
+            if (goalText != null && goalText.isNotEmpty) {
+              final confirm = await _showReminderConfirm(context, goalText);
+              if (!mounted) return;
+              if (confirm == true) {
+                // 取建议文案
+                final prefs = await SharedPreferences.getInstance();
+                final userId = prefs.getString('user_id') ?? 'anonymous';
+                final suggestions = await _remindersApi.getSuggestions(userId: userId, limit: 3);
+                final message = suggestions.isNotEmpty ? suggestions.first : '给自己一点耐心，迈出小小一步。';
+                // 默认时间 9:00 与每日频率
+                final defaults = await _reminderService.getDefaultSettings();
+                final plan = ReminderPlan(
+                  id: 'goal_${DateTime.now().millisecondsSinceEpoch}',
+                  goalText: goalText,
+                  message: message,
+                  hour: defaults.hour,
+                  minute: defaults.minute,
+                  frequency: defaults.frequency,
+                );
+                await _reminderService.initialize();
+                await _reminderService.schedulePlan(plan);
+                final plans = await _reminderService.loadPlans();
+                plans.add(plan);
+                await _reminderService.savePlans(plans);
+              }
+            }
+          }
+        } catch (_) {}
+
+        if (response.isEmpty) {
+          // 回退本地生成
+          final dialogueMessage = DialogueMessage.fromUser(text: text);
+          final aiReply = await _aiService.generateCatReply(
+            userMessage: dialogueMessage,
+            cat: Cat(name: '小暖', breed: CatBreed.random),
+            conversationHistory: _messages
+                .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
+                .toList(),
+          );
+          response = aiReply.text;
+        }
+      } else {
+        // 本地原有逻辑
+        final dialogueMessage = DialogueMessage.fromUser(text: text);
+        final aiReply = await _aiService.generateCatReply(
+          userMessage: dialogueMessage,
+          cat: Cat(name: '小暖', breed: CatBreed.random),
+          conversationHistory: _messages
+              .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
+              .toList(),
+        );
+        response = aiReply.text;
+      }
 
       // 添加AI回复
       setState(() {
@@ -392,6 +474,10 @@ class _AIChatScreenState extends State<AIChatScreen>
           isUser: false,
           timestamp: DateTime.now(),
           avatar: '🤖',
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          usedMemories: (_useServerChat && (serverData != null)) ? (serverData['used_memories'] as List?)?.cast<Map<String, dynamic>>() : null,
+          profile: (_useServerChat && (serverData != null)) ? (serverData['profile'] as Map<String, dynamic>?) : null,
+          references: (_useServerChat && (serverData != null)) ? (serverData['references'] as List?)?.cast<String>() : null,
         ));
         _isTyping = false;
       });
@@ -429,7 +515,7 @@ class _AIChatScreenState extends State<AIChatScreen>
   Future<void> _showInsightDialog() async {
     final moodProvider = Provider.of<MoodProvider>(context, listen: false);
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    
+
     if (moodProvider.moodEntries.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('需要更多心情记录才能提供洞察分析')),
@@ -459,7 +545,7 @@ class _AIChatScreenState extends State<AIChatScreen>
 
       if (mounted) {
         Navigator.of(context).pop(); // 关闭加载对话框
-        
+
         showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -472,7 +558,7 @@ class _AIChatScreenState extends State<AIChatScreen>
                   Text(insight.mainInsight),
                   const SizedBox(height: 16),
                   const Text('建议：', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ...insight.recommendations.map((rec) => 
+                  ...insight.recommendations.map((rec) =>
                     Padding(
                       padding: const EdgeInsets.only(top: 4),
                       child: Text('• $rec'),
@@ -504,11 +590,12 @@ class _AIChatScreenState extends State<AIChatScreen>
 
   Future<void> _showMeditationDialog() async {
     final moodProvider = Provider.of<MoodProvider>(context, listen: false);
-    final currentMood = moodProvider.moodEntries.isNotEmpty 
-        ? moodProvider.moodEntries.first.mood 
+    final currentMood = moodProvider.moodEntries.isNotEmpty
+        ? moodProvider.moodEntries.first.mood
         : MoodType.neutral;
-    
+
     final meditations = await _psychService.recommendMeditation(currentMood, 5);
+
 
     if (mounted) {
       showDialog(
@@ -518,7 +605,7 @@ class _AIChatScreenState extends State<AIChatScreen>
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
-              children: meditations.map((meditation) => 
+              children: meditations.map((meditation) =>
                 ListTile(
                   leading: const Icon(Icons.self_improvement),
                   title: Text(meditation.title),
@@ -543,6 +630,105 @@ class _AIChatScreenState extends State<AIChatScreen>
       );
     }
   }
+
+  Widget _buildAssistantExtras(ChatMessage message) {
+    // 展示“依据的记忆/画像”参考与反馈按钮
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ExpansionTile(
+          collapsedIconColor: ArtisticTheme.textSecondary,
+          iconColor: ArtisticTheme.textSecondary,
+          title: Text('参考与反馈', style: ArtisticTheme.caption.copyWith(color: ArtisticTheme.textSecondary)),
+          childrenPadding: const EdgeInsets.only(left: 8, right: 8, bottom: 8),
+          children: [
+            // 参考信息（当前最小版：提示说明；后续可接 /chat/reply 的 used_memories/profile）
+            Text('本次建议基于你的历史偏好与记忆检索结果生成。', style: ArtisticTheme.caption),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [
+                _buildFeedbackChip('👍 喜欢', 'like'),
+                _buildFeedbackChip('✅ 有用', 'useful'),
+              if (message.usedMemories != null && message.usedMemories!.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text('参考记忆：', style: ArtisticTheme.caption.copyWith(fontWeight: FontWeight.bold)),
+                const SizedBox(height: 4),
+                ...message.usedMemories!.take(3).map((m) => Padding(
+                      padding: const EdgeInsets.only(bottom: 2),
+                      child: Text('- ${m['text'] ?? ''}', style: ArtisticTheme.caption),
+                    )),
+              ],
+              if (message.profile != null && (message.profile!['top_categories'] is List) && (message.profile!['top_categories'] as List).isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text('画像Top类别：${(message.profile!['top_categories'] as List).take(3).join(', ')}', style: ArtisticTheme.caption),
+              ],
+              if ((message.profile?['references'] is List) && (message.profile!['references'] as List).isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text('参考摘要：${(message.profile!['references'] as List).join(', ')}', style: ArtisticTheme.caption),
+              if (message.references != null && message.references!.isNotEmpty) ...[
+                const SizedBox(height: 6),
+                Text('参考摘要：${message.references!.join(', ')}', style: ArtisticTheme.caption),
+              ],
+              ],
+              _buildFeedbackChip('👍 喜欢', 'like', targetId: message.id),
+              _buildFeedbackChip('✅ 有用', 'useful', targetId: message.id),
+              _buildFeedbackChip('⏭ 跳过', 'skip', targetId: message.id),
+              ],
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildFeedbackChip(String label, String type, {String? targetId}) {
+    bool busy = false;
+    return StatefulBuilder(
+      builder: (context, setState) {
+        return ActionChip(
+          label: Text(label, style: ArtisticTheme.caption),
+
+          onPressed: busy
+              ? null
+              : () async {
+                  try {
+                    setState(() => busy = true);
+                    final ok = await FeedbackApiClient().postFeedback(
+                      feedbackType: type,
+                      targetType: 'chat',
+                      targetId: targetId,
+                    );
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text(ok ? '已记录你的反馈' : '反馈失败，请稍后再试')),
+                    );
+                  } catch (_) {
+                  } finally {
+                    if (mounted) setState(() => busy = false);
+                  }
+                },
+        );
+      },
+    );
+  }
+
+  Future<bool?> _showReminderConfirm(BuildContext context, String goalText) async {
+    if (!mounted) return false;
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('设置目标提醒'),
+          content: Text('检测到你的目标："$goalText"\n是否为你在每天上午9:00添加一个温暖提醒？'),
+          actions: [
+            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('暂不')),
+            FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('好的')),
+          ],
+        );
+      },
+    );
+  }
 }
 
 /// 聊天消息模型
@@ -551,11 +737,19 @@ class ChatMessage {
   final bool isUser;
   final DateTime timestamp;
   final String avatar;
+  final String? id; // 用于反馈归因
+  final List<Map<String, dynamic>>? usedMemories; // 服务端返回的参考记忆
+  final Map<String, dynamic>? profile; // 服务端返回的画像片段
+  final List<String>? references; // 服务端返回的参考摘要
 
   ChatMessage({
     required this.text,
     required this.isUser,
     required this.timestamp,
     required this.avatar,
+    this.id,
+    this.usedMemories,
+    this.profile,
+    this.references,
   });
 }

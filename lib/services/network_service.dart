@@ -81,8 +81,7 @@ class NetworkService {
       final resp = await _client
           .get(uri, headers: _headers())
           .timeout(_connectTimeout, onTimeout: () => throw TimeoutException('Health check timeout'));
-      final ok = resp.statusCode >= 200 && resp.statusCode < 300;
-      return BackendHealth(ok, statusCode: resp.statusCode, rawBody: resp.body);
+      return BackendHealth.fromHttp(resp);
     } catch (e) {
       return BackendHealth(false, message: e.toString());
     }
@@ -100,5 +99,26 @@ class BackendHealth {
   final int? statusCode;
   final String? rawBody;
   final String? message;
-  BackendHealth(this.ok, {this.statusCode, this.rawBody, this.message});
+  final String? provider;
+  final String? model;
+  final String? version;
+  BackendHealth(this.ok, {this.statusCode, this.rawBody, this.message, this.provider, this.model, this.version});
+
+  factory BackendHealth.fromHttp(http.Response resp) {
+    String? provider;
+    String? model;
+    String? version;
+    String? body;
+    try {
+      body = resp.body;
+      final parsed = jsonDecode(resp.body);
+      if (parsed is Map<String, dynamic>) {
+        provider = parsed['provider'] as String?;
+        model = parsed['model'] as String?;
+        version = parsed['version'] as String?;
+      }
+    } catch (_) {}
+    final ok = resp.statusCode >= 200 && resp.statusCode < 300;
+    return BackendHealth(ok, statusCode: resp.statusCode, rawBody: body ?? resp.body, provider: provider, model: model, version: version);
+  }
 }

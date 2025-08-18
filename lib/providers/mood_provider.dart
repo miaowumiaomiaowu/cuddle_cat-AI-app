@@ -50,6 +50,49 @@ class MoodProvider extends ChangeNotifier {
           .where((entry) => entry.userId == _currentUserId) // 确保只加载当前用户的记录
           .toList();
 
+      // 若无记录，注入一次性开发样本
+      if (_moodEntries.isEmpty) {
+        final seeded = prefs.getBool('dev_seeded_moods_v1') ?? false;
+        if (!seeded) {
+          final now = DateTime.now();
+          final sample = <MoodEntry>[
+            MoodTypeConfig.createMoodEntry(
+              userId: _currentUserId!,
+              moodType: MoodType.anxious,
+              intensity: 7,
+              description: '接连加班，心里有些慌张',
+              tags: const ['工作','压力'],
+            ).copyWith(timestamp: now.subtract(const Duration(days: 3, hours: 2))),
+            MoodTypeConfig.createMoodEntry(
+              userId: _currentUserId!,
+              moodType: MoodType.sad,
+              intensity: 6,
+              description: '和同事争执了一下，心情低落',
+              tags: const ['人际'],
+            ).copyWith(timestamp: now.subtract(const Duration(days: 2, hours: 4))),
+            MoodTypeConfig.createMoodEntry(
+              userId: _currentUserId!,
+              moodType: MoodType.neutral,
+              intensity: 4,
+              description: '晚上散步放松了一会儿',
+              tags: const ['运动','放松'],
+            ).copyWith(timestamp: now.subtract(const Duration(days: 1, hours: 6))),
+            MoodTypeConfig.createMoodEntry(
+              userId: _currentUserId!,
+              moodType: MoodType.happy,
+              intensity: 7,
+              description: '决定明天早起跑步给自己打气',
+              tags: const ['计划','自我激励'],
+            ).copyWith(timestamp: now.subtract(const Duration(hours: 12))),
+          ];
+          _moodEntries = sample;
+          // 写回本地，确保各页面可见
+          final jsonList = _moodEntries.map((e) => jsonEncode(e.toJson())).toList();
+          await prefs.setStringList(key, jsonList);
+          await prefs.setBool('dev_seeded_moods_v1', true);
+        }
+      }
+
       // 按时间倒序排列
       _moodEntries.sort((a, b) => b.timestamp.compareTo(a.timestamp));
 
@@ -69,7 +112,7 @@ class MoodProvider extends ChangeNotifier {
       if (_currentUserId == null) return;
 
       final prefs = await SharedPreferences.getInstance();
-      final key = 'mood_entries_${_currentUserId}';
+      final key = 'mood_entries_$_currentUserId';
       final entriesJson = _moodEntries
           .where((entry) => entry.userId == _currentUserId) // 只保存当前用户的记录
           .map((entry) => jsonEncode(entry.toJson()))

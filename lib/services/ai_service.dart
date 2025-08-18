@@ -10,7 +10,8 @@ import '../models/cat.dart';
 import '../models/dialogue.dart';
 import '../utils/cat_emoji_expressions.dart';
 import 'error_handling_service.dart';
-import 'user_preferences_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'memory_api_client.dart';
 
 /// DeepSeek AI服务类
 class AIService {
@@ -87,19 +88,37 @@ class AIService {
         throw SocketException('网络暂时不可用，熔断中');
       }
 
-      // 读取用户偏好
-      final tonePref = await UserPreferencesService.getTone();
-      final advicePref = await UserPreferencesService.getAdviceRatio();
-      final langPref = await UserPreferencesService.getLang();
-      final ctxPref = await UserPreferencesService.getContextWindow();
-      String mapTone(String t) {
-        switch (t) { case 'cute': return '可爱'; case 'cool': return '高冷'; case 'funny': return '搞笑'; case 'gentle': return '温柔'; case 'rational': return '理性'; case 'literary': return '文艺'; default: return '自动'; }
-      }
-      String mapLang(String l) { switch (l) { case 'zh': return '中文'; case 'en': return '英文'; default: return '自动'; } }
-      String mapCtx(String c) { switch (c) { case 'short': return '短'; case 'long': return '长'; default: return '中'; } }
+      // 统一风格由“已领养猫咪的性格”决定；不再读取独立的 AI 语气偏好
 
-      // 构建提示词系统消息 + 偏好指引
-      final String systemPrompt = '${_buildSystemPrompt(cat)}\n用户偏好指引：语气：${mapTone(tonePref)}；建议比例：$advicePref%；语言：${mapLang(langPref)}；上下文：${mapCtx(ctxPref)}。';
+      // 读取用户记忆（用于个性化）
+      List<Map<String, dynamic>> memories = const [];
+      try {
+        final prefs = await SharedPreferences.getInstance();
+        final userId = prefs.getString('user_id');
+        final String? lastUserMsg = (
+          conversationHistory.isNotEmpty && conversationHistory.last.sender == MessageSender.user
+        ) ? conversationHistory.last.text : userMessage.text;
+        if (userId != null && userId.isNotEmpty) {
+          final memApi = MemoryApiClient();
+          memories = await memApi.queryMemories(userId: userId, query: lastUserMsg, topK: 3);
+        }
+      } catch (_) {}
+
+      // 构建提示词系统消息 + 偏好指引 + 风格规则 + 用户背景记忆
+      String memoryBlock = '';
+      if (memories.isNotEmpty) {
+        final lines = memories.take(3).map((m) => '- ${m['text'] ?? ''}'.trim()).where((s) => s.isNotEmpty).join('\n');
+        if (lines.isNotEmpty) {
+          memoryBlock = '\n用户背景记忆：\n$lines\n';
+        }
+      }
+      final String systemPrompt = '${_buildSystemPrompt(cat)}\n'
+          '风格规则：\n'
+          '- 使用直接、简洁、可执行的表达，优先要点或短句；\n'
+          '- 不要使用舞台指令或动作/姿态/情绪描写（如*微笑*、(点头)）；\n'
+          '- 不使用第三人称叙述；\n'
+          '- 可以使用emoji增强语义，但不要用来表达动作或姿态。'
+          '$memoryBlock';
       debugPrint('系统提示词构建完成');
 
       // 构建对话历史
@@ -207,15 +226,16 @@ class AIService {
           final responseData = jsonDecode(responseText);
 
           try {
-            final String replyContent =
-                responseData['choices'][0]['message']['content'];
+            final String rawReply = responseData['choices'][0]['message']['content'];
+
+            // 轻量后处理：去除星号/括号内的舞台指令或动作/姿态描述（保留emoji）
+            final replyContent = _postProcessStyle(rawReply);
 
             // 分析回复的情感
             final emotionAnalysis = _analyzeReplyEmotion(replyContent, cat);
 
-            // 增强回复内容，添加emoji表达
-            final enhancedReply =
-                _enhanceReplyWithEmoji(replyContent, emotionAnalysis.type, cat);
+            // 增强回复内容（保持emoji可用）
+            final enhancedReply = _enhanceReplyWithEmoji(replyContent, emotionAnalysis.type, cat);
 
             // 创建猫咪回复消息
             return DialogueMessage.fromCat(
@@ -615,6 +635,24 @@ class AIService {
     return reply;
   }
 
+
+  /// 轻量风格后处理：移除星号/括号中的舞台指令或动作/姿态描述
+  String _postProcessStyle(String input) {
+    // 去除 *动作* 或 （动作） 或 (动作) 这类短片段；保留 emoji 和文本
+    final patterns = <RegExp>[
+      RegExp(r'\*[^\n\r\*]{1,40}\*'),
+      RegExp(r'\([^\n\r\)]{1,40}\)'),
+      RegExp(r'\（[^\n\r\）]{1,40}\）'),
+    ];
+    var out = input;
+    for (final p in patterns) {
+      out = out.replaceAll(p, '');
+    }
+    // 合并多余空白
+    out = out.replaceAll(RegExp(r'\s{2,}'), ' ').trim();
+    return out;
+  }
+
   /// 获取情感对应的emoji
   String _getEmotionEmoji(EmotionType emotionType) {
     switch (emotionType) {
@@ -655,10 +693,11 @@ class AIService {
   }) async {
     try {
       final dialogueMessage = DialogueMessage.fromUser(text: userMessage);
-      final response = await generateCatReply(
+      // 调用单例以确保作用域正确
+      final response = await AIService().generateCatReply(
         userMessage: dialogueMessage,
         cat: catContext,
-        conversationHistory: [],
+        conversationHistory: const [],
       );
       return response.text;
     } catch (e) {

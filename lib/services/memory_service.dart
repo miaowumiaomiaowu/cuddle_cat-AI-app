@@ -44,12 +44,12 @@ class MemoryEvent {
 class MemoryService {
   static const String _memoryKey = 'user_memories';
   static const String _lastReviewKey = 'last_memory_review';
-  
+
   Future<List<MemoryEvent>> getMemories() async {
     final prefs = await SharedPreferences.getInstance();
     final jsonStr = prefs.getString(_memoryKey);
     if (jsonStr == null) return [];
-    
+
     final List<dynamic> jsonList = jsonDecode(jsonStr);
     return jsonList.map((json) => MemoryEvent.fromJson(json)).toList();
   }
@@ -58,6 +58,26 @@ class MemoryService {
     final memories = await getMemories();
     memories.add(memory);
     await _saveMemories(memories);
+  }
+
+  Future<void> updateMemory(MemoryEvent updated) async {
+    final memories = await getMemories();
+    final idx = memories.indexWhere((m) => m.id == updated.id);
+    if (idx >= 0) {
+      memories[idx] = updated;
+      await _saveMemories(memories);
+    }
+  }
+
+  Future<void> deleteMemory(String id) async {
+    final memories = await getMemories();
+    memories.removeWhere((m) => m.id == id);
+    await _saveMemories(memories);
+  }
+
+  Future<void> clearMemories() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_memoryKey);
   }
 
   Future<void> _saveMemories(List<MemoryEvent> memories) async {

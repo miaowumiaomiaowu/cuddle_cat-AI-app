@@ -3,9 +3,9 @@ import 'package:provider/provider.dart';
 import '../providers/happiness_provider.dart';
 import '../providers/mood_provider.dart';
 import '../theme/artistic_theme.dart';
-import 'happiness_task_edit_screen.dart';
 import '../widgets/happiness_gift_view.dart';
 import '../widgets/memory_review_card.dart';
+import '../widgets/wellness_plan_card.dart';
 import '../services/memory_service.dart';
 
 class HappinessHomeScreen extends StatefulWidget {
@@ -61,7 +61,14 @@ class _HappinessHomeScreenState extends State<HappinessHomeScreen> {
                   top: 12,
                   left: 16,
                   right: 16,
-                  child: _buildExplainer(context),
+                  child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _buildExplainer(context),
+                        const SizedBox(height: 12),
+                        const WellnessPlanCard(),
+                      ],
+                    ),
                 ),
                 if (_showMemoryReview)
                   Positioned(
@@ -99,17 +106,8 @@ class _HappinessHomeScreenState extends State<HappinessHomeScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  '幸福清单基于你的状态由AI分析生成，你也可以自定义哦',
-                  style: ArtisticTheme.bodyMedium,
-                ),
-                const SizedBox(height: 8),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: OutlinedButton.icon(
-                    onPressed: () => Navigator.of(context).pushNamed(HappinessTaskEditScreen.routeName),
-                    icon: const Icon(Icons.tune),
-                    label: const Text('自定义清单'),
-                  ),
+                  '幸福清单基于你的状态由AI分析生成。完整设置与自定义已迁移到“智能分析”。',
+                  style: ArtisticTheme.caption,
                 )
               ],
             ),

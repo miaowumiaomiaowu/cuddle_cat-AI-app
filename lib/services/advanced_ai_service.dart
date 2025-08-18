@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import '../models/mood_record.dart';
 import '../models/happiness_checkin.dart';
 
@@ -13,8 +14,12 @@ class AdvancedAIService {
     final prefs = await SharedPreferences.getInstance();
     final enabled = prefs.getBool(_enabledKey) ?? false;
     if (!enabled) return null;
-    
-    return prefs.getString(_baseUrlKey);
+
+    final url = prefs.getString(_baseUrlKey);
+    if (url != null && url.isNotEmpty) return url;
+    final server = dotenv.env['SERVER_BASE_URL'];
+    if (server != null && server.isNotEmpty) return server;
+    return dotenv.env['AI_ANALYSIS_BASE_URL'];
   }
 
   Future<Map<String, dynamic>?> analyzeEmotionAdvanced({

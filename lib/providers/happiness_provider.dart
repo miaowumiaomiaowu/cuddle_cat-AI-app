@@ -14,12 +14,14 @@ import 'package:flutter/material.dart';
 import 'base_provider.dart';
 import '../services/ai_analysis_facade.dart';
 import '../services/ai_analysis_http.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/config_service.dart';
 import '../services/breakthrough_detector.dart';
 import '../services/achievement_service.dart';
 import '../services/smart_reminder_service.dart';
 import '../services/real_time_learning_service.dart';
+import '../services/wellness_plan_service.dart';
+import '../models/wellness_plan.dart';
 import '../models/achievement.dart' as achievement_model;
 
 class HappinessProvider extends BaseProvider {
@@ -86,6 +88,11 @@ class HappinessProvider extends BaseProvider {
   List<HappinessTask> get tasks => List.unmodifiable(_tasks);
   List<HappinessTask> get todayTasks => List.unmodifiable(_todayTasks);
   List<HappinessTask> get recommendations => List.unmodifiable(_recommendations);
+  // Wellness Plan
+  final WellnessPlanService _wellnessService = WellnessPlanService();
+  WellnessPlan? _wellnessPlan;
+  WellnessPlan? get wellnessPlan => _wellnessPlan;
+
   List<HappinessCheckin> get checkins => List.unmodifiable(_checkins);
   HappinessStats? get stats => _stats;
   String? get error => _error;
@@ -107,6 +114,9 @@ class HappinessProvider extends BaseProvider {
     await _loadAll();
     await _achievementService.initialize();
     await _reminderService.initialize();
+    // 最小加载：同时拉取健康计划（如果后端启用）
+    await _refreshWellnessPlanSafely();
+
     await refreshAIRecommendations(force: true);
     _subscribeDialogueChanges();
   }
@@ -137,13 +147,18 @@ class HappinessProvider extends BaseProvider {
 
       // 优先尝试新的分析门面；失败再回退到旧 advice
       try {
-        // 读取配置：优先用户设置，其次 .env
+        // 根据 .env 自动启用 HTTP 后端；不再依赖 SharedPreferences 的开关
+        final cfg = ConfigService.instance;
+        final useHttp = cfg.isRemoteConfigured;
+        final baseUrl = cfg.serverBaseUrl;
         final prefs = await SharedPreferences.getInstance();
-        final enabled = prefs.getBool('ai_analysis_enabled') ?? false;
-        final cfgUrl = prefs.getString('ai_analysis_base_url');
-        final envUrl = dotenv.env['AI_ANALYSIS_BASE_URL'];
-        final baseUrl = (cfgUrl != null && cfgUrl.isNotEmpty) ? cfgUrl : (envUrl ?? '');
-        final useHttp = enabled && baseUrl.isNotEmpty;
+
+        // 确保存在 user_id（用于个性化与学习）
+        String? userId = prefs.getString('user_id');
+        if (userId == null || userId.isEmpty) {
+          userId = DateTime.now().millisecondsSinceEpoch.toString();
+          await prefs.setString('user_id', userId);
+        }
 
         final facade = useHttp ? AIAnalysisHttp(baseUrl) : AIAnalysisStub();
         final msgs = dialogueProvider.activeSession?.messages ?? const [];
@@ -160,6 +175,7 @@ class HappinessProvider extends BaseProvider {
           stats: {
             'streak': _stats?.currentStreak ?? 0,
             'completionRate7d': _stats?.completionRate7d ?? 0.0,
+            'user_id': userId,
           },
         );
         // 补充天气：已移除定位依赖（保留接口支持，可为空）
@@ -224,6 +240,43 @@ class HappinessProvider extends BaseProvider {
         HappinessTask(title: '颈肩拉伸', emoji: '🧎', category: 'body', estimatedMinutes: 5, frequency: 'daily'),
         HappinessTask(title: '联系一位朋友', emoji: '📞', category: 'social', estimatedMinutes: 5, frequency: 'weekly'),
       ];
+
+  Future<void> _refreshWellnessPlanSafely() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      String? userId = prefs.getString('user_id');
+      if (userId == null || userId.isEmpty) {
+        userId = DateTime.now().millisecondsSinceEpoch.toString();
+        await prefs.setString('user_id', userId);
+      }
+      final msgs = dialogueProvider.activeSession?.messages ?? const [];
+      final recentMessages = msgs.reversed.map((m) => m.text).take(20).toList();
+      final moodRecords = moodProvider.moodEntries.take(30).map((m) => {
+        'timestamp': m.timestamp.toIso8601String(),
+        'mood': m.mood.toString(),
+        'description': m.description ?? '',
+      }).toList();
+      final statsMap = {
+        'streak': _stats?.currentStreak ?? 0,
+        'completionRate7d': _stats?.completionRate7d ?? 0.0,
+        'user_id': userId,
+      };
+      final plan = await _wellnessService.fetchPlan(
+        recentMessages: recentMessages,
+        moodRecords: moodRecords,
+        stats: statsMap,
+        weather: null,
+      );
+      if (plan != null) {
+        _wellnessPlan = plan;
+        markPropertyChanged('wellnessPlan');
+        safeNotifyListeners();
+      }
+    } catch (e) {
+      // 静默失败，不影响主流程
+    }
+  }
+
 
   // 新增/更新任务
   Future<HappinessTask> addOrUpdateTask(HappinessTask task) async {

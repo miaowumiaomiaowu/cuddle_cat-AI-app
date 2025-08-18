@@ -6,6 +6,7 @@ from transformers import AutoTokenizer, AutoModel, pipeline
 from sentence_transformers import SentenceTransformer
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
+import os
 import redis
 from datetime import datetime, timedelta
 
@@ -55,12 +56,12 @@ class EmotionAnalyzer:
             "slightly": ["有点", "稍微", "略微", "一点", "些许", "轻微"],
             "extremely": ["极度", "极其", "超级", "非常非常", "特别特别"]
         }
-    
+
     def analyze_emotion(self, text: str) -> Dict[str, float]:
         """分析文本情感"""
         if not text.strip():
             return {"neutral": 1.0}
-            
+
         # 优先使用模型
         if self.sentiment_pipeline:
             try:
@@ -68,7 +69,7 @@ class EmotionAnalyzer:
                 # 转换为我们的格式
                 label = result[0]['label'].lower()
                 score = result[0]['score']
-                
+
                 # 映射标签
                 emotion_map = {
                     'positive': 'happy',
@@ -79,23 +80,23 @@ class EmotionAnalyzer:
                 return {emotion: score}
             except Exception as e:
                 print(f"Model analysis failed: {e}")
-        
+
         # 回退到关键词方法
         return self._keyword_analysis(text)
-    
+
     def _keyword_analysis(self, text: str) -> Dict[str, float]:
         """基于关键词的情感分析"""
         text_lower = text.lower()
         scores = {}
-        
+
         for emotion, keywords in self.emotion_keywords.items():
             score = sum(1 for keyword in keywords if keyword in text_lower)
             if score > 0:
                 scores[emotion] = min(score / len(keywords), 1.0)
-        
+
         if not scores:
             scores["neutral"] = 1.0
-            
+
         return scores
 
     def _load_primary_model(self, model_name: str):
@@ -210,46 +211,46 @@ class EmotionAnalyzer:
 
 class EmbeddingRecommender:
     """基于嵌入的推荐系统"""
-    
+
     def __init__(self, model_name: str = "moka-ai/m3e-base"):
         self.device = "cuda" if torch.cuda.is_available() else "cpu"
-        
+
         try:
             self.model = SentenceTransformer(model_name, device=self.device)
         except Exception as e:
             print(f"Failed to load embedding model: {e}")
             self.model = None
-    
+
     def encode_texts(self, texts: List[str]) -> np.ndarray:
         """编码文本为向量"""
         if not self.model:
             # 回退到简单的词频向量
             return self._simple_vectorize(texts)
-            
+
         try:
             embeddings = self.model.encode(texts, convert_to_numpy=True)
             return embeddings
         except Exception as e:
             print(f"Encoding failed: {e}")
             return self._simple_vectorize(texts)
-    
+
     def _simple_vectorize(self, texts: List[str]) -> np.ndarray:
         """简单的词频向量化"""
         from collections import Counter
         import jieba
-        
+
         # 分词并统计词频
         all_words = set()
         text_words = []
-        
+
         for text in texts:
             words = list(jieba.cut(text))
             text_words.append(words)
             all_words.update(words)
-        
+
         word_to_idx = {word: idx for idx, word in enumerate(all_words)}
         vectors = []
-        
+
         for words in text_words:
             vector = np.zeros(len(all_words))
             word_count = Counter(words)
@@ -257,34 +258,38 @@ class EmbeddingRecommender:
                 if word in word_to_idx:
                     vector[word_to_idx[word]] = count
             vectors.append(vector)
-        
+
         return np.array(vectors)
-    
+
     def find_similar(self, query_text: str, candidate_texts: List[str], top_k: int = 5) -> List[Tuple[int, float]]:
         """找到最相似的文本"""
         all_texts = [query_text] + candidate_texts
         embeddings = self.encode_texts(all_texts)
-        
+
         if len(embeddings) == 0:
             return []
-        
+
         query_embedding = embeddings[0:1]
         candidate_embeddings = embeddings[1:]
-        
+
         similarities = cosine_similarity(query_embedding, candidate_embeddings)[0]
-        
+
         # 获取top_k个最相似的
         top_indices = np.argsort(similarities)[::-1][:top_k]
         results = [(idx, similarities[idx]) for idx in top_indices]
-        
+
         return results
 
 class CacheManager:
     """智能缓存管理器"""
 
-    def __init__(self, redis_url: str = "redis://localhost:6379"):
+    def __init__(self, redis_url: str | None = None):
+        # Ensure in-memory cache exists regardless of Redis availability
+        self._memory_cache = {}
+
         try:
-            self.redis_client = redis.from_url(redis_url)
+            url = redis_url or os.getenv("REDIS_URL", "redis://localhost:6379")
+            self.redis_client = redis.from_url(url)
             self.redis_client.ping()
             self.enabled = True
         except Exception as e:
@@ -304,7 +309,7 @@ class CacheManager:
         self.max_memory_cache_size = 1000
         self.cache_access_times = {}
         self.cache_hit_counts = {}
-    
+
     def get(self, key: str) -> Optional[Dict]:
         """智能获取缓存"""
         # 更新访问时间和命中次数
@@ -335,7 +340,7 @@ class CacheManager:
             print(f"Cache get failed: {e}")
             self.cache_stats["misses"] += 1
             return None
-    
+
     def set(self, key: str, value: Dict, ttl: int = 3600):
         """智能设置缓存"""
         self.cache_stats["sets"] += 1
@@ -391,7 +396,7 @@ class CacheManager:
             "memory_cache_size": len(self._memory_cache),
             "redis_enabled": self.enabled
         }
-    
+
     def generate_key(self, user_signals: Dict) -> str:
         """生成缓存键"""
         # 基于用户信号生成唯一键

@@ -6,11 +6,12 @@ import '../models/cat.dart';
 import 'package:provider/provider.dart';
 import 'settings_screen.dart';
 import 'help_center_screen.dart';
-import '../services/user_preferences_service.dart';
 import '../providers/happiness_provider.dart';
 
 import 'more_stats_screen.dart';
 import 'package:table_calendar/table_calendar.dart';
+import 'developer_tools_screen.dart';
+
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -22,14 +23,18 @@ class ProfileScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             const Text('👤', style: TextStyle(fontSize: 24)),
             const SizedBox(width: 8),
-            Text(
-              '个人中心',
-              style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                color: AppTheme.textPrimary,
-                fontWeight: FontWeight.w600,
+            Flexible(
+              child: Text(
+                '个人中心',
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: AppTheme.textPrimary,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -52,6 +57,14 @@ class ProfileScreen extends StatelessWidget {
                 ),
               );
             },
+            tooltip: '设置',
+          ),
+          IconButton(
+            icon: const Icon(Icons.build_outlined),
+            onPressed: () {
+              Navigator.pushNamed(context, DeveloperToolsScreen.routeName);
+            },
+            tooltip: '开发者工具',
           ),
         ],
       ),
@@ -64,8 +77,7 @@ class ProfileScreen extends StatelessWidget {
               const SizedBox(height: AppTheme.spacingLarge),
               _buildMyCatSection(context),
               const SizedBox(height: AppTheme.spacingLarge),
-              _buildAIChatPreferencesSection(context),
-              const SizedBox(height: AppTheme.spacingLarge),
+              // AI聊天设置已由“猫咪性格”统一决定，移除冗余入口
               _buildStatsWithCalendarSection(context),
               const SizedBox(height: AppTheme.spacingLarge),
               _buildLiteAchievementsSection(context),
@@ -419,153 +431,9 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  // AI聊天偏好（可编辑简版）
-  Widget _buildAIChatPreferencesSection(BuildContext context) {
-    return FutureBuilder(
-      future: Future.wait([
-        UserPreferencesService.getTone(),
-        UserPreferencesService.getAdviceRatio(),
-        UserPreferencesService.getLang(),
-      ]),
-      builder: (context, snap) {
-        final tone = (snap.data != null) ? (snap.data![0] as String) : 'auto';
-        final ratio = (snap.data != null) ? (snap.data![1] as int) : 50;
-        final lang = (snap.data != null) ? (snap.data![2] as String) : 'auto';
-        return Container(
-          margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium),
-          padding: const EdgeInsets.all(AppTheme.spacingLarge),
-          decoration: AppTheme.handDrawnCard,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 8),
-              Align(
-                alignment: Alignment.centerRight,
-                child: TextButton(
-                  onPressed: () => Navigator.pushNamed(context, '/ai_prefs'),
-                  child: const Text('详细设置'),
-                ),
-              ),
-              Row(
-                children: [
-                  const Text('🤖', style: TextStyle(fontSize: 24)),
-                  const SizedBox(width: 8),
-                  Text('AI聊天偏好', style: Theme.of(context).textTheme.headlineSmall),
-                ],
-              ),
-              const SizedBox(height: AppTheme.spacingMedium),
-              Wrap(
-                runSpacing: 12,
-                spacing: 12,
-                children: [
-                  _toneDropdown(context, tone),
-                  _langDropdown(context, lang),
-                  _contextDropdown(context),
-                  _ratioSlider(context, ratio),
-                ],
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
 
-  Widget _toneDropdown(BuildContext context, String tone) {
-    final items = const [
-      DropdownMenuItem(value: 'auto', child: Text('语气：自动')),
-      DropdownMenuItem(value: 'cute', child: Text('语气：可爱')),
-      DropdownMenuItem(value: 'cool', child: Text('语气：高冷')),
-      DropdownMenuItem(value: 'funny', child: Text('语气：搞笑')),
-      DropdownMenuItem(value: 'gentle', child: Text('语气：温柔')),
-      DropdownMenuItem(value: 'rational', child: Text('语气：理性')),
-      DropdownMenuItem(value: 'literary', child: Text('语气：文艺')),
-    ];
-    return _chipWrap(
-      context,
-      Row(children: [
-        const Icon(Icons.music_note, size: 16),
-        const SizedBox(width: 6),
-        DropdownButton<String>(
-          value: tone,
-          items: items,
-          onChanged: (v) async { if (v != null) await UserPreferencesService.setTone(v); },
-          underline: const SizedBox.shrink(),
-        ),
-      ]),
-    );
-  }
 
-  Widget _langDropdown(BuildContext context, String lang) {
-    final items = const [
-      DropdownMenuItem(value: 'auto', child: Text('语言：自动')),
-      DropdownMenuItem(value: 'zh', child: Text('语言：中文')),
-      DropdownMenuItem(value: 'en', child: Text('语言：英文')),
-    ];
-    return _chipWrap(
-      context,
-      Row(children: [
-        const Icon(Icons.language, size: 16),
-        const SizedBox(width: 6),
-        DropdownButton<String>(
-          value: lang,
-          items: items,
-          onChanged: (v) async { if (v != null) await UserPreferencesService.setLang(v); },
-          underline: const SizedBox.shrink(),
-        ),
-      ]),
-    );
-  }
-
-  Widget _contextDropdown(BuildContext context) {
-    final items = const [
-      DropdownMenuItem(value: 'short', child: Text('上下文：短')),
-      DropdownMenuItem(value: 'medium', child: Text('上下文：中')),
-      DropdownMenuItem(value: 'long', child: Text('上下文：长')),
-    ];
-    return FutureBuilder(
-      future: UserPreferencesService.getContextWindow(),
-      builder: (context, snap) {
-        final v = snap.data?.toString() ?? 'medium';
-        return _chipWrap(
-          context,
-          Row(children: [
-            const Icon(Icons.history, size: 16),
-            const SizedBox(width: 6),
-            DropdownButton<String>(
-              value: v,
-              items: items,
-              onChanged: (nv) async { if (nv != null) await UserPreferencesService.setContextWindow(nv); },
-              underline: const SizedBox.shrink(),
-            ),
-          ]),
-        );
-      },
-    );
-  }
-
-  Widget _ratioSlider(BuildContext context, int ratio) {
-    return _chipWrap(
-      context,
-      Row(children: [
-        const Icon(Icons.scale, size: 16),
-        const SizedBox(width: 6),
-        Text('建议比例：$ratio%'),
-        const SizedBox(width: 8),
-        SizedBox(
-          width: 120,
-          child: Slider(
-            value: ratio.toDouble(),
-            min: 0,
-            max: 100,
-            divisions: 10,
-            onChanged: (v) async { await UserPreferencesService.setAdviceRatio(v.toInt()); },
-          ),
-        ),
-      ]),
-    );
-  }
-
+  // 废弃的 AI 偏好辅助样式保留不影响功能，若需可继续用于其他卡片。
   Widget _chipWrap(BuildContext context, Widget child) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'config_service.dart';
 
 enum FeedbackType { like, dislike, completed, skipped }
 
@@ -69,15 +70,12 @@ class FeedbackService {
 
   Future<void> _uploadFeedback(GiftFeedback feedback) async {
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final baseUrl = prefs.getString('ai_analysis_base_url');
-      final enabled = prefs.getBool('ai_analysis_enabled') ?? false;
-      
-      if (!enabled || baseUrl == null || baseUrl.isEmpty) {
-        // 存储到待上传队列
+      final cfg = ConfigService.instance;
+      if (!cfg.isRemoteConfigured) {
         await _addToPendingUpload(feedback);
         return;
       }
+      final baseUrl = cfg.serverBaseUrl;
 
       final response = await http.post(
         Uri.parse('$baseUrl/feedback'),
@@ -109,16 +107,15 @@ class FeedbackService {
   Future<void> uploadPendingFeedback() async {
     final prefs = await SharedPreferences.getInstance();
     final pendingJson = prefs.getString(_pendingUploadKey);
-    
+
     if (pendingJson == null) return;
-    
+
     final List<dynamic> pending = jsonDecode(pendingJson);
     if (pending.isEmpty) return;
 
-    final baseUrl = prefs.getString('ai_analysis_base_url');
-    final enabled = prefs.getBool('ai_analysis_enabled') ?? false;
-    
-    if (!enabled || baseUrl == null || baseUrl.isEmpty) return;
+    final cfg = ConfigService.instance;
+    if (!cfg.isRemoteConfigured) return;
+    final baseUrl = cfg.serverBaseUrl;
 
     final uploaded = <int>[];
     

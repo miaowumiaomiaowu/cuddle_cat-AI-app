@@ -49,14 +49,26 @@ class ConfigService {
   }
 
   // 是否启用远程后端（ECS）
+  // 需求：当 .env 中 ENABLE_REMOTE_BACKEND=true 时，强制启用远端，忽略本地开关覆盖
   bool get enableRemoteBackend {
+    final forceEnable = _envBool('ENABLE_REMOTE_BACKEND', false);
+    if (forceEnable) return true;
     if (_overrideEnableRemoteBackend != null) return _overrideEnableRemoteBackend!;
-    return _envBool('ENABLE_REMOTE_BACKEND', false);
+    return false;
   }
 
   // 服务器基础 URL（例如 https://api.example.com 或 http://<ecs_ip>:8080）
-  // 优先：用户设置（SharedPreferences）> SERVER_BASE_URL > AI_ANALYSIS_BASE_URL（兼容旧配置）
+  // 当强制远端启用时，始终返回 .env 中的地址；否则才允许用户覆盖
   String get serverBaseUrl {
+    final forceEnable = _envBool('ENABLE_REMOTE_BACKEND', false);
+    if (forceEnable) {
+      final server = _env('SERVER_BASE_URL');
+      if (server.isNotEmpty) return server;
+      final legacy = _env('AI_ANALYSIS_BASE_URL');
+      if (legacy.isNotEmpty) return legacy;
+      // 开启远端但未提供地址时，默认指向模拟器宿主机 8002
+      return 'http://10.0.2.2:8002';
+    }
     if (_overrideBaseUrl != null && _overrideBaseUrl!.isNotEmpty) return _overrideBaseUrl!;
     final server = _env('SERVER_BASE_URL');
     if (server.isNotEmpty) return server;

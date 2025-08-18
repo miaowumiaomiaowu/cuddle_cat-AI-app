@@ -54,8 +54,14 @@ class AuthService extends ChangeNotifier {
           await logout();
         }
       } else if (_isGuestMode) {
-        // 游客模式，创建临时用户
-        _currentUser = _createGuestUser();
+        // 游客模式：优先恢复持久化的游客用户；若不存在则创建并持久化一个稳定的游客ID
+        final userJson = prefs.getString(_userKey);
+        if (userJson != null) {
+          _currentUser = User.fromJson(jsonDecode(userJson));
+        } else {
+          _currentUser = _createGuestUser();
+          await _saveUser(_currentUser!);
+        }
       }
 
       debugPrint('认证服务初始化完成 - 登录状态: $_isLoggedIn, 游客模式: $_isGuestMode');
@@ -220,7 +226,15 @@ class AuthService extends ChangeNotifier {
       _setLoading(true);
       _clearError();
 
-      _currentUser = _createGuestUser();
+      // 如果已经有持久化的游客用户，则沿用；否则创建并保存
+      final prefs = await SharedPreferences.getInstance();
+      final userJson = prefs.getString(_userKey);
+      if (userJson != null) {
+        _currentUser = User.fromJson(jsonDecode(userJson));
+      } else {
+        _currentUser = _createGuestUser();
+        await _saveUser(_currentUser!);
+      }
       _isLoggedIn = false;
       _isGuestMode = true;
 

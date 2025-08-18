@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../models/cat.dart';
 import '../providers/cat_provider.dart';
 import '../theme/app_theme.dart';
+import '../utils/cat_image_manager.dart';
 
 class AdoptCatScreen extends StatefulWidget {
   const AdoptCatScreen({super.key});
@@ -138,39 +139,18 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> with TickerProviderStat
                         );
                       },
                     ),
-                    // 圆形预览
+                    // 圆形预览（使用真实猫图）
                     Container(
-                      width: 200,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: _isRandom
-                            ? AppTheme.primaryColorLight.withValues(alpha: 0.25)
-                            : _getCatColor(_selectedBreed).withValues(alpha: 0.2),
-                        shape: BoxShape.circle,
-                      ),
-                      child: Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.pets,
-                              size: 80,
-                              color: _isRandom
-                                  ? AppTheme.primaryColor
-                                  : _getCatColor(_selectedBreed),
-                            ),
-                            const SizedBox(height: 10),
-                            Text(
-                              _isRandom ? '随机猫咪' : _getCatBreedName(_selectedBreed),
-                              style: TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: _isRandom
-                                    ? AppTheme.primaryColor
-                                    : _getCatColor(_selectedBreed),
-                              ),
-                            ),
-                          ],
+                      width: 220,
+                      height: 220,
+                      decoration: const BoxDecoration(shape: BoxShape.circle),
+                      child: ClipOval(
+                        child: Image.asset(
+                          _isRandom
+                              ? CatImageManager.getPersonaImagePath(_selectedPersonality)
+                              : CatImageManager.getCatImagePath(_breedKey(_selectedBreed)),
+                          fit: BoxFit.cover,
+                          errorBuilder: (c, e, s) => Icon(Icons.pets, size: 80, color: AppTheme.primaryColor),
                         ),
                       ),
                     ),
@@ -222,13 +202,13 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> with TickerProviderStat
                   shrinkWrap: true,
                   physics: const NeverScrollableScrollPhysics(),
                   crossAxisCount: 3,
-                  childAspectRatio: 1,
+                  childAspectRatio: 0.9,
                   children: [
-                    _buildBreedCard(CatBreed.persian),
-                    _buildBreedCard(CatBreed.ragdoll),
-                    _buildBreedCard(CatBreed.siamese),
-                    _buildBreedCard(CatBreed.bengal),
-                    _buildBreedCard(CatBreed.maineCoon),
+                    CatImageManager.buildBreedCard(breed: 'persian', onTap: () => setState(() => _selectedBreed = CatBreed.persian), isSelected: _selectedBreed == CatBreed.persian),
+                    CatImageManager.buildBreedCard(breed: 'ragdoll', onTap: () => setState(() => _selectedBreed = CatBreed.ragdoll), isSelected: _selectedBreed == CatBreed.ragdoll),
+                    CatImageManager.buildBreedCard(breed: 'siamese', onTap: () => setState(() => _selectedBreed = CatBreed.siamese), isSelected: _selectedBreed == CatBreed.siamese),
+                    CatImageManager.buildBreedCard(breed: 'bengal', onTap: () => setState(() => _selectedBreed = CatBreed.bengal), isSelected: _selectedBreed == CatBreed.bengal),
+                    CatImageManager.buildBreedCard(breed: 'maine_coon', onTap: () => setState(() => _selectedBreed = CatBreed.maineCoon), isSelected: _selectedBreed == CatBreed.maineCoon),
                   ],
                 ),
               ],
@@ -239,17 +219,60 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> with TickerProviderStat
               const SizedBox(height: 16),
               Text('选择猫咪个性', style: Theme.of(context).textTheme.titleLarge),
               const SizedBox(height: 8),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [
-                  _personalityChip(CatPersonality.playful, '可爱'),
-                  _personalityChip(CatPersonality.independent, '高冷'),
-                  _personalityChip(CatPersonality.social, '搞笑'),
-                  _personalityChip(CatPersonality.calm, '温柔'),
-                  _personalityChip(CatPersonality.curious, '理性'),
-                  _personalityChip(CatPersonality.lazy, '文艺'),
-                ],
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(children: [
+                  CatImageManager.buildPersonalityCard(
+                    personality: CatPersonality.playful,
+                    title: '阳光',
+                    description: _personalityDesc(CatPersonality.playful),
+                    selected: _selectedPersonality == CatPersonality.playful,
+                    onTap: () {
+                      setState(() => _selectedPersonality = CatPersonality.playful);
+                      _showPersonalityPreviewBubble(CatPersonality.playful);
+                    },
+                  ),
+                  CatImageManager.buildPersonalityCard(
+                    personality: CatPersonality.social,
+                    title: '搞笑',
+                    description: _personalityDesc(CatPersonality.social),
+                    selected: _selectedPersonality == CatPersonality.social,
+                    onTap: () {
+                      setState(() => _selectedPersonality = CatPersonality.social);
+                      _showPersonalityPreviewBubble(CatPersonality.social);
+                    },
+                  ),
+                  CatImageManager.buildPersonalityCard(
+                    personality: CatPersonality.independent,
+                    title: '严厉',
+                    description: _personalityDesc(CatPersonality.independent),
+                    selected: _selectedPersonality == CatPersonality.independent,
+                    onTap: () {
+                      setState(() => _selectedPersonality = CatPersonality.independent);
+                      _showPersonalityPreviewBubble(CatPersonality.independent);
+                    },
+                  ),
+                  CatImageManager.buildPersonalityCard(
+                    personality: CatPersonality.calm,
+                    title: '温暖',
+                    description: _personalityDesc(CatPersonality.calm),
+                    selected: _selectedPersonality == CatPersonality.calm,
+                    onTap: () {
+                      setState(() => _selectedPersonality = CatPersonality.calm);
+                      _showPersonalityPreviewBubble(CatPersonality.calm);
+                    },
+                  ),
+                  CatImageManager.buildPersonalityCard(
+                    personality: CatPersonality.lazy,
+                    title: '文艺',
+                    description: _personalityDesc(CatPersonality.lazy),
+                    selected: _selectedPersonality == CatPersonality.lazy,
+                    onTap: () {
+                      setState(() => _selectedPersonality = CatPersonality.lazy);
+                      _showPersonalityPreviewBubble(CatPersonality.lazy);
+                    },
+                  ),
+                ]),
               ),
               const SizedBox(height: 8),
               Text(_personalityDesc(_selectedPersonality), style: Theme.of(context).textTheme.bodyMedium),
@@ -295,23 +318,83 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> with TickerProviderStat
                             fontWeight: FontWeight.bold,
                           ),
                         ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
-            ],
+            ),
+      );
+  }
+
+
+  // 个性预览气泡：展示该性格的典型回应风格
+  void _showPersonalityPreviewBubble(CatPersonality p) {
+    final Map<CatPersonality, List<String>> samples = {
+      CatPersonality.playful: ['嘿嘿，今天也想黏着你~', '给你偷偷递一颗小太阳 ☀️'],
+      CatPersonality.social: ['笑一个嘛～我先来：😹', '来点开心的！🎉'],
+      CatPersonality.independent: ['我在，你放心做你该做的。', '给你一条清晰路线 🧭'],
+      CatPersonality.calm: ['先深呼吸，慢慢来。', '我在，轻轻抱一会儿。'],
+      CatPersonality.curious: ['这个可以这样试试：', '我有个小主意💡'],
+      CatPersonality.lazy: ['泡杯茶听首歌吧 🎵', '给心情一点留白。'],
+    };
+    final list = samples[p] ?? ['喵~'];
+    final text = (list..shuffle()).first;
+
+    final overlay = Overlay.of(context);
+
+    final entry = OverlayEntry(
+      builder: (_) => Positioned(
+        left: 24,
+        right: 24,
+        bottom: 140,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 350),
+          builder: (c, v, child) => Opacity(
+            opacity: v,
+            child: Transform.translate(offset: Offset(0, 10 * (1 - v)), child: child),
+          ),
+          child: Material(
+            color: Colors.transparent,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              decoration: BoxDecoration(
+                color: Colors.black87,
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
+              ),
+              child: Row(children: [
+                const Text('💬 ', style: TextStyle(color: Colors.white)),
+                Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 14))),
+              ]),
+            ),
           ),
         ),
       ),
     );
+
+    overlay.insert(entry);
+    Future.delayed(const Duration(milliseconds: 1200), entry.remove);
   }
 
-  Widget _personalityChip(CatPersonality p, String label) {
-    final selected = _selectedPersonality == p;
-    return ChoiceChip(
-      label: Text(label),
-      selected: selected,
-      selectedColor: AppTheme.primaryColor.withValues(alpha: 0.2),
-      onSelected: (_) => setState(() => _selectedPersonality = p),
-    );
+
+  // 将枚举品种转换为图片键
+  String _breedKey(CatBreed b) {
+    switch (b) {
+      case CatBreed.persian:
+        return 'persian';
+      case CatBreed.ragdoll:
+        return 'ragdoll';
+      case CatBreed.siamese:
+        return 'siamese';
+      case CatBreed.bengal:
+        return 'bengal';
+      case CatBreed.maineCoon:
+        return 'maine_coon';
+      case CatBreed.random:
+        return 'ragdoll';
+    }
   }
 
   String _personalityDesc(CatPersonality p) {
@@ -364,78 +447,5 @@ class _AdoptCatScreenState extends State<AdoptCatScreen> with TickerProviderStat
     );
   }
 
-  Widget _buildBreedCard(CatBreed breed) {
-    final isSelected = _selectedBreed == breed;
-
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedBreed = breed;
-        });
-      },
-      child: Card(
-        elevation: isSelected ? 4 : 1,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-          side: BorderSide(
-            color: isSelected ? AppTheme.primaryColor : Colors.transparent,
-            width: 2,
-          ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.pets,
-              size: 40,
-              color: _getCatColor(breed),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              _getCatBreedName(breed),
-              style: TextStyle(
-                fontSize: 12,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
-              textAlign: TextAlign.center,
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Color _getCatColor(CatBreed breed) {
-    switch (breed) {
-      case CatBreed.persian:
-        return Colors.grey.shade600;
-      case CatBreed.ragdoll:
-        return Colors.blue.shade300;
-      case CatBreed.siamese:
-        return Colors.brown.shade300;
-      case CatBreed.bengal:
-        return Colors.orange.shade600;
-      case CatBreed.maineCoon:
-        return Colors.brown.shade700;
-      case CatBreed.random:
-        return AppTheme.primaryColor;
-    }
-  }
-
-  String _getCatBreedName(CatBreed breed) {
-    switch (breed) {
-      case CatBreed.persian:
-        return '波斯猫';
-      case CatBreed.ragdoll:
-        return '布偶猫';
-      case CatBreed.siamese:
-        return '暹罗猫';
-      case CatBreed.bengal:
-        return '孟加拉猫';
-      case CatBreed.maineCoon:
-        return '缅因猫';
-      case CatBreed.random:
-        return '随机猫咪';
-    }
-  }
+  // 原 _buildBreedCard/_getCatColor/_getCatBreedName 已由 CatImageManager 的卡片替代，移除冗余。
 }

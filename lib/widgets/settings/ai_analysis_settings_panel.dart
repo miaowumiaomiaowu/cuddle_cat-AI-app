@@ -9,7 +9,6 @@ class AIAnalysisSettingsPanel extends StatefulWidget {
 }
 
 class _AIAnalysisSettingsPanelState extends State<AIAnalysisSettingsPanel> {
-  bool _enabled = false;
   final _ctrl = TextEditingController();
   bool _loading = true;
 
@@ -22,19 +21,12 @@ class _AIAnalysisSettingsPanelState extends State<AIAnalysisSettingsPanel> {
   Future<void> _load() async {
     final prefs = await SharedPreferences.getInstance();
     setState(() {
-      _enabled = prefs.getBool('ai_analysis_enabled') ?? false;
       _ctrl.text = prefs.getString('ai_analysis_base_url') ?? '';
       _loading = false;
     });
   }
 
-  Future<void> _save() async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool('ai_analysis_enabled', _enabled);
-    await prefs.setString('ai_analysis_base_url', _ctrl.text.trim());
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('AI 分析配置已保存')));
-  }
+  // 保存方法已不再使用，AI 分析由 .env 控制
 
   @override
   void dispose() {
@@ -48,25 +40,19 @@ class _AIAnalysisSettingsPanelState extends State<AIAnalysisSettingsPanel> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SwitchListTile(
-          title: const Text('启用 AI 分析（HTTP）'),
-          subtitle: const Text('关闭时使用本地 Stub，不调用服务端'),
-          value: _enabled,
-          onChanged: (v) => setState(() => _enabled = v),
+        ListTile(
+          leading: const Icon(Icons.check_circle, color: Colors.green),
+          title: const Text('AI 分析模式由 .env 控制'),
+          subtitle: const Text('当 ENABLE_REMOTE_BACKEND=true 时，始终使用 HTTP 后端'),
         ),
         TextField(
           controller: _ctrl,
+          readOnly: true,
           decoration: const InputDecoration(
             labelText: '分析服务地址（baseUrl）',
-            hintText: '例如 http://127.0.0.1:8000',
+            hintText: '由 .env 的 SERVER_BASE_URL/AI_ANALYSIS_BASE_URL 或默认 10.0.2.2:8002 提供',
           ),
         ),
-        const SizedBox(height: 12),
-        ElevatedButton.icon(
-          onPressed: _save,
-          icon: const Icon(Icons.save),
-          label: const Text('保存'),
-        )
       ],
     );
   }

@@ -20,6 +20,8 @@ import '../providers/mood_provider.dart';
 import '../services/config_service.dart';
 import '../services/network_service.dart';
 import '../services/error_handling_service.dart';
+import 'metrics_debug_screen.dart';
+
 import 'ai_service_debug_screen.dart';
 
 /// 开发者工具界面
@@ -78,6 +80,7 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
         ),
         bottom: TabBar(
           controller: _tabController,
+          isScrollable: true,
           tabs: const [
             Tab(icon: Icon(Icons.speed), text: '性能'),
             Tab(icon: Icon(Icons.bug_report), text: '测试'),
@@ -706,6 +709,15 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
                   icon: const Icon(Icons.psychology),
                   label: const Text('AI服务诊断'),
                 ),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const MetricsDebugScreen()),
+                    );
+                  },
+                  icon: const Icon(Icons.insights),
+                  label: const Text('Metrics 调试'),
+                ),
               ],
             ),
           ],
@@ -755,66 +767,86 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
   }
 
   Future<void> _runAllTests() async {
-    setState(() {
-      _isRunningTests = true;
-    });
-
+    setState(() { _isRunningTests = true; });
+    final buf = StringBuffer();
     try {
-      // final suite = await _testingService.runAllTests();
-      // final report = _testingService.generateTestReport(suite);
+      buf.writeln('== 自检开始 ==');
+      buf.writeln('时间: ${DateTime.now().toIso8601String()}');
 
-      setState(() {
-        _lastReport = '测试服务功能已禁用';
-      });
+      // 1) SharedPreferences 读写
+      buf.writeln('\n[SharedPreferences]');
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('devtools_selftest_key', 'ok');
+      final readback = prefs.getString('devtools_selftest_key');
+      buf.writeln('写入/读取: ${readback == 'ok' ? '✅' : '❌'}');
 
+      // 2) 配置检查
+      buf.writeln('\n[Config]');
+      final cfg = ConfigService.instance;
+      buf.writeln('ENABLE_REMOTE_BACKEND: ${cfg.enableRemoteBackend}');
+      buf.writeln('SERVER_BASE_URL: ${cfg.serverBaseUrl.isEmpty ? '(空)' : cfg.serverBaseUrl}');
+
+      // 3) 后端健康检查
+      buf.writeln('\n[Backend /health]');
+      final health = await NetworkService.instance.healthCheck();
+      buf.writeln('ok: ${health.ok} code: ${health.statusCode ?? '-'}');
+      if (health.rawBody != null && health.rawBody!.isNotEmpty) {
+        final snippet = health.rawBody!.length > 200
+            ? '${health.rawBody!.substring(0, 200)}...'
+            : health.rawBody!;
+        buf.writeln('body: $snippet');
+      }
+
+      if (!mounted) return;
+      setState(() { _lastReport = buf.toString(); });
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('测试完成 (功能已禁用)'),
-          backgroundColor: ArtisticTheme.warningColor,
-        ),
+        const SnackBar(content: Text('测试完成')),
       );
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('测试失败: $e'),
-          backgroundColor: ArtisticTheme.errorColor,
-        ),
-      );
+      if (mounted) {
+        setState(() { _lastReport = '${buf.toString()}\n异常: $e'; });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('测试失败: $e'), backgroundColor: ArtisticTheme.errorColor),
+        );
+      }
     } finally {
-      setState(() {
-        _isRunningTests = false;
-      });
+      setState(() { _isRunningTests = false; });
     }
   }
 
   Future<void> _runHealthCheck() async {
-    setState(() {
-      _isRunningHealthCheck = true;
-    });
-
+    setState(() { _isRunningHealthCheck = true; });
     try {
-      // final report = await _healthCheckService.performFullHealthCheck();
-      // final reportText = _healthCheckService.generateHealthReport(report);
-      final reportText = '健康检查功能已禁用';
+      final cfg = ConfigService.instance;
+      final health = await NetworkService.instance.healthCheck();
+      final details = StringBuffer()
+        ..writeln('远程启用: ${cfg.enableRemoteBackend}')
+        ..writeln('Base URL: ${cfg.serverBaseUrl}')
+        ..writeln('Health OK: ${health.ok}')
+        ..writeln('HTTP: ${health.statusCode ?? '-'}')
+        ..writeln('时间: ${DateTime.now().toIso8601String()}');
+      if (health.rawBody != null && health.rawBody!.isNotEmpty) {
+        final snippet = health.rawBody!.length > 600
+            ? '${health.rawBody!.substring(0, 600)}...'
+            : health.rawBody!;
+        details..writeln('\n响应片段:')..writeln(snippet);
+      }
 
+      // 展示报告
+      if (!mounted) return;
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
-          title: const Text('健康检查报告 (功能已禁用)'),
+          title: const Text('健康检查报告'),
           content: SingleChildScrollView(
-            child: Text(
-              reportText,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-            ),
+            child: Text(details.toString(), style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
           ),
           actions: [
             TextButton(
               onPressed: () {
-                Clipboard.setData(ClipboardData(text: reportText));
+                Clipboard.setData(ClipboardData(text: details.toString()));
                 Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('报告已复制到剪贴板')),
-                );
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('报告已复制到剪贴板')));
               },
               child: const Text('复制'),
             ),
@@ -827,15 +859,10 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('健康检查失败: $e'),
-          backgroundColor: ArtisticTheme.errorColor,
-        ),
+        SnackBar(content: Text('健康检查失败: $e'), backgroundColor: ArtisticTheme.errorColor),
       );
     } finally {
-      setState(() {
-        _isRunningHealthCheck = false;
-      });
+      setState(() { _isRunningHealthCheck = false; });
     }
   }
 

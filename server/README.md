@@ -1,11 +1,21 @@
 # Cuddle Cat AI Analysis Service (FastAPI)
 
-Minimal FastAPI skeleton for emotion/behavior analysis and gift recommendations.
+FastAPI backend for chat replies, wellness/gift recommendations, memories, feedback, analytics and metrics.
 
-## Endpoints
+## Endpoints (current)
+- GET /health
+- POST /chat/reply
 - POST /recommend/gifts
-- (future) POST /analyze/emotion
-- (future) POST /analyze/behavior
+- POST /recommend/wellness-plan
+- POST /memory/upsert
+- POST /memory/query
+- POST /feedback (JSON payload)
+- GET  /feedback/stats/{user_id}
+- GET  /analytics/stats
+- POST /analytics/predict-mood
+- POST /analytics/emotion-advanced
+- GET  /metrics (requires X-API-Key if METRICS_API_KEY is set)
+- GET  /metrics_prom (Prometheus format; requires X-API-Key if METRICS_API_KEY is set)
 
 ## Quickstart
 ```bash

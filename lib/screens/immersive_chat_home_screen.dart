@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/cat_provider.dart';
-import '../services/ai_service.dart';
+import '../providers/dialogue_provider.dart';
 import '../models/cat.dart';
 import '../models/dialogue.dart';
 import '../theme/artistic_theme.dart';
 import '../widgets/floating_cat_assistant.dart';
 import '../widgets/immersive_chat_widget.dart';
-import '../widgets/function_bubble_menu.dart';
 import '../widgets/quick_mood_record_sheet.dart';
 
 /// 沉浸式聊天首页 - 创新设计
@@ -21,32 +20,23 @@ class ImmersiveChatHomeScreen extends StatefulWidget {
 
 class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
     with TickerProviderStateMixin {
-  
-  // 聊天相关
+
+  // 聊天相关（输入与滚动控制）
   final TextEditingController _messageController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<ChatMessage> _messages = [];
-  bool _isTyping = false;
-  
+
   // 悬浮猫咪相关
-  bool _showFunctionMenu = false;
   late AnimationController _catAnimationController;
-  late AnimationController _menuAnimationController;
   late Animation<double> _catPulseAnimation;
-  late Animation<double> _menuScaleAnimation;
-  
+
   // 背景动画
   late AnimationController _backgroundController;
   late Animation<Color?> _backgroundColorAnimation;
-  
-  // 服务
-  final AIService _aiService = AIService();
 
   @override
   void initState() {
     super.initState();
     _initializeAnimations();
-    _loadWelcomeMessage();
   }
 
   void _initializeAnimations() {
@@ -64,19 +54,6 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
     ));
     _catAnimationController.repeat(reverse: true);
 
-    // 菜单缩放动画
-    _menuAnimationController = AnimationController(
-      duration: const Duration(milliseconds: 300),
-      vsync: this,
-    );
-    _menuScaleAnimation = Tween<double>(
-      begin: 0.0,
-      end: 1.0,
-    ).animate(CurvedAnimation(
-      parent: _menuAnimationController,
-      curve: Curves.elasticOut,
-    ));
-
     // 背景颜色动画
     _backgroundController = AnimationController(
       duration: const Duration(minutes: 5),
@@ -89,31 +66,13 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
     _backgroundController.repeat(reverse: true);
   }
 
-  void _loadWelcomeMessage() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final catProvider = Provider.of<CatProvider>(context, listen: false);
-      final cat = catProvider.cat;
-      
-      if (cat != null) {
-        setState(() {
-          _messages.add(ChatMessage(
-            text: '喵~ 我是${cat.name}！今天想聊什么呢？我可以陪你聊天、记录心情，或者分享旅行故事哦~ 🐱✨',
-            isUser: false,
-            timestamp: DateTime.now(),
-            avatar: '🐱',
-            messageType: ChatMessageType.welcome,
-          ));
-        });
-      }
-    });
-  }
+
 
   @override
   void dispose() {
     _messageController.dispose();
     _scrollController.dispose();
     _catAnimationController.dispose();
-    _menuAnimationController.dispose();
     _backgroundController.dispose();
     super.dispose();
   }
@@ -141,12 +100,9 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
                 children: [
                   // 主聊天界面
                   _buildChatInterface(),
-                  
-                  // 悬浮猫咪助手
+
+                  // 悬浮猫咪助手（点击直接作为“抚摸”反馈）
                   _buildFloatingCatAssistant(),
-                  
-                  // 功能菜单
-                  if (_showFunctionMenu) _buildFunctionMenu(),
                 ],
               ),
             ),
@@ -157,21 +113,21 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
   }
 
   Widget _buildChatInterface() {
+    final dialogue = context.watch<DialogueProvider>();
+    final sessionMsgs = dialogue.activeSession?.messages ?? const <DialogueMessage>[];
+    final messages = _mapProviderMessages(sessionMsgs);
+    final isTyping = dialogue.isProcessing;
+
     return Column(
       children: [
-        // 顶部标题栏
         _buildTopBar(),
-        
-        // 聊天消息列表
         Expanded(
           child: ImmersiveChatWidget(
-            messages: _messages,
+            messages: messages,
             scrollController: _scrollController,
-            isTyping: _isTyping,
+            isTyping: isTyping,
           ),
         ),
-        
-        // 输入区域
         _buildInputArea(),
       ],
     );
@@ -197,7 +153,7 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
             ),
           ),
           const SizedBox(width: 12),
-          
+
           // 标题
           Expanded(
             child: Column(
@@ -226,7 +182,7 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
               ],
             ),
           ),
-          
+
           // 状态指示器
           _buildStatusIndicator(),
         ],
@@ -253,301 +209,141 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
   }
 
   Widget _buildInputArea() {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: ArtisticTheme.surfaceColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final bool isNarrow = constraints.maxWidth < 360;
+        final double side = isNarrow ? 44 : 48;
+        final double radius = side / 2;
+        final double spacing = isNarrow ? 8 : 12;
+        final double horizontalPad = isNarrow ? 12 : 16;
+        final double inputHPad = isNarrow ? 14 : 20;
+        return Container(
+          padding: EdgeInsets.all(horizontalPad),
+          decoration: BoxDecoration(
+            color: ArtisticTheme.surfaceColor,
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withValues(alpha: 0.05),
+                blurRadius: 10,
+                offset: const Offset(0, -2),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Row(
-        children: [
-          // 心情记录快捷按钮
-          GestureDetector(
-            onTap: _showQuickMoodRecord,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: Colors.pink.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(
-                  color: Colors.pink.withValues(alpha: 0.3),
-                  width: 1,
-                ),
-              ),
-              child: const Icon(
-                Icons.mood,
-                color: Colors.pink,
-                size: 24,
-              ),
-            ),
-          ),
-
-          const SizedBox(width: 12),
-
-          // 输入框
-          Expanded(
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(25),
-                border: Border.all(
-                  color: ArtisticTheme.primaryColor.withValues(alpha: 0.2),
-                  width: 1,
-                ),
-              ),
-              child: TextField(
-                controller: _messageController,
-                decoration: InputDecoration(
-                  hintText: '和我聊聊吧...',
-                  hintStyle: ArtisticTheme.bodyStyle.copyWith(
-                    color: ArtisticTheme.textSecondary,
+          child: Row(
+            children: [
+              // 心情记录快捷按钮
+              GestureDetector(
+                onTap: _showQuickMoodRecord,
+                child: Container(
+                  width: side,
+                  height: side,
+                  decoration: BoxDecoration(
+                    color: Colors.pink.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(radius),
+                    border: Border.all(
+                      color: Colors.pink.withValues(alpha: 0.3),
+                      width: 1,
+                    ),
                   ),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 20,
-                    vertical: 12,
+                  child: const Icon(
+                    Icons.mood,
+                    color: Colors.pink,
+                    size: 22,
                   ),
                 ),
-                maxLines: null,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _sendMessage(),
               ),
-            ),
-          ),
 
-          const SizedBox(width: 12),
+              SizedBox(width: spacing),
 
-          // 发送按钮
-          GestureDetector(
-            onTap: _sendMessage,
-            child: Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: ArtisticTheme.primaryColor,
-                borderRadius: BorderRadius.circular(24),
-                boxShadow: ArtisticTheme.elevatedShadow,
+              // 输入框
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
+                    border: Border.all(
+                      color: ArtisticTheme.primaryColor.withValues(alpha: 0.2),
+                      width: 1,
+                    ),
+                  ),
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: InputDecoration(
+                      hintText: '和我聊聊吧...',
+                      hintStyle: ArtisticTheme.bodyStyle.copyWith(
+                        color: ArtisticTheme.textSecondary,
+                      ),
+                      border: InputBorder.none,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: inputHPad,
+                        vertical: 12,
+                      ),
+                    ),
+                    maxLines: null,
+                    textInputAction: TextInputAction.send,
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
               ),
-              child: const Icon(
-                Icons.send_rounded,
-                color: Colors.white,
-                size: 24,
+
+              SizedBox(width: spacing),
+
+              // 发送按钮
+              GestureDetector(
+                onTap: _sendMessage,
+                child: Container(
+                  width: side,
+                  height: side,
+                  decoration: BoxDecoration(
+                    color: ArtisticTheme.primaryColor,
+                    borderRadius: BorderRadius.circular(radius),
+                    boxShadow: ArtisticTheme.elevatedShadow,
+                  ),
+                  child: const Icon(
+                    Icons.send_rounded,
+                    color: Colors.white,
+                    size: 22,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
   Widget _buildFloatingCatAssistant() {
+    final dialogue = context.watch<DialogueProvider>();
+    final hasFewMsgs = (dialogue.activeSession?.messages.length ?? 0) <= 1;
     return Positioned(
       right: 20,
       bottom: 100,
       child: FloatingCatAssistant(
         animation: _catPulseAnimation,
-        onTap: _toggleFunctionMenu,
-        showNotification: _messages.length <= 1, // 新用户显示提示
+        onTap: _petCatBubble,
+        showNotification: hasFewMsgs, // 新用户显示提示
       ),
     );
   }
 
-  Widget _buildFunctionMenu() {
-    return Positioned(
-      right: 20,
-      bottom: 160,
-      child: ScaleTransition(
-        scale: _menuScaleAnimation,
-        child: FunctionBubbleMenu(
-          onMoodRecord: _openMoodRecord,
-          onSettings: _openSettings,
-          onClose: _toggleFunctionMenu,
-        ),
-      ),
-    );
-  }
-
-  void _toggleFunctionMenu() {
-    setState(() {
-      _showFunctionMenu = !_showFunctionMenu;
-    });
-    
-    if (_showFunctionMenu) {
-      _menuAnimationController.forward();
-    } else {
-      _menuAnimationController.reverse();
-    }
-    
-    // 触觉反馈
-    HapticFeedback.lightImpact();
-  }
 
   Future<void> _sendMessage() async {
     final text = _messageController.text.trim();
-    if (text.isEmpty || _isTyping) return;
+    if (text.isEmpty) return;
 
-    // 添加用户消息
-    setState(() {
-      _messages.add(ChatMessage(
-        text: text,
-        isUser: true,
-        timestamp: DateTime.now(),
-        avatar: '😊',
-      ));
-      _isTyping = true;
-    });
+    // 通过 DialogueProvider 发送消息（内部负责AI调用与持久化）
+    final dialogue = context.read<DialogueProvider>();
+    final cat = context.read<CatProvider>().cat ?? Cat(name: '小暖', breed: CatBreed.random);
 
+    // 立刻清空输入并滚动
     _messageController.clear();
     _scrollToBottom();
 
-    try {
-      // 统一使用 AI 生成回复
-      String response;
-      ChatMessageType responseType = ChatMessageType.normal;
-
-      switch (_analyzeMessageType(text)) {
-        case UserMessageType.psychology:
-          // 心理支持回复（接入 DeepSeek 实时对话）
-          final history = _messages
-              .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
-              .toList();
-          final aiMsg = await _aiService.generateCatReply(
-            userMessage: DialogueMessage.fromUser(text: text),
-            cat: Provider.of<CatProvider>(context, listen: false).cat ?? Cat(name: '小暖', breed: CatBreed.random),
-            conversationHistory: history,
-          );
-          response = aiMsg.text;
-          responseType = ChatMessageType.psychology;
-          break;
-
-        case UserMessageType.catInteraction:
-          // 猫咪互动也统一走 AI 生成
-          final history = _messages
-              .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
-              .toList();
-          final aiMsgInteraction = await _aiService.generateCatReply(
-            userMessage: DialogueMessage.fromUser(text: text),
-            cat: Provider.of<CatProvider>(context, listen: false).cat ?? Cat(name: '小暖', breed: CatBreed.random),
-            conversationHistory: history,
-          );
-          response = aiMsgInteraction.text;
-          responseType = ChatMessageType.normal;
-          break;
-
-        case UserMessageType.casual:
-          // 日常聊天也走 AI，对闲聊做更自然的生成；失败时由 AIService 内部兜底
-          final history = _messages
-              .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
-              .toList();
-          final aiMsgCasual = await _aiService.generateCatReply(
-            userMessage: DialogueMessage.fromUser(text: text),
-            cat: Provider.of<CatProvider>(context, listen: false).cat ?? Cat(name: '小暖', breed: CatBreed.random),
-            conversationHistory: history,
-          );
-          response = aiMsgCasual.text;
-          responseType = ChatMessageType.normal;
-          break;
-
-        case UserMessageType.functional:
-          // 功能性询问也统一走 AI 生成
-          final history = _messages
-              .map((m) => m.isUser ? DialogueMessage.fromUser(text: m.text) : DialogueMessage.fromCat(text: m.text))
-              .toList();
-          final aiMsgFunctional = await _aiService.generateCatReply(
-            userMessage: DialogueMessage.fromUser(text: text),
-            cat: Provider.of<CatProvider>(context, listen: false).cat ?? Cat(name: '小暖', breed: CatBreed.random),
-            conversationHistory: history,
-          );
-          response = aiMsgFunctional.text;
-          responseType = ChatMessageType.normal;
-          break;
-      }
-
-      // 添加AI回复
-      setState(() {
-        _messages.add(ChatMessage(
-          text: response,
-          isUser: false,
-          timestamp: DateTime.now(),
-          avatar: _getResponseAvatar(responseType),
-          messageType: responseType,
-        ));
-        _isTyping = false;
-      });
-
-      _scrollToBottom();
-    } catch (e) {
-      setState(() {
-        _messages.add(ChatMessage(
-          text: '当前网络不可用或服务异常，请检查网络连接后重试。',
-          isUser: false,
-          timestamp: DateTime.now(),
-          avatar: '🤖',
-        ));
-        _isTyping = false;
-      });
-    }
+    await dialogue.sendUserMessage(text, cat);
   }
 
-  /// 分析用户消息类型
-  UserMessageType _analyzeMessageType(String message) {
-    final lowerMessage = message.toLowerCase();
 
-    // 心理支持关键词
-    final psychologyKeywords = [
-      '难过', '伤心', '焦虑', '担心', '害怕', '抑郁', '压力', '烦恼',
-      '不开心', '痛苦', '困扰', '迷茫', '失望', '绝望', '孤独', '无助',
-      '心情', '情绪', '感受', '心理', '精神', '内心', '想法'
-    ];
-
-    // 猫咪互动关键词
-    final catKeywords = [
-      '猫', '猫咪', '小猫', '喵', '宠物', '陪伴', '可爱', '毛茸茸',
-      '抚摸', '拥抱', '玩耍', '互动'
-    ];
-
-    // 功能性关键词
-    final functionalKeywords = [
-      '记录', '心情记录', '设置', '帮助', '功能', '怎么用',
-      '如何', '教程', '指南'
-    ];
-
-    // 检查心理支持
-    if (psychologyKeywords.any((keyword) => lowerMessage.contains(keyword))) {
-      return UserMessageType.psychology;
-    }
-
-    // 检查猫咪互动
-    if (catKeywords.any((keyword) => lowerMessage.contains(keyword))) {
-      return UserMessageType.catInteraction;
-    }
-
-    // 检查功能性
-    if (functionalKeywords.any((keyword) => lowerMessage.contains(keyword))) {
-      return UserMessageType.functional;
-    }
-
-    // 默认为日常聊天
-    return UserMessageType.casual;
-  }
-  /// 获取回复头像
-  String _getResponseAvatar(ChatMessageType type) {
-    switch (type) {
-      case ChatMessageType.psychology:
-        return '💙';
-      case ChatMessageType.system:
-        return '🤖';
-      default:
-        return '🐱';
-    }
-  }
 
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -561,11 +357,6 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
     });
   }
 
-  void _openMoodRecord() {
-    _toggleFunctionMenu();
-    _showQuickMoodRecord();
-  }
-
   void _showQuickMoodRecord() {
     showModalBottomSheet(
       context: context,
@@ -575,12 +366,76 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
     );
   }
 
+  // 轻触猫咪：弹出性格化 Emoji 气泡
+  void _petCatBubble() {
+    final cat = context.read<CatProvider>().cat;
+    final personality = cat?.personality;
+    final list = () {
+      switch (personality) {
+        case CatPersonality.playful:
+          return ['😸','🥰','✨','🌞'];
+        case CatPersonality.social:
+          return ['😹','🤪','🎉','🫶'];
+        case CatPersonality.independent:
+          return ['😼','🧭','🧠','👍'];
+        case CatPersonality.calm:
+          return ['😺','🌿','☕','💗'];
+        case CatPersonality.curious:
+          return ['🧐','💡','🧩','📚'];
+        case CatPersonality.lazy:
+          return ['😽','🌙','🎵','📖'];
+        default:
+          return ['🐾','💝'];
+      }
+    }();
+    final emoji = (list..shuffle()).first;
 
-  void _openSettings() {
-    _toggleFunctionMenu();
-    Navigator.pushNamed(context, '/settings');
+    final overlay = Overlay.of(context);
+
+    final entry = OverlayEntry(
+      builder: (ctx) => Positioned(
+        right: 26,
+        bottom: 170,
+        child: TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 600),
+          builder: (c, v, child) => Opacity(
+            opacity: v,
+            child: Transform.translate(
+              offset: Offset(0, -30 * v),
+              child: child,
+            ),
+          ),
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.black87,
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: const [BoxShadow(color: Colors.black26, blurRadius: 8)],
+            ),
+            child: Text(emoji, style: const TextStyle(fontSize: 20, color: Colors.white)),
+          ),
+        ),
+      ),
+    );
+
+    overlay.insert(entry);
+    Future.delayed(const Duration(milliseconds: 900), entry.remove);
+    HapticFeedback.lightImpact();
   }
+
 }
+
+  List<ChatMessage> _mapProviderMessages(List<DialogueMessage> msgs) {
+    return msgs.map((m) => ChatMessage(
+      text: m.text,
+      isUser: m.sender == MessageSender.user,
+      timestamp: m.timestamp,
+      avatar: m.sender == MessageSender.user ? '😊' : '🐱',
+      messageType: ChatMessageType.normal,
+    )).toList();
+  }
+
 
 /// 聊天消息类型
 enum ChatMessageType {

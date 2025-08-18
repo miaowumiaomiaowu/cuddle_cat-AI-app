@@ -245,7 +245,7 @@ class _FloatingCatAssistantState extends State<FloatingCatAssistant>
         ],
       ),
       child: Text(
-        '点击我查看更多功能 ✨',
+        '摸摸我 ✨',
         style: ArtisticTheme.bodyStyle.copyWith(
           color: Colors.white,
           fontSize: 12,

@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'ai_analysis_facade.dart';
+import 'ai_trace_service.dart';
 
 class AIAnalysisHttp implements AIAnalysisFacade {
   final String baseUrl;
@@ -9,8 +10,20 @@ class AIAnalysisHttp implements AIAnalysisFacade {
 
   @override
   Future<AnalysisResult> analyzeAndRecommend(UserSignals input) async {
+    final traceId = DateTime.now().microsecondsSinceEpoch.toString();
+    final path = '/recommend/gifts';
     try {
-      final uri = Uri.parse('$baseUrl/recommend/gifts');
+      final uri = Uri.parse('$baseUrl$path');
+      AiTraceService.instance.recordStart(
+        id: traceId,
+        baseUrl: baseUrl,
+        path: path,
+        requestSummary: {
+          'recentMessages': input.recentMessages.length,
+          'moodRecords': input.moodRecords.length,
+          'hasStats': input.stats.isNotEmpty,
+        },
+      );
       final resp = await _client
           .post(uri, headers: {'Content-Type': 'application/json'}, body: jsonEncode({
             'recentMessages': input.recentMessages,
@@ -32,13 +45,25 @@ class AIAnalysisHttp implements AIAnalysisFacade {
             estimatedMinutes: (m['estimatedMinutes'] as num?)?.toInt(),
           );
         }).toList() ?? [];
+        AiTraceService.instance.recordSuccess(
+          id: traceId,
+          statusCode: resp.statusCode,
+          responseSummary: {
+            'emotions': (data['emotions'] as List?)?.length ?? 0,
+            'scoresKeys': (data['scores'] as Map?)?.length ?? 0,
+            'gifts': gifts.length,
+          },
+        );
         return AnalysisResult(
           emotions: List<String>.from(data['emotions'] as List? ?? const []),
           scores: Map<String, double>.from((data['scores'] as Map?)?.map((k, v) => MapEntry(k.toString(), (v as num).toDouble())) ?? {}),
           gifts: gifts,
         );
       }
-    } catch (_) {}
+      AiTraceService.instance.recordError(id: traceId, statusCode: resp.statusCode, error: 'HTTP ${resp.statusCode}');
+    } catch (e) {
+      AiTraceService.instance.recordError(id: traceId, error: e.toString());
+    }
     return AIAnalysisStub().analyzeAndRecommend(input);
   }
 }

@@ -41,6 +41,50 @@ class DialogueService {
         _historySessions.add(DialogueSession.fromJson(sessionMap));
       }
 
+      // 如无历史会话，则注入一次性开发样本（仅用户输入，不预填充AI回复）
+      if (_historySessions.isEmpty) {
+        final seeded = prefs.getBool('dev_seeded_dialogues_v1') ?? false;
+        if (!seeded) {
+          final now = DateTime.now();
+          final msgs = <DialogueMessage>[
+            DialogueMessage(
+              text: '最近工作压力有点大，总觉得任务做不完。',
+              sender: MessageSender.user,
+              timestamp: now.subtract(const Duration(days: 2, hours: 3)),
+              emotionType: EmotionType.anxious,
+            ),
+            DialogueMessage(
+              text: '今天和同事有点小争执，心里不太舒服。',
+              sender: MessageSender.user,
+              timestamp: now.subtract(const Duration(days: 1, hours: 5)),
+              emotionType: EmotionType.angry,
+            ),
+            DialogueMessage(
+              text: '晚上散步了一会儿，感觉好一些了。',
+              sender: MessageSender.user,
+              timestamp: now.subtract(const Duration(hours: 20)),
+              emotionType: EmotionType.neutral,
+            ),
+            DialogueMessage(
+              text: '明天想早点起床去跑步，给自己一个好开始。',
+              sender: MessageSender.user,
+              timestamp: now.subtract(const Duration(hours: 10)),
+              emotionType: EmotionType.happy,
+            ),
+          ];
+          final session = DialogueSession(
+            id: 'session_${now.millisecondsSinceEpoch}',
+            startTime: msgs.first.timestamp,
+            lastUpdateTime: msgs.last.timestamp,
+            messages: msgs,
+          );
+          _historySessions.add(session);
+          _activeSession = session;
+          await saveSessions();
+          await prefs.setBool('dev_seeded_dialogues_v1', true);
+        }
+      }
+
       _historySessions
           .sort((a, b) => b.lastUpdateTime.compareTo(a.lastUpdateTime));
 
