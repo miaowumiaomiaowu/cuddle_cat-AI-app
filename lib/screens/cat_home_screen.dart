@@ -684,76 +684,88 @@ class _CatHomeScreenState extends State<CatHomeScreen>
 
   /// 显示API状态对话框
   void _showApiStatusDialog(BuildContext context) {
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Text(
-              _isApiKeyConfigured() ? '✅' : '❌',
-              style: const TextStyle(fontSize: 20),
-            ),
-            const SizedBox(width: AppTheme.spacingSmall),
-            const Text('API状态'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildInfoRow('API密钥', _isApiKeyConfigured() ? "已配置" : "未配置"),
-              const SizedBox(height: AppTheme.spacingSmall),
-              _buildInfoRow('密钥信息', _maskApiKey()),
-              _buildInfoRow('API端点', _getApiEndpoint()),
-              const SizedBox(height: AppTheme.spacingMedium),
-              Container(
-                padding: const EdgeInsets.all(AppTheme.spacingMedium),
-                decoration: BoxDecoration(
-                  color: AppTheme.infoColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                  border: Border.all(
-                    color: AppTheme.infoColor.withValues(alpha: 0.3),
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
+              title: Row(
+                children: [
+                  Text(
+                    _isApiKeyConfigured() ? '✅' : '❌',
+                    style: const TextStyle(fontSize: 20),
                   ),
-                ),
+                  const SizedBox(width: AppTheme.spacingSmall),
+                  const Text('API状态'),
+                ],
+              ),
+              content: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      '调试说明:',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: AppTheme.infoColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                    ),
+                    _buildInfoRow('API密钥', _isApiKeyConfigured() ? "已配置" : "未配置"),
                     const SizedBox(height: AppTheme.spacingSmall),
-                    ...const [
-                      '1. 请确保.env文件已正确配置',
-                      '2. API密钥格式应为: sk-xxx...',
-                      '3. 如无法连接，请检查网络设置',
-                    ].map((text) => Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Text(
-                            text,
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: AppTheme.textSecondary,
-                                    ),
+                    _buildInfoRow('密钥信息', _maskApiKey()),
+                    _buildInfoRow('API端点', _getApiEndpoint()),
+                    const SizedBox(height: AppTheme.spacingMedium),
+                    Container(
+                      padding: const EdgeInsets.all(AppTheme.spacingMedium),
+                      decoration: BoxDecoration(
+                        color: AppTheme.infoColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                        border: Border.all(
+                          color: AppTheme.infoColor.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '调试说明:',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  color: AppTheme.infoColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
-                        )),
+                          const SizedBox(height: AppTheme.spacingSmall),
+                          ...const [
+                            '1. 请确保.env文件已正确配置',
+                            '2. API密钥格式应为: sk-xxx...',
+                            '3. 如无法连接，请检查网络设置',
+                          ].map((text) => Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  text,
+                                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                        color: AppTheme.textSecondary,
+                                      ),
+                                ),
+                              )),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('关闭'),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('关闭'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 

@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:animations/animations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
@@ -23,7 +24,7 @@ import 'screens/onboarding_screen.dart';
 import 'screens/help_center_screen.dart';
 import 'screens/adopt_cat_screen.dart';
 import 'screens/more_stats_screen.dart';
-import 'screens/more_achievements_screen.dart';
+
 import 'screens/ai_service_debug_screen.dart';
 import 'screens/smart_analysis_screen.dart';
 import 'screens/reminder_settings_screen.dart';
@@ -210,7 +211,7 @@ class MyApp extends StatelessWidget {
         HappinessTaskEditScreen.routeName: (ctx) => const HappinessTaskEditScreen(),
         '/adopt_cat': (ctx) => const AdoptCatScreen(),
         MoreStatsScreen.routeName: (ctx) => const MoreStatsScreen(),
-        MoreAchievementsScreen.routeName: (ctx) => const MoreAchievementsScreen(),
+
         ReminderSettingsScreen.routeName: (ctx) => const ReminderSettingsScreen(),
         ReminderPlansScreen.routeName: (ctx) => const ReminderPlansScreen(),
         AIServiceDebugScreen.routeName: (ctx) => const AIServiceDebugScreen(),
@@ -342,53 +343,52 @@ class _MainScreenState extends State<MainScreen> with WidgetsBindingObserver {
 
   Widget _buildMainInterface() {
     return Scaffold(
-      body: _screens[_currentIndex],
+      body: PageTransitionSwitcher(
+        duration: AppTheme.motionMedium,
+        reverse: false,
+        transitionBuilder: (Widget child, Animation<double> primaryAnimation, Animation<double> secondaryAnimation) {
+          return FadeThroughTransition(
+            animation: primaryAnimation,
+            secondaryAnimation: secondaryAnimation,
+            child: child,
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey<int>(_currentIndex),
+          child: _screens[_currentIndex],
+        ),
+      ),
       floatingActionButton: const QuickRecordFAB(),
       bottomNavigationBar: Container(
-        decoration: BoxDecoration(
-          color: AppTheme.surfaceColor,
-          boxShadow: AppTheme.elevatedShadow,
+        decoration: const BoxDecoration(
+          gradient: AppTheme.mistSkyGradient,
         ),
         child: SafeArea(
-          child: BottomNavigationBar(
-            currentIndex: _currentIndex,
-            onTap: (index) {
-              setState(() {
-                _currentIndex = index;
-              });
+          top: false,
+          child: NavigationBar(
+            selectedIndex: _currentIndex,
+            onDestinationSelected: (index) {
+              setState(() => _currentIndex = index);
             },
-            elevation: 0,
-            backgroundColor: Colors.transparent,
-            selectedItemColor: AppTheme.primaryColor,
-            unselectedItemColor: AppTheme.textSecondary,
-            type: BottomNavigationBarType.fixed,
-            selectedLabelStyle: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-            unselectedLabelStyle: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.normal,
-            ),
-            items: const [
-              BottomNavigationBarItem(
-                icon: Text('🐱', style: TextStyle(fontSize: 24)),
-                activeIcon: Text('🐱', style: TextStyle(fontSize: 28)),
+            destinations: const [
+              NavigationDestination(
+                icon: Icon(Icons.pets_outlined),
+                selectedIcon: Icon(Icons.pets_rounded),
                 label: '猫咪',
               ),
-              BottomNavigationBarItem(
-                icon: Text('🌿', style: TextStyle(fontSize: 24)),
-                activeIcon: Text('🌿', style: TextStyle(fontSize: 28)),
+              NavigationDestination(
+                icon: Icon(Icons.eco_outlined),
+                selectedIcon: Icon(Icons.eco_rounded),
                 label: '幸福',
               ),
-              BottomNavigationBarItem(
-                icon: Icon(Icons.analytics_outlined, size: 24),
-                activeIcon: Icon(Icons.analytics, size: 28),
+              NavigationDestination(
+                icon: Icon(Icons.analytics_outlined),
+                selectedIcon: Icon(Icons.analytics_rounded),
                 label: '智能分析',
               ),
-              BottomNavigationBarItem(
-                icon: Text('👤', style: TextStyle(fontSize: 24)),
-                activeIcon: Text('👤', style: TextStyle(fontSize: 28)),
+              NavigationDestination(
+                icon: Icon(Icons.person_outline),
+                selectedIcon: Icon(Icons.person_rounded),
                 label: '我的',
               ),
             ],

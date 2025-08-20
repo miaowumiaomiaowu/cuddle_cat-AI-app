@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+
 import 'package:provider/provider.dart';
 import '../services/provider_manager.dart';
 import '../utils/persistence_monitor.dart';
-import '../theme/app_theme.dart';
+import '../ui/app_card.dart';
 
 /// 数据调试屏幕 - 用于监控和调试数据持久化系统
 class DataDebugScreen extends StatefulWidget {
@@ -51,12 +53,14 @@ class _DataDebugScreenState extends State<DataDebugScreen>
         Future.value(providerManager.getProvidersStats()),
       ]);
 
+      if (!mounted) return;
       setState(() {
-        _monitoringReport = results[0] as Map<String, dynamic>;
-        _performanceStats = results[1] as Map<String, dynamic>;
-        _providersStats = results[2] as Map<String, dynamic>;
+        _monitoringReport = results[0];
+        _performanceStats = results[1];
+        _providersStats = results[2];
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('加载数据失败: $e')),
       );
@@ -126,28 +130,53 @@ class _DataDebugScreenState extends State<DataDebugScreen>
     final backups =
         _monitoringReport!['backups'] as Map<String, dynamic>? ?? {};
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildInfoCard('监控状态', [
-          _buildInfoRow('监控状态', monitoring['isActive'] == true ? '运行中' : '已停止'),
-          _buildInfoRow('总事件数', '${monitoring['totalEvents'] ?? 0}'),
-        ]),
-        const SizedBox(height: 16),
-        _buildInfoCard('存储信息', [
-          _buildInfoRow('总键数', '${storage['totalKeys'] ?? 0}'),
-          _buildInfoRow(
-              '存储大小', _formatBytes(storage['totalSize'] as int? ?? 0)),
-        ]),
-        const SizedBox(height: 16),
-        _buildInfoCard('备份信息', [
-          _buildInfoRow('备份文件数', '${backups['count'] ?? 0}'),
-        ]),
-        if (backups['files'] != null) ...[
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppTheme.mistSkyGradient,
+      ),
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('监控状态', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                _buildInfoRow('监控状态', monitoring['isActive'] == true ? '运行中' : '已停止'),
+                _buildInfoRow('总事件数', '${monitoring['totalEvents'] ?? 0}'),
+              ],
+            ),
+          ),
           const SizedBox(height: 16),
-          _buildBackupsList(backups['files'] as List),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('存储信息', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                _buildInfoRow('总键数', '${storage['totalKeys'] ?? 0}'),
+                _buildInfoRow('存储大小', _formatBytes(storage['totalSize'] as int? ?? 0)),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('备份信息', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                _buildInfoRow('备份文件数', '${backups['count'] ?? 0}'),
+              ],
+            ),
+          ),
+          if (backups['files'] != null) ...[
+            const SizedBox(height: 16),
+            _buildBackupsList(backups['files'] as List),
+          ],
         ],
-      ],
+      ),
     );
   }
 
@@ -156,22 +185,20 @@ class _DataDebugScreenState extends State<DataDebugScreen>
       return const Center(child: Text('暂无性能数据'));
     }
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: _performanceStats!.entries.map((entry) {
-        final stats = entry.value as Map<String, dynamic>;
-        return Card(
-          margin: const EdgeInsets.only(bottom: 16),
-          child: Padding(
-            padding: const EdgeInsets.all(16),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppTheme.mistSkyGradient,
+      ),
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: _performanceStats!.entries.map((entry) {
+          final stats = entry.value as Map<String, dynamic>;
+          return AppCard(
+            margin: const EdgeInsets.only(bottom: 16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  entry.key,
-                  style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
-                ),
+                Text(entry.key, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 _buildInfoRow('调用次数', '${stats['count']}'),
                 _buildInfoRow('平均耗时', '${stats['avgMs']}ms'),
@@ -180,9 +207,9 @@ class _DataDebugScreenState extends State<DataDebugScreen>
                 _buildInfoRow('总耗时', '${stats['totalMs']}ms'),
               ],
             ),
-          ),
-        );
-      }).toList(),
+          );
+        }).toList(),
+      ),
     );
   }
 
@@ -194,47 +221,46 @@ class _DataDebugScreenState extends State<DataDebugScreen>
     final providers =
         _providersStats!['providers'] as Map<String, dynamic>? ?? {};
 
-    return ListView(
-      padding: const EdgeInsets.all(16),
-      children: [
-        _buildInfoCard('总览', [
-          _buildInfoRow(
-              'Provider总数', '${_providersStats!['totalProviders'] ?? 0}'),
-          _buildInfoRow('初始化状态',
-              _providersStats!['isInitialized'] == true ? '已初始化' : '未初始化'),
-        ]),
-        const SizedBox(height: 16),
-        ...providers.entries.map((entry) {
-          final stats = entry.value as Map<String, dynamic>;
-          return Card(
-            margin: const EdgeInsets.only(bottom: 16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppTheme.mistSkyGradient,
+      ),
+      child: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text('总览', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 8),
+                _buildInfoRow('Provider总数', '${_providersStats!['totalProviders'] ?? 0}'),
+                _buildInfoRow('初始化状态', _providersStats!['isInitialized'] == true ? '已初始化' : '未初始化'),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          ...providers.entries.map((entry) {
+            final stats = entry.value as Map<String, dynamic>;
+            return AppCard(
+              margin: const EdgeInsets.only(bottom: 16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    entry.key,
-                    style: const TextStyle(
-                        fontSize: 18, fontWeight: FontWeight.bold),
-                  ),
+                  Text(entry.key, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 8),
-                  _buildInfoRow('初始化状态',
-                      stats['isInitialized'] == true ? '已初始化' : '未初始化'),
-                  _buildInfoRow(
-                      '加载状态', stats['isLoading'] == true ? '加载中' : '空闲'),
-                  _buildInfoRow(
-                      '错误状态', stats['hasError'] == true ? '有错误' : '正常'),
+                  _buildInfoRow('初始化状态', stats['isInitialized'] == true ? '已初始化' : '未初始化'),
+                  _buildInfoRow('加载状态', stats['isLoading'] == true ? '加载中' : '空闲'),
+                  _buildInfoRow('错误状态', stats['hasError'] == true ? '有错误' : '正常'),
                   _buildInfoRow('通知次数', '${stats['notificationCount'] ?? 0}'),
-                  if (stats['hasError'] == true &&
-                      stats['errorMessage'] != null)
+                  if (stats['hasError'] == true && stats['errorMessage'] != null)
                     _buildInfoRow('错误信息', stats['errorMessage']),
                 ],
               ),
-            ),
-          );
-        }).toList(),
-      ],
+            );
+          }),
+        ],
+      ),
     );
   }
 
@@ -245,42 +271,30 @@ class _DataDebugScreenState extends State<DataDebugScreen>
       return const Center(child: Text('暂无事件记录'));
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: events.length,
-      itemBuilder: (context, index) {
-        final event = events[events.length - 1 - index]; // 倒序显示
-        return Card(
-          margin: const EdgeInsets.only(bottom: 8),
-          child: ListTile(
-            leading: _getEventIcon(event.type),
-            title: Text(event.message),
-            subtitle: Text(_formatDateTime(event.timestamp)),
-            dense: true,
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildInfoCard(String title, List<Widget> children) {
-    return Card(
-      child: Padding(
+    return Container(
+      decoration: const BoxDecoration(
+        gradient: AppTheme.mistSkyGradient,
+      ),
+      child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+        itemCount: events.length,
+        itemBuilder: (context, index) {
+          final event = events[events.length - 1 - index]; // 倒序显示
+          return AppCard(
+            margin: const EdgeInsets.only(bottom: 8),
+            child: ListTile(
+              leading: _getEventIcon(event.type),
+              title: Text(event.message),
+              subtitle: Text(_formatDateTime(event.timestamp)),
+              dense: true,
             ),
-            const SizedBox(height: 8),
-            ...children,
-          ],
-        ),
+          );
+        },
       ),
     );
   }
+
+
 
   Widget _buildInfoRow(String label, String value) {
     return Padding(
@@ -321,7 +335,7 @@ class _DataDebugScreenState extends State<DataDebugScreen>
                   onPressed: () => _restoreFromBackup(file['path'] as String),
                 ),
               );
-            }).toList(),
+            }),
           ],
         ),
       ),
@@ -348,8 +362,9 @@ class _DataDebugScreenState extends State<DataDebugScreen>
   String _formatBytes(int bytes) {
     if (bytes < 1024) return '${bytes}B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)}KB';
-    if (bytes < 1024 * 1024 * 1024)
+    if (bytes < 1024 * 1024 * 1024) {
       return '${(bytes / (1024 * 1024)).toStringAsFixed(1)}MB';
+    }
     return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)}GB';
   }
 
@@ -364,12 +379,14 @@ class _DataDebugScreenState extends State<DataDebugScreen>
     switch (action) {
       case 'backup':
         final success = await providerManager.createBackup();
+        if (!mounted) return;
         _showMessage(success ? '备份创建成功' : '备份创建失败');
         if (success) _loadData();
         break;
 
       case 'restore':
         final success = await providerManager.restoreFromBackup();
+        if (!mounted) return;
         _showMessage(success ? '数据恢复成功' : '数据恢复失败');
         if (success) _loadData();
         break;
@@ -388,28 +405,36 @@ class _DataDebugScreenState extends State<DataDebugScreen>
   }
 
   Future<void> _restoreFromBackup(String backupPath) async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showGeneralDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('确认恢复'),
-        content: const Text('确定要从此备份恢复数据吗？这将覆盖当前所有数据。'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('取消'),
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
+              title: const Text('确认恢复'),
+              content: const Text('确定要从此备份恢复数据吗？这将覆盖当前所有数据。'),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('取消')),
+                TextButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('确认')),
+              ],
+            ),
           ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('确认'),
-          ),
-        ],
-      ),
+        );
+      },
     );
 
     if (confirmed == true) {
-      final providerManager =
-          Provider.of<ProviderManager>(context, listen: false);
+      if (!mounted) return;
+      final providerManager = Provider.of<ProviderManager>(context, listen: false);
       final success = await providerManager.restoreFromBackup(backupPath);
+      if (!mounted) return;
       _showMessage(success ? '数据恢复成功' : '数据恢复失败');
       if (success) _loadData();
     }
@@ -422,20 +447,35 @@ class _DataDebugScreenState extends State<DataDebugScreen>
   }
 
   void _showExportDialog(String data) {
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('导出数据'),
-        content: SingleChildScrollView(
-          child: SelectableText(data),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('关闭'),
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
+              title: const Text('导出数据'),
+              content: SingleChildScrollView(
+                child: SelectableText(data),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('关闭'),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
+
 }
+

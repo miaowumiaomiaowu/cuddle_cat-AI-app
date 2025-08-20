@@ -178,12 +178,9 @@ class FeedbackService {
   Future<String> _getUserId() async {
     final prefs = await SharedPreferences.getInstance();
     String? userId = prefs.getString('user_id');
-    
-    if (userId == null) {
-      userId = DateTime.now().millisecondsSinceEpoch.toString();
-      await prefs.setString('user_id', userId);
-    }
-    
+    if (userId != null && userId.isNotEmpty) return userId;
+    userId = 'guest_${DateTime.now().millisecondsSinceEpoch}';
+    await prefs.setString('user_id', userId);
     return userId;
   }
 

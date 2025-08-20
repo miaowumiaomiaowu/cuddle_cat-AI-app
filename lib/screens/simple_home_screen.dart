@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../theme/artistic_theme.dart';
 import '../widgets/quick_mood_record_sheet.dart';
+import '../theme/app_theme.dart';
+
 
 /// 简化版首页 - 专注于核心功能
 class SimpleHomeScreen extends StatefulWidget {
@@ -12,23 +14,23 @@ class SimpleHomeScreen extends StatefulWidget {
 
 class _SimpleHomeScreenState extends State<SimpleHomeScreen>
     with TickerProviderStateMixin {
-  
+
   final TextEditingController _messageController = TextEditingController();
   final List<ChatMessage> _messages = [];
   bool _isTyping = false;
-  
+
   late AnimationController _catAnimationController;
   late Animation<double> _catPulseAnimation;
 
   @override
   void initState() {
     super.initState();
-    
+
     _catAnimationController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
     );
-    
+
     _catPulseAnimation = Tween<double>(
       begin: 1.0,
       end: 1.1,
@@ -36,9 +38,9 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
       parent: _catAnimationController,
       curve: Curves.easeInOut,
     ));
-    
+
     _catAnimationController.repeat(reverse: true);
-    
+
     _loadWelcomeMessage();
   }
 
@@ -71,12 +73,12 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
           children: [
             // 顶部标题栏
             _buildTopBar(),
-            
+
             // 聊天消息列表
             Expanded(
               child: _buildChatList(),
             ),
-            
+
             // 输入区域
             _buildInputArea(),
           ],
@@ -140,7 +142,7 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
         if (index == _messages.length && _isTyping) {
           return _buildTypingIndicator();
         }
-        
+
         final message = _messages[index];
         return _buildMessageBubble(message);
       },
@@ -149,12 +151,12 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
 
   Widget _buildMessageBubble(ChatMessage message) {
     final isUser = message.isUser;
-    
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       child: Row(
-        mainAxisAlignment: isUser 
-            ? MainAxisAlignment.end 
+        mainAxisAlignment: isUser
+            ? MainAxisAlignment.end
             : MainAxisAlignment.start,
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
@@ -162,7 +164,7 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
             _buildAvatar(message.avatar),
             const SizedBox(width: 8),
           ],
-          
+
           Flexible(
             child: Container(
               constraints: BoxConstraints(
@@ -170,8 +172,8 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
               ),
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: isUser 
-                    ? ArtisticTheme.primaryColor 
+                color: isUser
+                    ? ArtisticTheme.primaryColor
                     : Colors.grey.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(16),
               ),
@@ -183,7 +185,7 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
               ),
             ),
           ),
-          
+
           if (isUser) ...[
             const SizedBox(width: 8),
             _buildAvatar(message.avatar),
@@ -252,9 +254,9 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
               ),
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // 输入框
           Expanded(
             child: TextField(
@@ -275,9 +277,9 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
               onSubmitted: (_) => _sendMessage(),
             ),
           ),
-          
+
           const SizedBox(width: 12),
-          
+
           // 发送按钮
           GestureDetector(
             onTap: _sendMessage,
@@ -350,19 +352,19 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
 
   String _generateSimpleReply(String userMessage) {
     final lowerMessage = userMessage.toLowerCase();
-    
+
     if (lowerMessage.contains('难过') || lowerMessage.contains('伤心')) {
       return '我感受到了你的难过... 虽然我只是个AI，但我想给你一个温暖的拥抱 🤗 一切都会好起来的！';
     }
-    
+
     if (lowerMessage.contains('开心') || lowerMessage.contains('高兴')) {
       return '喵喵喵~ 看到你开心我也很高兴！你的笑容是最美的~ ✨';
     }
-    
+
     if (lowerMessage.contains('累') || lowerMessage.contains('疲惫')) {
       return '听起来你需要好好休息~ 来，让我陪你一起放松一下 😴';
     }
-    
+
     final replies = [
       '听起来很有趣！能告诉我更多吗？😊',
       '我很喜欢和你聊天！你今天过得怎么样？',
@@ -370,7 +372,7 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
       '你的想法很棒！我们继续聊聊吧~',
       '谢谢你和我分享这些！我很开心能听到你的声音 💙',
     ];
-    
+
     return replies[DateTime.now().millisecond % replies.length];
   }
 
@@ -379,23 +381,51 @@ class _SimpleHomeScreenState extends State<SimpleHomeScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => const QuickMoodRecordSheet(),
+      builder: (context) {
+        return AnimatedBuilder(
+          animation: ModalRoute.of(context)!.animation!,
+          builder: (ctx, child) {
+            final anim = CurvedAnimation(parent: ModalRoute.of(context)!.animation!, curve: AppTheme.easeStandard);
+            return FadeTransition(
+              opacity: anim,
+              child: SlideTransition(
+                position: Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(anim),
+                child: child,
+              ),
+            );
+          },
+          child: const QuickMoodRecordSheet(),
+        );
+      },
     );
   }
 
   void _showCatMenu() {
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('🐱 猫咪菜单'),
-        content: const Text('更多功能正在开发中...\n\n目前可用功能：\n• 聊天对话\n• 心情记录'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('知道了'),
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
+              title: const Text('🐱 猫咪菜单'),
+              content: const Text('更多功能正在开发中...\n\n目前可用功能：\n• 聊天对话\n• 心情记录'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('知道了'),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

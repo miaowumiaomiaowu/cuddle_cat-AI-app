@@ -179,18 +179,6 @@ class SystemHealthService {
         report.addCheck('任务数量', '0');
       }
       
-      // 检查成就数据
-      final achievementsData = prefs.getString('user_achievements');
-      if (achievementsData != null) {
-        try {
-          final achievementsList = jsonDecode(achievementsData) as List;
-          final unlockedCount = achievementsList.where((a) => a['isUnlocked'] == true).length;
-          report.addCheck('已解锁成就', '$unlockedCount/${achievementsList.length}');
-        } catch (e) {
-          report.addError('成就数据格式', '数据格式错误');
-        }
-      }
-      
     } catch (e) {
       report.addError('数据完整性检查', e.toString());
     }

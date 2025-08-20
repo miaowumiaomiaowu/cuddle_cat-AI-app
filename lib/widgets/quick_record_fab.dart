@@ -3,6 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../theme/artistic_theme.dart';
+import '../theme/app_theme.dart';
+
 import '../providers/mood_provider.dart';
 import '../models/mood_record.dart';
 
@@ -328,17 +330,31 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
     _closeMenu();
 
     // 显示心情选择对话框
-    final selectedMood = await showDialog<MoodType>(
+    final selectedMood = await showGeneralDialog<MoodType>(
       context: context,
-      builder: (context) => _MoodSelectionDialog(),
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: _MoodSelectionDialog(),
+          ),
+        );
+      },
     );
 
     if (selectedMood != null) {
+      if (!mounted || !context.mounted) return;
       final moodProvider = Provider.of<MoodProvider>(context, listen: false);
       await moodProvider.quickAddMood(selectedMood);
 
-      if (mounted && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+      if (!mounted || !context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('😊 心情记录已添加: ${MoodTypeConfig.getMoodName(selectedMood)}'),
             backgroundColor: ArtisticTheme.successColor,
@@ -348,9 +364,6 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
       }
     }
   }
-
-
-}
 
 /// 心情选择对话框
 class _MoodSelectionDialog extends StatelessWidget {

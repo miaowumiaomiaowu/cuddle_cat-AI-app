@@ -10,19 +10,19 @@ import 'user_provider.dart';
 
 /// AI驱动的幸福任务 Provider（第一版：骨架+核心流程）
 import 'dart:async';
-import 'package:flutter/material.dart';
+
 import 'base_provider.dart';
 import '../services/ai_analysis_facade.dart';
 import '../services/ai_analysis_http.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/config_service.dart';
 import '../services/breakthrough_detector.dart';
-import '../services/achievement_service.dart';
+
 import '../services/smart_reminder_service.dart';
 import '../services/real_time_learning_service.dart';
 import '../services/wellness_plan_service.dart';
 import '../models/wellness_plan.dart';
-import '../models/achievement.dart' as achievement_model;
+
 
 class HappinessProvider extends BaseProvider {
   @override
@@ -74,7 +74,7 @@ class HappinessProvider extends BaseProvider {
   String? _error;
   String? _lastGiftOpenYmd;
   final BreakthroughDetector _breakthroughDetector = BreakthroughDetector();
-  final AchievementService _achievementService = AchievementService();
+
   final SmartReminderService _reminderService = SmartReminderService();
   final RealTimeLearningService _learningService = RealTimeLearningService();
 
@@ -112,7 +112,7 @@ class HappinessProvider extends BaseProvider {
   @override
   Future<void> onInitialize() async {
     await _loadAll();
-    await _achievementService.initialize();
+
     await _reminderService.initialize();
     // 最小加载：同时拉取健康计划（如果后端启用）
     await _refreshWellnessPlanSafely();
@@ -156,7 +156,7 @@ class HappinessProvider extends BaseProvider {
         // 确保存在 user_id（用于个性化与学习）
         String? userId = prefs.getString('user_id');
         if (userId == null || userId.isEmpty) {
-          userId = DateTime.now().millisecondsSinceEpoch.toString();
+          userId = 'guest_${DateTime.now().millisecondsSinceEpoch}';
           await prefs.setString('user_id', userId);
         }
 
@@ -234,11 +234,14 @@ class HappinessProvider extends BaseProvider {
   }
 
   List<HappinessTask> _defaultTemplates() => [
-        HappinessTask(title: '4-7-8 呼吸', emoji: '🫁', category: 'mind', estimatedMinutes: 3, frequency: 'daily'),
-        HappinessTask(title: '记录三件感恩的事', emoji: '🙏', category: 'mind', estimatedMinutes: 5, frequency: 'daily'),
-        HappinessTask(title: '10分钟散步', emoji: '🚶', category: 'body', estimatedMinutes: 10, frequency: 'daily'),
-        HappinessTask(title: '颈肩拉伸', emoji: '🧎', category: 'body', estimatedMinutes: 5, frequency: 'daily'),
-        HappinessTask(title: '联系一位朋友', emoji: '📞', category: 'social', estimatedMinutes: 5, frequency: 'weekly'),
+        HappinessTask(title: '方块呼吸 4×4×4', emoji: '🫁', category: 'mind', estimatedMinutes: 3, frequency: 'daily', description: '吸气4秒-停4秒-呼气4秒-停4秒，循环4轮'),
+        HappinessTask(title: '写下今天最小的胜利', emoji: '✨', category: 'mind', estimatedMinutes: 3, frequency: 'daily'),
+        HappinessTask(title: '10 分钟轻松散步', emoji: '🚶', category: 'body', estimatedMinutes: 10, frequency: 'daily'),
+        HappinessTask(title: '3 分钟颈肩拉伸', emoji: '🧘', category: 'body', estimatedMinutes: 3, frequency: 'daily'),
+        HappinessTask(title: '喝一杯温水', emoji: '🥛', category: 'selfcare', estimatedMinutes: 1, frequency: 'daily'),
+        HappinessTask(title: '记录两件感恩的小事', emoji: '🙏', category: 'mind', estimatedMinutes: 4, frequency: 'daily'),
+        HappinessTask(title: '发一条关心的信息', emoji: '💌', category: 'social', estimatedMinutes: 3, frequency: 'weekly'),
+        HappinessTask(title: '睡前 5 分钟放松', emoji: '🌙', category: 'selfcare', estimatedMinutes: 5, frequency: 'daily', description: '屏幕远离，闭眼深呼吸，放慢节奏'),
       ];
 
   Future<void> _refreshWellnessPlanSafely() async {
@@ -246,7 +249,7 @@ class HappinessProvider extends BaseProvider {
       final prefs = await SharedPreferences.getInstance();
       String? userId = prefs.getString('user_id');
       if (userId == null || userId.isEmpty) {
-        userId = DateTime.now().millisecondsSinceEpoch.toString();
+        userId = 'guest_${DateTime.now().millisecondsSinceEpoch}';
         await prefs.setString('user_id', userId);
       }
       final msgs = dialogueProvider.activeSession?.messages ?? const [];
@@ -326,9 +329,9 @@ class HappinessProvider extends BaseProvider {
     _checkins = await _service.getAllCheckins();
     _stats = await _service.getStats();
 
-    // 检测突破模式与成就
+    // 检测突破模式
     await _analyzeTaskBreakthrough(task);
-    await _checkAchievements(task);
+
 
     // 记录实时学习数据
     await _learningService.recordTaskCompleted(
@@ -414,69 +417,49 @@ class HappinessProvider extends BaseProvider {
     }
   }
 
-  Future<void> _checkAchievements(HappinessTask task) async {
-    try {
-      // 检查任务完成成就
-      final newAchievements = await _achievementService.checkTaskCompletion(task);
 
-      // 检查连击成就
-      final currentStreak = _stats?.currentStreak ?? 0;
-      final streakAchievements = await _achievementService.checkStreakAchievements(currentStreak);
-      newAchievements.addAll(streakAchievements);
 
-      // 检查里程碑成就
-      final totalCompleted = _checkins.length;
-      final milestoneAchievements = await _achievementService.checkMilestoneAchievements(totalCompleted);
-      newAchievements.addAll(milestoneAchievements);
 
-      // 显示新解锁的成就
-      if (newAchievements.isNotEmpty) {
-        _showAchievementNotifications(newAchievements);
-      }
 
-      // 更新智能提醒
-      await _updateSmartReminders();
-    } catch (e) {
-      // 忽略成就检查错误
-    }
-  }
 
-  void _showAchievementNotifications(List<achievement_model.Achievement> achievements) {
-    // 这里可以触发成就解锁的UI通知
-    // 暂时简化处理，实际应该通过事件系统或回调通知UI
-    for (final achievement in achievements) {
-      // 使用debugPrint替代print，在生产环境中会被优化掉
-      debugPrint('🎉 解锁成就: ${achievement.emoji} ${achievement.title}');
-    }
-  }
 
-  Future<void> _updateSmartReminders() async {
-    try {
-      final currentStreak = _stats?.currentStreak ?? 0;
-      final lastCompletion = _checkins.isNotEmpty
-          ? DateTime.parse('${_checkins.last.ymdDate}T12:00:00')
-          : DateTime.now().subtract(const Duration(days: 1));
 
-      final recentMoods = moodProvider.moodEntries.take(10).toList();
 
-      await _reminderService.scheduleSmartReminders(
-        currentStreak: currentStreak,
-        lastCompletionDate: lastCompletion,
-        recentMoods: recentMoods,
-      );
 
-      // 分析用户行为模式
-      await _reminderService.analyzeBehaviorPattern(
-        checkins: _checkins.take(50).toList(),
-        moodRecords: recentMoods,
-      );
-    } catch (e) {
-      // 忽略提醒更新错误
-    }
-  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
   // 公开方法供UI调用
-  AchievementService get achievementService => _achievementService;
+
   SmartReminderService get reminderService => _reminderService;
   RealTimeLearningService get learningService => _learningService;
 

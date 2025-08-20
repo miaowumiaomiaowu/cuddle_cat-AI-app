@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
+
+
+
 
 /// 应用主题配置类 - 手绘风格
 class AppTheme {
@@ -8,11 +12,16 @@ class AppTheme {
   // 莫奈睡莲色系（柔和水绿 + 雾蓝 + 淡紫）
   // 采用用户提供的配色（梵高·绿色原野调色盘）
   // #329363 深翠绿、#98CCBB 雾青绿、#398D37 深叶绿、#80BC6B 浅叶绿、#C2D4D6 雾蓝灰
-  static const Color primaryColor = Color(0xFF329363); // 深翠绿（主色）
-  static const Color primaryColorLight = Color(0xFF98CCBB); // 雾青绿（浅）
-  static const Color primaryColorDark = Color(0xFF398D37); // 深叶绿（深）
-  static const Color accentColor = Color(0xFF80BC6B); // 浅叶绿（强调）
+  // 更柔和的疗愈绿（按你的偏好 #34D399 作为主色）
+  static const Color primaryColor = Color(0xFF34D399);
+  static const Color primaryColorLight = Color(0xFFA7F3D0); // 浅薄荷绿
+  static const Color primaryColorDark = Color(0xFF10B981); // 深一点的青绿
+  static const Color accentColor = Color(0xFF80BC6B); // 保留原叶绿作强调
   static const Color secondaryColor = Color(0xFFC2D4D6); // 雾蓝灰（次要）
+
+
+	  // 亮强调色（来自参考图更鲜亮的草绿色）
+	  static const Color vibrantGreen = Color(0xFF68A530);
 
   // 画布与卡片采用更浅的雾蓝/雾青系，保证可读性
   static const Color backgroundColor = Color(0xFFF4F8F8); // 极浅雾青白
@@ -81,6 +90,29 @@ class AppTheme {
   static const double spacingLarge = 32.0;
   static const double spacingXLarge = 48.0;
 
+
+	  // 8pt 栅格化命名（兼容保留原有 spacing 常量）
+	  static const double gap8 = 8.0;
+	  static const double gap12 = 12.0;
+
+	  // 动效 tokens
+	  static const Duration motionShort = Duration(milliseconds: 150);
+	  static const Duration motionMedium = Duration(milliseconds: 250);
+	  static const Duration motionLong = Duration(milliseconds: 400);
+	  static const Curve easeStandard = Curves.easeInOutCubic;
+	  static const Curve easeEmphasized = Curves.easeInOut;
+
+	  static const double gap16 = 16.0;
+	  static const double gap24 = 24.0;
+	  static const double gap32 = 32.0;
+	  static const double gap48 = 48.0;
+
+	  // 状态层不透明度（可访问性一致化）
+	  static const double opacityHover = 0.08;
+	  static const double opacityFocus = 0.12;
+	  static const double opacityPressed = 0.12;
+	  static const double opacityDragged = 0.16;
+
   // 手绘风格装饰方法
   /// 获取手绘风格的边框装饰
   static BoxDecoration get handDrawnBorder => BoxDecoration(
@@ -92,6 +124,23 @@ class AppTheme {
     ),
     boxShadow: cardShadow,
   );
+
+	  // 通用渐变（参考图：浅雾蓝灰 → 雾青绿）
+	  static const LinearGradient mistSkyGradient = LinearGradient(
+	    colors: [Color(0xFFF6FFFB), Color(0xFFE9FBF4)],
+	    begin: Alignment.topLeft,
+	    end: Alignment.bottomRight,
+	    stops: [0.1, 1.0],
+	  );
+
+
+		  // 关键 CTA/庆祝渐变（浅叶绿 → 深翠绿）
+		  static const LinearGradient fieldGreenGradient = LinearGradient(
+		    colors: [Color(0xFF80BC6B), Color(0xFF329363)],
+		    begin: Alignment.topLeft,
+		    end: Alignment.bottomRight,
+		  );
+
 
   /// 获取手绘风格的按钮装饰（睡莲渐变）
   static BoxDecoration get handDrawnButton => BoxDecoration(
@@ -132,36 +181,61 @@ class AppTheme {
       useMaterial3: true,
       brightness: Brightness.light,
 
-      // 颜色方案
+
+	      // 全局字体（用户指定）
+	      fontFamily: 'ZCOOL KuaiLe',
+
+      // 颜色方案（显式覆盖角色，确保与参考配色一致）
       colorScheme: ColorScheme.fromSeed(
         seedColor: primaryColor,
         brightness: Brightness.light,
+      ).copyWith(
         primary: primaryColor,
+        onPrimary: Colors.white,
+        primaryContainer: primaryColorLight,
+        onPrimaryContainer: textPrimary,
+
         secondary: accentColor,
+        onSecondary: const Color(0xFF0F1A14),
+        secondaryContainer: const Color(0xFFDDEAE4),
+        onSecondaryContainer: textPrimary,
+
+        tertiary: primaryColorLight, // 雾青绿
+        onTertiary: const Color(0xFF163028),
+        tertiaryContainer: const Color(0xFFE8F3F0),
+        onTertiaryContainer: textPrimary,
+
         surface: surfaceColor,
-        // background: backgroundColor, // deprecated, using surface instead
+        surfaceTint: primaryColor,
+        surfaceContainerHighest: cardColor,
+        onSurface: textPrimary,
+        onSurfaceVariant: textSecondary,
+
         error: errorColor,
+        onError: Colors.white,
+
+        outline: const Color(0xFFBFD4CF),
       ),
 
       // 脚手架主题
       scaffoldBackgroundColor: backgroundColor,
 
       // AppBar主题
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
-        systemOverlayStyle: SystemUiOverlayStyle(
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.dark,
           statusBarBrightness: Brightness.light,
         ),
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.zcoolKuaiLe(
           color: textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
-        iconTheme: IconThemeData(
+        iconTheme: const IconThemeData(
           color: textPrimary,
           size: 24,
         ),
@@ -192,10 +266,23 @@ class AppTheme {
             horizontal: spacingLarge,
             vertical: spacingMedium,
           ),
-          textStyle: const TextStyle(
+          textStyle: GoogleFonts.zcoolKuaiLe(
             fontSize: 16,
             fontWeight: FontWeight.w600,
           ),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return primaryColor.withValues(alpha: opacityPressed);
+            }
+            if (states.contains(WidgetState.hovered)) {
+              return primaryColor.withValues(alpha: opacityHover);
+            }
+            if (states.contains(WidgetState.focused)) {
+              return primaryColor.withValues(alpha: opacityFocus);
+            }
+            return null;
+          }),
         ),
       ),
 
@@ -209,6 +296,20 @@ class AppTheme {
             horizontal: spacingMedium,
             vertical: spacingSmall,
           ),
+          textStyle: GoogleFonts.zcoolKuaiLe(),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return primaryColor.withValues(alpha: opacityPressed);
+            }
+            if (states.contains(WidgetState.hovered)) {
+              return primaryColor.withValues(alpha: opacityHover);
+            }
+            if (states.contains(WidgetState.focused)) {
+              return primaryColor.withValues(alpha: opacityFocus);
+            }
+            return null;
+          }),
         ),
       ),
 
@@ -223,20 +324,34 @@ class AppTheme {
             horizontal: spacingLarge,
             vertical: spacingMedium,
           ),
+          textStyle: GoogleFonts.zcoolKuaiLe(),
+        ).copyWith(
+          overlayColor: WidgetStateProperty.resolveWith((states) {
+            if (states.contains(WidgetState.pressed)) {
+              return primaryColor.withValues(alpha: opacityPressed);
+            }
+            if (states.contains(WidgetState.hovered)) {
+              return primaryColor.withValues(alpha: opacityHover);
+            }
+            if (states.contains(WidgetState.focused)) {
+              return primaryColor.withValues(alpha: opacityFocus);
+            }
+            return null;
+          }),
         ),
       ),
 
       // 输入框主题
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: Colors.grey.shade50,
+        fillColor: const Color(0xFFF2F7F6),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: primaryColorLight.withValues(alpha: 0.40)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
-          borderSide: BorderSide(color: Colors.grey.shade300),
+          borderSide: BorderSide(color: primaryColorLight.withValues(alpha: 0.40)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(radiusMedium),
@@ -260,14 +375,40 @@ class AppTheme {
         unselectedItemColor: textSecondary,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
-        selectedLabelStyle: const TextStyle(
+        selectedLabelStyle: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.w600,
+          fontFamily: 'ZCOOL KuaiLe',
         ),
-        unselectedLabelStyle: const TextStyle(
+        unselectedLabelStyle: TextStyle(
           fontSize: 12,
           fontWeight: FontWeight.normal,
+          fontFamily: 'ZCOOL KuaiLe',
         ),
+        showUnselectedLabels: true,
+      ),
+
+      // NavigationBar 主题（M3 胶囊指示）
+      navigationBarTheme: NavigationBarThemeData(
+        backgroundColor: surfaceColor,
+        elevation: 0,
+        indicatorColor: primaryColorLight.withValues(alpha: 0.25),
+        indicatorShape: StadiumBorder(),
+        labelTextStyle: WidgetStateProperty.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return GoogleFonts.zcoolKuaiLe(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+            color: isSelected ? primaryColor : textSecondary,
+          );
+        }),
+        iconTheme: WidgetStateProperty.resolveWith((states) {
+          final isSelected = states.contains(WidgetState.selected);
+          return IconThemeData(
+            color: isSelected ? primaryColor : textSecondary,
+            size: isSelected ? 28 : 24,
+          );
+        }),
       ),
 
       // 对话框主题
@@ -277,12 +418,12 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusLarge),
         ),
-        titleTextStyle: const TextStyle(
+        titleTextStyle: GoogleFonts.zcoolKuaiLe(
           color: textPrimary,
           fontSize: 20,
           fontWeight: FontWeight.w600,
         ),
-        contentTextStyle: const TextStyle(
+        contentTextStyle: GoogleFonts.zcoolKuaiLe(
           color: textSecondary,
           fontSize: 16,
         ),
@@ -291,7 +432,7 @@ class AppTheme {
       // SnackBar主题
       snackBarTheme: SnackBarThemeData(
         backgroundColor: textPrimary,
-        contentTextStyle: const TextStyle(color: Colors.white),
+        contentTextStyle: GoogleFonts.zcoolKuaiLe(color: Colors.white),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusSmall),
         ),
@@ -299,11 +440,12 @@ class AppTheme {
         elevation: 4,
       ),
 
-      // 文本主题
-      textTheme: const TextTheme(
+      // 文本主题（套用 ZCOOL KuaiLe 字体）
+      textTheme: GoogleFonts.zcoolKuaiLeTextTheme(const TextTheme(
         displayLarge: TextStyle(
           fontSize: 32,
           fontWeight: FontWeight.bold,
+
           color: textPrimary,
           height: 1.2,
         ),
@@ -391,7 +533,7 @@ class AppTheme {
           color: textHint,
           height: 1.4,
         ),
-      ),
+      )),
 
       // 图标主题
       iconTheme: const IconThemeData(
@@ -400,17 +542,17 @@ class AppTheme {
       ),
 
       // 分割线主题
-      dividerTheme: DividerThemeData(
-        color: Colors.grey.shade200,
+      dividerTheme: const DividerThemeData(
+        color: Color(0xFFE3ECEA),
         thickness: 1,
         space: 1,
       ),
 
       // 芯片主题
       chipTheme: ChipThemeData(
-        backgroundColor: Colors.grey.shade100,
-        selectedColor: primaryColor.withValues(alpha: 0.2),
-        disabledColor: Colors.grey.shade200,
+        backgroundColor: const Color(0xFFF2F7F6),
+        selectedColor: primaryColor.withValues(alpha: 0.20),
+        disabledColor: const Color(0xFFE8EFEF),
         labelStyle: const TextStyle(
           color: textPrimary,
           fontSize: 12,
@@ -423,6 +565,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(radiusSmall),
         ),
+        side: BorderSide(color: primaryColorLight.withValues(alpha: 0.40)),
       ),
 
       // 进度指示器主题
@@ -525,6 +668,7 @@ class AppTheme {
         tileColor: Colors.transparent,
         selectedTileColor: primaryColor.withValues(alpha: 0.1),
         iconColor: textSecondary,
+
         textColor: textPrimary,
       ),
     );

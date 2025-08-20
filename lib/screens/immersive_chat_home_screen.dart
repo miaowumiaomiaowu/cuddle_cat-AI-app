@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../providers/cat_provider.dart';
@@ -7,6 +9,7 @@ import '../models/cat.dart';
 import '../models/dialogue.dart';
 import '../theme/artistic_theme.dart';
 import '../widgets/floating_cat_assistant.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../widgets/immersive_chat_widget.dart';
 import '../widgets/quick_mood_record_sheet.dart';
 
@@ -28,6 +31,9 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
   // 悬浮猫咪相关
   late AnimationController _catAnimationController;
   late Animation<double> _catPulseAnimation;
+  Offset? _catPos; // 当前会话内的猫咪位置（left, top）
+  String? _catPosSessionId;
+  bool _catPosLoading = false;
 
   // 背景动画
   late AnimationController _backgroundController;
@@ -84,16 +90,8 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
         animation: _backgroundColorAnimation,
         builder: (context, child) {
           return Container(
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-                colors: [
-                  _backgroundColorAnimation.value ?? ArtisticTheme.backgroundColor,
-                  ArtisticTheme.backgroundColor,
-                  ArtisticTheme.surfaceColor,
-                ],
-              ),
+            decoration: const BoxDecoration(
+              gradient: AppTheme.mistSkyGradient,
             ),
             child: SafeArea(
               child: Stack(
@@ -313,19 +311,72 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
     );
   }
 
+  Future<void> _loadCatPosForSession(String sessionId) async {
+    if (_catPosLoading) return;
+    _catPosLoading = true;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final raw = prefs.getString('cat_pos_$sessionId');
+      if (raw != null) {
+        final parts = raw.split(',');
+        if (parts.length == 2) {
+          final dx = double.tryParse(parts[0]);
+          final dy = double.tryParse(parts[1]);
+          if (dx != null && dy != null && mounted) {
+            setState(() => _catPos = Offset(dx, dy));
+          }
+        }
+      }
+    } finally {
+      _catPosLoading = false;
+    }
+  }
+
+  Future<void> _saveCatPosForSession(String sessionId, Offset pos) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('cat_pos_$sessionId', '${pos.dx},${pos.dy}');
+  }
+
   Widget _buildFloatingCatAssistant() {
     final dialogue = context.watch<DialogueProvider>();
     final hasFewMsgs = (dialogue.activeSession?.messages.length ?? 0) <= 1;
+    final sessionId = dialogue.activeSession?.id;
+
+    // 当切换到新会话时，加载存储的位置
+    if (sessionId != null && _catPosSessionId != sessionId) {
+      _catPosSessionId = sessionId;
+      _catPos = null; // 重置为默认
+      _loadCatPosForSession(sessionId);
+    }
+
+    final defaultPos = const Offset(20, 100);
+    final pos = _catPos ?? defaultPos;
+
     return Positioned(
-      right: 20,
-      bottom: 100,
-      child: FloatingCatAssistant(
-        animation: _catPulseAnimation,
-        onTap: _petCatBubble,
-        showNotification: hasFewMsgs, // 新用户显示提示
+      left: pos.dx,
+      top: pos.dy,
+      child: Draggable(
+        feedback: const SizedBox(width: 80, height: 80),
+        childWhenDragging: const Opacity(opacity: 0.7, child: SizedBox(width: 80, height: 80)),
+        onDragEnd: (details) async {
+          final dx = details.offset.dx;
+          // 减去安全区顶部，限制在可视范围内
+          final safeTop = MediaQuery.of(context).padding.top;
+          final dy = (details.offset.dy - safeTop).clamp(0.0, MediaQuery.of(context).size.height - 80);
+          final newPos = Offset(dx, dy);
+          setState(() => _catPos = newPos);
+          if (sessionId != null) await _saveCatPosForSession(sessionId, newPos);
+        },
+        child: FloatingCatAssistant(
+          animation: _catPulseAnimation,
+          onTap: _petCatBubble,
+          showNotification: hasFewMsgs,
+        ),
       ),
     );
   }
+
+
 
 
   Future<void> _sendMessage() async {
@@ -362,7 +413,22 @@ class _ImmersiveChatHomeScreenState extends State<ImmersiveChatHomeScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => QuickMoodRecordSheet(),
+      builder: (context) {
+        return AnimatedBuilder(
+          animation: ModalRoute.of(context)!.animation!,
+          builder: (ctx, child) {
+            final anim = CurvedAnimation(parent: ModalRoute.of(context)!.animation!, curve: AppTheme.easeStandard);
+            return FadeTransition(
+              opacity: anim,
+              child: SlideTransition(
+                position: Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(anim),
+                child: child,
+              ),
+            );
+          },
+          child: QuickMoodRecordSheet(),
+        );
+      },
     );
   }
 

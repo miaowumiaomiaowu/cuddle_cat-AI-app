@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+
 import 'dart:math' as math;
 
 class SmartLoadingWidget extends StatefulWidget {
@@ -35,12 +37,12 @@ class _SmartLoadingWidgetState extends State<SmartLoadingWidget>
   @override
   void initState() {
     super.initState();
-    
+
     _controller = AnimationController(
       duration: widget.duration,
       vsync: this,
     );
-    
+
     _messageController = AnimationController(
       duration: const Duration(milliseconds: 800),
       vsync: this,
@@ -95,7 +97,7 @@ class _SmartLoadingWidgetState extends State<SmartLoadingWidget>
             child: Text(
               widget.message!,
               style: theme.textTheme.bodyMedium?.copyWith(
-                color: color.withOpacity(0.8),
+                color: color.withValues(alpha: 0.8),
               ),
               textAlign: TextAlign.center,
             ),
@@ -130,7 +132,7 @@ class _SmartLoadingWidgetState extends State<SmartLoadingWidget>
         strokeWidth: 3.0,
       );
     }
-    
+
     return AnimatedBuilder(
       animation: _animation,
       builder: (context, child) {
@@ -158,7 +160,7 @@ class _SmartLoadingWidgetState extends State<SmartLoadingWidget>
             final delay = index * 0.2;
             final animationValue = (_animation.value + delay) % 1.0;
             final scale = math.sin(animationValue * math.pi) * 0.5 + 0.5;
-            
+
             return Container(
               margin: const EdgeInsets.symmetric(horizontal: 2),
               child: Transform.scale(
@@ -167,7 +169,7 @@ class _SmartLoadingWidgetState extends State<SmartLoadingWidget>
                   width: 8,
                   height: 8,
                   decoration: BoxDecoration(
-                    color: color.withOpacity(0.5 + scale * 0.5),
+                    color: color.withValues(alpha: 0.5 + scale * 0.5),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -190,7 +192,7 @@ class _SmartLoadingWidgetState extends State<SmartLoadingWidget>
             width: widget.size,
             height: widget.size,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.3),
+              color: color.withValues(alpha: 0.3),
               shape: BoxShape.circle,
             ),
             child: Center(
@@ -235,7 +237,7 @@ class _SmartLoadingWidgetState extends State<SmartLoadingWidget>
             width: widget.size,
             height: widget.size,
             decoration: BoxDecoration(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(widget.size * 0.3),
             ),
             child: Center(
@@ -253,7 +255,7 @@ class _SmartLoadingWidgetState extends State<SmartLoadingWidget>
   Widget _buildAdaptiveIndicator(Color color) {
     // 根据平台和上下文选择最合适的加载指示器
     final platform = Theme.of(context).platform;
-    
+
     if (platform == TargetPlatform.iOS) {
       return _buildCircularIndicator(color);
     } else if (widget.message?.contains('猫') == true) {
@@ -285,7 +287,7 @@ class CircularLoadingPainter extends CustomPainter {
     final radius = size.width / 2 - 2;
 
     // 背景圆
-    paint.color = color.withOpacity(0.2);
+    paint.color = color.withValues(alpha: 0.2);
     canvas.drawCircle(center, radius, paint);
 
     // 进度弧
@@ -324,15 +326,15 @@ class WaveLoadingPainter extends CustomPainter {
     final path = Path();
     final waveHeight = size.height * 0.1;
     final waveLength = size.width;
-    
+
     path.moveTo(0, size.height / 2);
-    
+
     for (double x = 0; x <= size.width; x += 1) {
-      final y = size.height / 2 + 
+      final y = size.height / 2 +
           math.sin((x / waveLength * 2 * math.pi) + (progress * 2 * math.pi)) * waveHeight;
       path.lineTo(x, y);
     }
-    
+
     path.lineTo(size.width, size.height);
     path.lineTo(0, size.height);
     path.close();
@@ -361,10 +363,19 @@ class SmartLoadingDialog {
     LoadingType type = LoadingType.adaptive,
     bool barrierDismissible = false,
   }) {
-    showDialog(
+    showGeneralDialog(
       context: context,
       barrierDismissible: barrierDismissible,
-      builder: (context) => Dialog(
+      barrierLabel: 'loading',
+      transitionDuration: AppTheme.motionShort,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: Dialog(
         backgroundColor: Colors.transparent,
         child: Container(
           padding: const EdgeInsets.all(20),
@@ -377,7 +388,10 @@ class SmartLoadingDialog {
             type: type,
           ),
         ),
-      ),
+            ),
+          ),
+        );
+      },
     );
   }
 

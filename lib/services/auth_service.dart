@@ -37,7 +37,7 @@ class AuthService extends ChangeNotifier {
       _clearError();
 
       final prefs = await SharedPreferences.getInstance();
-      
+
       // 检查登录状态
       _isLoggedIn = prefs.getBool(_isLoggedInKey) ?? false;
       _isGuestMode = prefs.getBool(_guestModeKey) ?? false;
@@ -47,6 +47,8 @@ class AuthService extends ChangeNotifier {
         final userJson = prefs.getString(_userKey);
         if (userJson != null) {
           _currentUser = User.fromJson(jsonDecode(userJson));
+          // 同步 user_id 到偏好，确保全局一致
+          await _syncUserIdPref(_currentUser!.id);
           // 更新最后登录时间
           await _updateLastLoginTime();
         } else {
@@ -62,6 +64,11 @@ class AuthService extends ChangeNotifier {
           _currentUser = _createGuestUser();
           await _saveUser(_currentUser!);
         }
+        await _syncUserIdPref(_currentUser!.id);
+      } else {
+        // 尚未登录也不是游客：不创建随机ID，保持空，交由显式登录/游客流程创建
+        // 但如果历史上存在 user_id，清一下避免脏关联
+        await prefs.remove('user_id');
       }
 
       debugPrint('认证服务初始化完成 - 登录状态: $_isLoggedIn, 游客模式: $_isGuestMode');
@@ -122,6 +129,11 @@ class AuthService extends ChangeNotifier {
       }
 
       // 本地模式（原逻辑）
+      // 简易重复校验：若当前保存用户的邮箱相同，则视为已存在
+      final existing = await _getUserByEmail(email);
+      if (existing != null) {
+        throw Exception('用户已存在');
+      }
       final now = DateTime.now();
       final newUser = User(
         id: _generateUserId(),
@@ -348,6 +360,8 @@ class AuthService extends ChangeNotifier {
   Future<void> _saveUser(User user) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(_userKey, jsonEncode(user.toJson()));
+    // 同步 user_id，供其它服务/后端调用读取
+    await _syncUserIdPref(user.id);
   }
 
   /// 保存认证状态
@@ -355,6 +369,19 @@ class AuthService extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_isLoggedInKey, _isLoggedIn);
     await prefs.setBool(_guestModeKey, _isGuestMode);
+    // 若当前用户存在，同步 user_id
+    if (_currentUser != null) {
+      await _syncUserIdPref(_currentUser!.id);
+    }
+  }
+
+  /// 同步 user_id 到 SharedPreferences，作为跨服务的统一用户标识
+  Future<void> _syncUserIdPref(String userId) async {
+    final prefs = await SharedPreferences.getInstance();
+    final existing = prefs.getString('user_id');
+    if (existing != userId) {
+      await prefs.setString('user_id', userId);
+    }
   }
 
   /// 清除认证状态
@@ -363,6 +390,7 @@ class AuthService extends ChangeNotifier {
     await prefs.remove(_userKey);
     await prefs.remove(_isLoggedInKey);
     await prefs.remove(_guestModeKey);
+    await prefs.remove('user_id');
   }
 
   /// 更新最后登录时间
@@ -402,11 +430,20 @@ class AuthService extends ChangeNotifier {
   }
 
 
-  /// 根据邮箱获取用户（简化实现）
+  /// 根据邮箱获取用户（本地简化实现）
   Future<User?> _getUserByEmail(String email) async {
-    // 简化实现：实际应该调用后端API
-    // 这里返回null表示用户不存在，实际项目中应该从数据库查询
-    return null;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userJson = prefs.getString(_userKey);
+      if (userJson == null) return null;
+      final user = User.fromJson(jsonDecode(userJson));
+      if (user.email.toLowerCase() == email.toLowerCase()) {
+        return user;
+      }
+      return null;
+    } catch (_) {
+      return null;
+    }
   }
 
   /// 删除用户数据（简化实现）

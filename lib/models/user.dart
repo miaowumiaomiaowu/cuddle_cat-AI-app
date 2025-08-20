@@ -338,14 +338,14 @@ class UserStats {
   final int consecutiveDays; // 连续记录天数
   final int longestStreak; // 最长连续记录
   final DateTime? lastMoodEntry; // 最后一次心情记录
-  final List<String> achievements; // 成就列表
+
 
   UserStats({
     this.totalMoodEntries = 0,
     this.consecutiveDays = 0,
     this.longestStreak = 0,
     this.lastMoodEntry,
-    this.achievements = const [],
+
   });
 
   factory UserStats.fromJson(Map<String, dynamic> json) {
@@ -356,7 +356,7 @@ class UserStats {
       lastMoodEntry: json['lastMoodEntry'] != null
           ? DateTime.parse(json['lastMoodEntry'] as String)
           : null,
-      achievements: List<String>.from(json['achievements'] as List? ?? []),
+
     );
   }
 
@@ -366,7 +366,7 @@ class UserStats {
       'consecutiveDays': consecutiveDays,
       'longestStreak': longestStreak,
       'lastMoodEntry': lastMoodEntry?.toIso8601String(),
-      'achievements': achievements,
+
     };
   }
 
@@ -375,14 +375,14 @@ class UserStats {
     int? consecutiveDays,
     int? longestStreak,
     DateTime? lastMoodEntry,
-    List<String>? achievements,
+
   }) {
     return UserStats(
       totalMoodEntries: totalMoodEntries ?? this.totalMoodEntries,
       consecutiveDays: consecutiveDays ?? this.consecutiveDays,
       longestStreak: longestStreak ?? this.longestStreak,
       lastMoodEntry: lastMoodEntry ?? this.lastMoodEntry,
-      achievements: achievements ?? this.achievements,
+
     );
   }
 }

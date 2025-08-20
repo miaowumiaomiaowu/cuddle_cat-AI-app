@@ -86,7 +86,7 @@ class _ReminderSettingsPanelState extends State<ReminderSettingsPanel> {
       'streakRisk': '连击风险提醒',
       'moodCheck': '心情检查提醒',
       'breakthrough': '突破回顾提醒',
-      'achievement': '成就庆祝提醒',
+      
       'wellness': '健康关怀提醒',
     };
 

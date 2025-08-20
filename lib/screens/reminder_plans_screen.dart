@@ -67,8 +67,19 @@ class _ReminderPlansScreenState extends State<ReminderPlansScreen> {
   Future<ReminderPlan?> _showEditDialog(BuildContext context, ReminderPlan p) async {
     int h = p.hour; int m = p.minute; String f = p.frequency; String msg = p.message;
     final msgCtrl = TextEditingController(text: msg);
-    return showDialog<ReminderPlan>(context: context, builder: (ctx) {
-      return AlertDialog(
+    return showGeneralDialog<ReminderPlan>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
         title: const Text('编辑提醒计划'),
         content: Column(mainAxisSize: MainAxisSize.min, children: [
           TextField(controller: msgCtrl, decoration: const InputDecoration(labelText: '提醒文案')),
@@ -85,8 +96,11 @@ class _ReminderPlansScreenState extends State<ReminderPlansScreen> {
           TextButton(onPressed: ()=> Navigator.of(ctx).pop(null), child: const Text('取消')),
           FilledButton(onPressed: ()=> Navigator.of(ctx).pop(ReminderPlan(id:p.id, goalText:p.goalText, message:msgCtrl.text, hour:h, minute:m, frequency:f, active:true)), child: const Text('保存')),
         ],
-      );
-    });
+            ),
+          ),
+        );
+      },
+    );
   }
 
 

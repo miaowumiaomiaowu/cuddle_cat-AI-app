@@ -1,4 +1,6 @@
 import 'dart:math' as math;
+import '../theme/app_theme.dart';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -9,7 +11,6 @@ import '../widgets/dialogue_input.dart';
 import '../widgets/cat_animation.dart';
 import '../widgets/common/loading_widget.dart';
 import '../widgets/common/error_widget.dart';
-import '../theme/app_theme.dart';
 import '../utils/responsive_utils.dart';
 
 /// 对话聊天屏幕
@@ -337,118 +338,128 @@ class _DialogueScreenState extends State<DialogueScreen>
 
   /// 显示API信息对话框
   void _showApiInfoDialog(BuildContext context) {
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            Text(
-              'ℹ️',
-              style: const TextStyle(fontSize: 20),
-            ),
-            const SizedBox(width: AppTheme.spacingSmall),
-            const Text('API状态信息'),
-          ],
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Consumer<DialogueProvider>(
-                builder: (ctx, provider, _) {
-                  return Container(
-                    padding: const EdgeInsets.all(AppTheme.spacingMedium),
-                    decoration: BoxDecoration(
-                      color: provider.useAI
-                          ? AppTheme.successColor.withValues(alpha: 0.1)
-                          : AppTheme.warningColor.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                      border: Border.all(
-                        color: provider.useAI
-                            ? AppTheme.successColor.withValues(alpha: 0.3)
-                            : AppTheme.warningColor.withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          provider.useAI ? Icons.smart_toy : Icons.chat_bubble,
-                          color: provider.useAI
-                              ? AppTheme.successColor
-                              : AppTheme.warningColor,
-                        ),
-                        const SizedBox(width: AppTheme.spacingSmall),
-                        Text(
-                          'AI模式: ${provider.useAI ? "开启" : "关闭"}',
-                          style: TextStyle(
-                            color: provider.useAI
-                                ? AppTheme.successColor
-                                : AppTheme.warningColor,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  );
-                },
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
+              title: Row(
+                children: [
+                  Text('ℹ️', style: const TextStyle(fontSize: 20)),
+                  const SizedBox(width: AppTheme.spacingSmall),
+                  const Text('API状态信息'),
+                ],
               ),
-              const SizedBox(height: AppTheme.spacingMedium),
-              Container(
-                padding: const EdgeInsets.all(AppTheme.spacingMedium),
-                decoration: BoxDecoration(
-                  color: AppTheme.infoColor.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
-                  border: Border.all(
-                    color: AppTheme.infoColor.withValues(alpha: 0.3),
-                  ),
-                ),
+              content: SingleChildScrollView(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      '调试提示：',
-                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            color: AppTheme.infoColor,
-                            fontWeight: FontWeight.w600,
+                    Consumer<DialogueProvider>(
+                      builder: (ctx, provider, _) {
+                        return Container(
+                          padding: const EdgeInsets.all(AppTheme.spacingMedium),
+                          decoration: BoxDecoration(
+                            color: provider.useAI
+                                ? AppTheme.successColor.withValues(alpha: 0.1)
+                                : AppTheme.warningColor.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                            border: Border.all(
+                              color: provider.useAI
+                                  ? AppTheme.successColor.withValues(alpha: 0.3)
+                                  : AppTheme.warningColor.withValues(alpha: 0.3),
+                            ),
                           ),
+                          child: Row(
+                            children: [
+                              Icon(
+                                provider.useAI ? Icons.smart_toy : Icons.chat_bubble,
+                                color: provider.useAI
+                                    ? AppTheme.successColor
+                                    : AppTheme.warningColor,
+                              ),
+                              const SizedBox(width: AppTheme.spacingSmall),
+                              Text(
+                                'AI模式: ${provider.useAI ? "开启" : "关闭"}',
+                                style: TextStyle(
+                                  color: provider.useAI
+                                      ? AppTheme.successColor
+                                      : AppTheme.warningColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
                     ),
-                    const SizedBox(height: AppTheme.spacingSmall),
-                    ...const [
-                      '1. 确保.env文件已正确配置',
-                      '2. 确保API密钥有效',
-                      '3. 检查网络连接',
-                      '4. 如果仍有问题，查看控制台日志',
-                    ].map((text) => Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: Text(
-                            text,
-                            style:
-                                Theme.of(context).textTheme.bodySmall?.copyWith(
-                                      color: AppTheme.textSecondary,
-                                    ),
+                    const SizedBox(height: AppTheme.spacingMedium),
+                    Container(
+                      padding: const EdgeInsets.all(AppTheme.spacingMedium),
+                      decoration: BoxDecoration(
+                        color: AppTheme.infoColor.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(AppTheme.radiusSmall),
+                        border: Border.all(
+                          color: AppTheme.infoColor.withValues(alpha: 0.3),
+                        ),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '调试提示：',
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  color: AppTheme.infoColor,
+                                  fontWeight: FontWeight.w600,
+                                ),
                           ),
-                        )),
+                          const SizedBox(height: AppTheme.spacingSmall),
+                          ...const [
+                            '1. 确保.env文件已正确配置',
+                            '2. 确保API密钥有效',
+                            '3. 检查网络连接',
+                            '4. 如果仍有问题，查看控制台日志',
+                          ].map((text) => Padding(
+                                padding: const EdgeInsets.only(bottom: 4),
+                                child: Text(
+                                  text,
+                                  style:
+                                      Theme.of(context).textTheme.bodySmall?.copyWith(
+                                            color: AppTheme.textSecondary,
+                                          ),
+                                ),
+                              )),
+                        ],
+                      ),
+                    ),
                   ],
                 ),
               ),
-            ],
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop();
+                    Navigator.of(context).pushNamed('/api-debug');
+                  },
+                  child: const Text('打开调试工具'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('关闭'),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              Navigator.of(context).pushNamed('/api-debug');
-            },
-            child: const Text('打开调试工具'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('关闭'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }

@@ -418,7 +418,7 @@ class MoodAnalytics {
 
   // 改善指标
   final double improvementScore; // 改善分数 0-100
-  final List<Achievement> achievements; // 成就
+  // 成就已移除
   final MoodType dominantMood; // 主导心情
   final double positiveRatio; // 积极心情占比
   final double negativeRatio; // 消极心情占比
@@ -436,7 +436,7 @@ class MoodAnalytics {
     required this.insights,
     required this.recommendations,
     required this.improvementScore,
-    required this.achievements,
+
     required this.dominantMood,
     required this.positiveRatio,
     required this.negativeRatio,
@@ -466,7 +466,7 @@ class MoodAnalytics {
         insights: [],
         recommendations: [],
         improvementScore: 50.0,
-        achievements: [],
+
         dominantMood: MoodType.neutral,
         positiveRatio: 0.0,
         negativeRatio: 0.0,
@@ -519,7 +519,7 @@ class MoodAnalytics {
       insights: _generateInsights(entries, positiveRatio, negativeRatio),
       recommendations: _generateRecommendations(dominantMood, positiveRatio),
       improvementScore: improvementScore.clamp(0.0, 100.0),
-      achievements: _calculateAchievements(entries),
+
       dominantMood: dominantMood,
       positiveRatio: positiveRatio,
       negativeRatio: negativeRatio,
@@ -601,33 +601,32 @@ class MoodAnalytics {
     return recommendations;
   }
 
-  static List<Achievement> _calculateAchievements(List<MoodEntry> entries) {
-    final achievements = <Achievement>[];
 
-    if (entries.length >= 7) {
-      achievements.add(Achievement(
-        id: 'week_recorder',
-        title: '坚持记录一周',
-        description: '连续记录心情一周，养成好习惯！',
-        icon: '📝',
-        unlockedAt: DateTime.now(),
-      ));
-    }
 
-    final gratitudeCount = entries.where((e) => e.gratitude.isNotEmpty).length;
-    if (gratitudeCount >= 10) {
-      achievements.add(Achievement(
-        id: 'gratitude_master',
-        title: '感恩达人',
-        description: '记录了10次感恩，心怀感激！',
-        icon: '🙏',
-        unlockedAt: DateTime.now(),
-      ));
-    }
 
-    return achievements;
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   }
-}
 
 /// 心情趋势点
 class MoodTrendPoint {
@@ -659,19 +658,19 @@ class MoodPattern {
   });
 }
 
-/// 成就
-class Achievement {
-  final String id;
-  final String title;
-  final String description;
-  final String icon;
-  final DateTime unlockedAt;
+/// 成就已移除
 
-  Achievement({
-    required this.id,
-    required this.title,
-    required this.description,
-    required this.icon,
-    required this.unlockedAt,
-  });
-}
+
+
+
+
+
+
+
+
+
+
+
+
+
+

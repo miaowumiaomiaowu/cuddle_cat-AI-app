@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../theme/artistic_theme.dart';
+import '../theme/app_theme.dart';
 // import '../services/performance_service.dart'; // 已删除
 // import '../services/testing_service.dart'; // 已删除
 // import '../services/health_check_service.dart'; // 已删除
@@ -736,33 +737,46 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
     // final report = _performanceService.exportPerformanceData();
     final report = '性能监控功能已禁用'; // 模拟报告
 
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('性能报告'),
-        content: SingleChildScrollView(
-          child: Text(
-            report,
-            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
+              title: const Text('性能报告'),
+              content: SingleChildScrollView(
+                child: Text(
+                  report,
+                  style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Clipboard.setData(ClipboardData(text: report));
+                    Navigator.of(ctx).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('报告已复制到剪贴板')),
+                    );
+                  },
+                  child: const Text('复制'),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('关闭'),
+                ),
+              ],
+            ),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: report));
-              Navigator.of(context).pop();
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('报告已复制到剪贴板')),
-              );
-            },
-            child: const Text('复制'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('关闭'),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -834,28 +848,41 @@ class _DeveloperToolsScreenState extends State<DeveloperToolsScreen>
 
       // 展示报告
       if (!mounted) return;
-      showDialog(
+      showGeneralDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('健康检查报告'),
-          content: SingleChildScrollView(
-            child: Text(details.toString(), style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Clipboard.setData(ClipboardData(text: details.toString()));
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('报告已复制到剪贴板')));
-              },
-              child: const Text('复制'),
+        barrierDismissible: true,
+        barrierLabel: 'dialog',
+        transitionDuration: AppTheme.motionMedium,
+        pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+        transitionBuilder: (ctx, anim, sec, child) {
+          final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+          return FadeTransition(
+            opacity: curved,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+              child: AlertDialog(
+                title: const Text('健康检查报告'),
+                content: SingleChildScrollView(
+                  child: Text(details.toString(), style: const TextStyle(fontFamily: 'monospace', fontSize: 12)),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () {
+                      Clipboard.setData(ClipboardData(text: details.toString()));
+                      Navigator.of(ctx).pop();
+                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('报告已复制到剪贴板')));
+                    },
+                    child: const Text('复制'),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.of(ctx).pop(),
+                    child: const Text('关闭'),
+                  ),
+                ],
+              ),
             ),
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('关闭'),
-            ),
-          ],
-        ),
+          );
+        },
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(

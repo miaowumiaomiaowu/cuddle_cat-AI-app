@@ -17,6 +17,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../services/reminders_api_client.dart';
 import '../services/reminder_service.dart';
 
+import '../theme/app_theme.dart';
+
+import '../ui/chat/chat_bubble.dart';
+
 /// AI心理支持聊天页面
 class AIChatScreen extends StatefulWidget {
   static const String routeName = '/ai_chat';
@@ -90,10 +94,16 @@ class _AIChatScreenState extends State<AIChatScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: ArtisticTheme.backgroundColor,
-      appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: AppTheme.mistSkyGradient,
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              AppBar(
+                backgroundColor: Colors.transparent,
+                elevation: 0,
         title: Row(
           children: [
             Container(
@@ -144,19 +154,25 @@ class _AIChatScreenState extends State<AIChatScreen>
             tooltip: '冥想指导',
           ),
         ],
-      ),
-      body: FadeTransition(
-        opacity: _fadeAnimation,
-        child: Column(
-          children: [
-            Expanded(
-              child: _buildMessageList(),
+          ),
+          Expanded(
+            child: FadeTransition(
+              opacity: _fadeAnimation,
+              child: Column(
+                children: [
+                  Expanded(
+                    child: _buildMessageList(),
+                  ),
+                  _buildInputArea(),
+                ],
+              ),
             ),
-            _buildInputArea(),
-          ],
-        ),
+          ),
+        ],
       ),
-    );
+    ),
+  ),
+);
   }
 
   Widget _buildMessageList() {
@@ -169,97 +185,72 @@ class _AIChatScreenState extends State<AIChatScreen>
           return _buildTypingIndicator();
         }
 
+
         final message = _messages[index];
-        return _buildMessageBubble(message);
+        return TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0.0, end: 1.0),
+          duration: AppTheme.motionMedium,
+          curve: AppTheme.easeStandard,
+          builder: (context, value, child) {
+            return Opacity(
+              opacity: value,
+              child: Transform.translate(
+                offset: Offset(0, (1 - value) * 8),
+                child: child,
+              ),
+            );
+          },
+          child: _chatBubble(message),
+        );
       },
     );
   }
 
-  Widget _buildMessageBubble(ChatMessage message) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: message.isUser
-            ? MainAxisAlignment.end
-            : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          if (!message.isUser) ...[
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: ArtisticTheme.primaryColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
+    // 新 UI chat bubble 封装
+    Widget _chatBubble(ChatMessage message) {
+      final bubble = ChatBubble(
+        isUser: message.isUser,
+        extras: message.isUser ? null : _buildAssistantExtras(message),
+        timeText: _formatTime(message.timestamp),
+        child: Text(message.text),
+      );
+
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 4),
+        child: Row(
+          mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (!message.isUser) ...[
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: ArtisticTheme.primaryColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Center(child: Text(message.avatar, style: const TextStyle(fontSize: 16))),
               ),
-              child: Center(
-                child: Text(message.avatar, style: const TextStyle(fontSize: 16)),
+              const SizedBox(width: 8),
+            ],
+            Flexible(child: bubble),
+            if (message.isUser) ...[
+              const SizedBox(width: 8),
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: ArtisticTheme.accentColor.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Center(child: Text(message.avatar, style: const TextStyle(fontSize: 16))),
               ),
-            ),
-            const SizedBox(width: 8),
+            ],
           ],
-          Flexible(
-            child: Container(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.of(context).size.width * 0.75,
-              ),
-              padding: const EdgeInsets.symmetric(
-                horizontal: ArtisticTheme.spacingMedium,
-                vertical: ArtisticTheme.spacingSmall,
-              ),
-              decoration: BoxDecoration(
-                color: message.isUser
-                    ? ArtisticTheme.primaryColor
-                    : ArtisticTheme.surfaceColor,
-                borderRadius: BorderRadius.circular(ArtisticTheme.radiusMedium),
-                boxShadow: ArtisticTheme.softShadow,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    message.text,
-                    style: ArtisticTheme.bodyMedium.copyWith(
-                      color: message.isUser
-                          ? Colors.white
-                          : ArtisticTheme.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                      if (!message.isUser) ...[
-                        const SizedBox(height: 8),
-                        _buildAssistantExtras(message),
-                      ],
-                  Text(
-                    _formatTime(message.timestamp),
-                    style: ArtisticTheme.caption.copyWith(
-                      color: message.isUser
-                          ? Colors.white70
-                          : ArtisticTheme.textSecondary,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          if (message.isUser) ...[
-            const SizedBox(width: 8),
-            Container(
-              width: 32,
-              height: 32,
-              decoration: BoxDecoration(
-                color: ArtisticTheme.accentColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Center(
-                child: Text(message.avatar, style: const TextStyle(fontSize: 16)),
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
+        ),
+      );
+    }
+
 
   Widget _buildTypingIndicator() {
     return Padding(
@@ -303,10 +294,11 @@ class _AIChatScreenState extends State<AIChatScreen>
 
   Widget _buildTypingDot(int index) {
     return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 600),
+      duration: AppTheme.motionShort,
+      curve: AppTheme.easeStandard,
       tween: Tween(begin: 0.0, end: 1.0),
       builder: (context, value, child) {
-        final delay = index * 0.2;
+        final delay = index * 0.18; // 0, 180ms, 360ms 梯度
         final animValue = ((value + delay) % 1.0);
         final opacity = (animValue < 0.5) ? animValue * 2 : (1 - animValue) * 2;
 
@@ -314,7 +306,7 @@ class _AIChatScreenState extends State<AIChatScreen>
           width: 6,
           height: 6,
           decoration: BoxDecoration(
-            color: ArtisticTheme.primaryColor.withValues(alpha: opacity),
+            color: AppTheme.primaryColor.withValues(alpha: opacity),
             borderRadius: BorderRadius.circular(3),
           ),
         );
@@ -323,51 +315,61 @@ class _AIChatScreenState extends State<AIChatScreen>
   }
 
   Widget _buildInputArea() {
+    final radius = BorderRadius.circular(AppTheme.radiusLarge);
     return Container(
-      padding: const EdgeInsets.all(ArtisticTheme.spacingMedium),
+      padding: const EdgeInsets.all(AppTheme.gap16),
       decoration: BoxDecoration(
-        color: ArtisticTheme.surfaceColor,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        color: AppTheme.surfaceColor,
+        boxShadow: AppTheme.cardShadow,
       ),
       child: SafeArea(
         child: Row(
           children: [
             Expanded(
-              child: TextField(
-                controller: _messageController,
-                decoration: InputDecoration(
-                  hintText: '输入你的感受或问题...',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(ArtisticTheme.radiusLarge),
-                    borderSide: BorderSide.none,
-                  ),
-                  filled: true,
-                  fillColor: ArtisticTheme.backgroundColor,
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: ArtisticTheme.spacingMedium,
-                    vertical: ArtisticTheme.spacingSmall,
-                  ),
+              child: Container(
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: radius,
+                  boxShadow: [
+                    BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 8, offset: const Offset(0, 2)),
+                  ],
                 ),
-                maxLines: null,
-                textInputAction: TextInputAction.send,
-                onSubmitted: (_) => _sendMessage(),
+                child: TextField(
+                  controller: _messageController,
+                  decoration: InputDecoration(
+                    hintText: '输入你的感受或问题...',
+                    border: OutlineInputBorder(
+                      borderRadius: radius,
+                      borderSide: BorderSide.none,
+                    ),
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: AppTheme.gap16,
+                      vertical: AppTheme.gap12,
+                    ),
+                  ),
+                  maxLines: null,
+                  textInputAction: TextInputAction.send,
+                  onSubmitted: (_) => _sendMessage(),
+                ),
               ),
             ),
             const SizedBox(width: 8),
-            Container(
-              decoration: BoxDecoration(
-                color: ArtisticTheme.primaryColor,
-                borderRadius: BorderRadius.circular(ArtisticTheme.radiusLarge),
-              ),
-              child: IconButton(
-                icon: const Icon(Icons.send, color: Colors.white),
-                onPressed: _isTyping ? null : _sendMessage,
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: radius,
+                onTap: _isTyping ? null : _sendMessage,
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: AppTheme.fieldGreenGradient,
+                    borderRadius: radius,
+                    boxShadow: AppTheme.cardShadow,
+                  ),
+                  child: Icon(Icons.send, color: Theme.of(context).colorScheme.onPrimary),
+                ),
               ),
             ),
           ],
@@ -414,8 +416,9 @@ class _AIChatScreenState extends State<AIChatScreen>
           if (extracted.isNotEmpty) {
             final goalText = (extracted.first['content'] as String?)?.trim();
             if (goalText != null && goalText.isNotEmpty) {
+              if (!mounted || !context.mounted) return;
               final confirm = await _showReminderConfirm(context, goalText);
-              if (!mounted) return;
+              if (!mounted || !context.mounted) return;
               if (confirm == true) {
                 // 取建议文案
                 final prefs = await SharedPreferences.getInstance();
@@ -523,18 +526,31 @@ class _AIChatScreenState extends State<AIChatScreen>
       return;
     }
 
-    showDialog(
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('💡 心理洞察'),
-        content: const Text('正在分析你的心情模式...'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('关闭'),
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
+              title: const Text('💡 心理洞察'),
+              content: const Text('正在分析你的心情模式...'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('关闭'),
+                ),
+              ],
+            ),
           ),
-        ],
-      ),
+        );
+      },
     );
 
     try {
@@ -546,36 +562,47 @@ class _AIChatScreenState extends State<AIChatScreen>
       if (mounted) {
         Navigator.of(context).pop(); // 关闭加载对话框
 
-        showDialog(
+        showGeneralDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('💡 心理洞察'),
-            content: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(insight.mainInsight),
-                  const SizedBox(height: 16),
-                  const Text('建议：', style: TextStyle(fontWeight: FontWeight.bold)),
-                  ...insight.recommendations.map((rec) =>
-                    Padding(
-                      padding: const EdgeInsets.only(top: 4),
-                      child: Text('• $rec'),
+          barrierDismissible: true,
+          barrierLabel: 'dialog',
+          transitionDuration: AppTheme.motionMedium,
+          pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+          transitionBuilder: (ctx, anim, sec, child) {
+            final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+            return FadeTransition(
+              opacity: curved,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+                child: AlertDialog(
+                  title: const Text('💡 心理洞察'),
+                  content: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(insight.mainInsight),
+                        const SizedBox(height: 16),
+                        const Text('建议：', style: TextStyle(fontWeight: FontWeight.bold)),
+                        ...insight.recommendations.map((rec) => Padding(
+                              padding: const EdgeInsets.only(top: 4),
+                              child: Text('• $rec'),
+                            )),
+                        const SizedBox(height: 16),
+                        Text('健康评分: ${(insight.wellnessScore * 100).toInt()}/100'),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Text('健康评分: ${(insight.wellnessScore * 100).toInt()}/100'),
-                ],
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('知道了'),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(),
-                child: const Text('知道了'),
-              ),
-            ],
-          ),
+            );
+          },
         );
       }
     } catch (e) {
@@ -598,35 +625,46 @@ class _AIChatScreenState extends State<AIChatScreen>
 
 
     if (mounted) {
-      showDialog(
+      showGeneralDialog(
         context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('🧘‍♀️ 冥想指导'),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: meditations.map((meditation) =>
-                ListTile(
-                  leading: const Icon(Icons.self_improvement),
-                  title: Text(meditation.title),
-                  subtitle: Text('${meditation.duration}分钟 - ${meditation.description}'),
-                  onTap: () {
-                    Navigator.of(context).pop();
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text('开始${meditation.title}')),
-                    );
-                  },
+        barrierDismissible: true,
+        barrierLabel: 'dialog',
+        transitionDuration: AppTheme.motionMedium,
+        pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+        transitionBuilder: (ctx, anim, sec, child) {
+          final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+          return FadeTransition(
+            opacity: curved,
+            child: ScaleTransition(
+              scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+              child: AlertDialog(
+                title: const Text('🧘‍♀️ 冥想指导'),
+                content: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: meditations.map((meditation) => ListTile(
+                          leading: const Icon(Icons.self_improvement),
+                          title: Text(meditation.title),
+                          subtitle: Text('${meditation.duration}分钟 - ${meditation.description}'),
+                          onTap: () {
+                            Navigator.of(context).pop();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('开始${meditation.title}')),
+                            );
+                          },
+                        )).toList(),
+                  ),
                 ),
-              ).toList(),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text('关闭'),
+                  ),
+                ],
+              ),
             ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('关闭'),
-            ),
-          ],
-        ),
+          );
+        },
       );
     }
   }
@@ -715,16 +753,27 @@ class _AIChatScreenState extends State<AIChatScreen>
 
   Future<bool?> _showReminderConfirm(BuildContext context, String goalText) async {
     if (!mounted) return false;
-    return showDialog<bool>(
+    return showGeneralDialog<bool>(
       context: context,
-      builder: (ctx) {
-        return AlertDialog(
-          title: const Text('设置目标提醒'),
-          content: Text('检测到你的目标："$goalText"\n是否为你在每天上午9:00添加一个温暖提醒？'),
-          actions: [
-            TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('暂不')),
-            FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('好的')),
-          ],
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
+              title: const Text('设置目标提醒'),
+              content: Text('检测到你的目标："$goalText"\n是否为你在每天上午9:00添加一个温暖提醒？'),
+              actions: [
+                TextButton(onPressed: () => Navigator.of(ctx).pop(false), child: const Text('暂不')),
+                FilledButton(onPressed: () => Navigator.of(ctx).pop(true), child: const Text('好的')),
+              ],
+            ),
+          ),
         );
       },
     );

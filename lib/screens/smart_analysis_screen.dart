@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+
 import 'package:provider/provider.dart';
 import '../theme/artistic_theme.dart';
 import '../widgets/enhanced_chart_widget.dart';
@@ -14,6 +16,8 @@ import '../services/memory_service.dart';
 import '../services/smart_reminder_service.dart';
 import '../services/feedback_service.dart';
 import '../services/network_service.dart';
+import '../widgets/gradient_button.dart';
+
 import '../services/ai_trace_service.dart';
 import '../widgets/settings/reminder_settings_panel.dart';
 import 'happiness_task_edit_screen.dart';
@@ -146,6 +150,10 @@ class _SmartAnalysisScreenState extends State<SmartAnalysisScreen> {
             const SizedBox(height: 16),
             _buildAnalysisTracerSection(),
             const SizedBox(height: 16),
+            const SizedBox(height: 8),
+            _buildPrimaryCTA(),
+            const SizedBox(height: 16),
+
             _buildPersonalizedGiftsSection(hp),
             const SizedBox(height: 16),
             _buildMemorySection(),
@@ -394,8 +402,19 @@ class _SmartAnalysisScreenState extends State<SmartAnalysisScreen> {
   }
 
   void _showMemoryDetail(MemoryEvent m) {
-    showDialog(context: context, builder: (ctx){
-      return AlertDialog(
+    showGeneralDialog(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
         title: Text('记忆详情'),
         content: SingleChildScrollView(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children:[
           Text('类型：${m.type}'),
@@ -410,8 +429,11 @@ class _SmartAnalysisScreenState extends State<SmartAnalysisScreen> {
         actions: [
           TextButton(onPressed: ()=>Navigator.of(ctx).pop(), child: const Text('关闭')),
         ],
-      );
-    });
+            ),
+          ),
+        );
+      },
+    );
   }
 
   // E. 智能提醒模块（嵌入完整设置面板 + 幸福清单自定义入口）
@@ -435,5 +457,15 @@ class _SmartAnalysisScreenState extends State<SmartAnalysisScreen> {
       ]),
     );
   }
+
+  Widget _buildPrimaryCTA() {
+    return Center(
+      child: GradientButton(
+        onPressed: _bootstrap,
+        child: const Text('开始综合分析'),
+      ),
+    );
+  }
+
 }
 

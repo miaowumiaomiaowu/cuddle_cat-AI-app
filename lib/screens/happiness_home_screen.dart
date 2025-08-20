@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../providers/happiness_provider.dart';
 import '../providers/mood_provider.dart';
 import '../theme/artistic_theme.dart';
+import '../theme/app_theme.dart';
+
 import '../widgets/happiness_gift_view.dart';
 import '../widgets/memory_review_card.dart';
 import '../widgets/wellness_plan_card.dart';
@@ -56,6 +58,19 @@ class _HappinessHomeScreenState extends State<HappinessHomeScreen> {
             child: Stack(
               children: [
                 const HappinessGiftView(),
+                // 顶部渐变 Header 背景（雾天 -> 雾青）
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: 140,
+                  child: Container(
+                    decoration: const BoxDecoration(
+                      gradient: AppTheme.mistSkyGradient,
+                    ),
+                  ),
+                ),
+
                 // 顶部今日幸福清单栏目已移除，改为说明与自定义入口
                 Positioned(
                   top: 12,

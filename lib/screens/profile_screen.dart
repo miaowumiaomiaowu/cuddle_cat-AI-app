@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import '../theme/app_theme.dart';
+import '../ui/app_card.dart';
 import '../theme/artistic_theme.dart';
 import '../providers/cat_provider.dart';
+import '../utils/animation_utils.dart';
+
 import '../models/cat.dart';
 import 'package:provider/provider.dart';
 import 'settings_screen.dart';
@@ -80,7 +83,7 @@ class ProfileScreen extends StatelessWidget {
               // AI聊天设置已由“猫咪性格”统一决定，移除冗余入口
               _buildStatsWithCalendarSection(context),
               const SizedBox(height: AppTheme.spacingLarge),
-              _buildLiteAchievementsSection(context),
+              // 成就模块已移除
               const SizedBox(height: AppTheme.spacingXLarge),
             ],
           ),
@@ -91,18 +94,16 @@ class ProfileScreen extends StatelessWidget {
 
   // 手绘风格用户信息卡片
   Widget _buildUserInfoCard(BuildContext context) {
-    return Container(
+    return AppCard(
       margin: const EdgeInsets.all(AppTheme.spacingMedium),
       padding: const EdgeInsets.all(AppTheme.spacingLarge),
-      decoration: AppTheme.handDrawnCard.copyWith(
-        gradient: LinearGradient(
-          colors: [
-            AppTheme.primaryColor.withValues(alpha: 0.8),
-            AppTheme.primaryColorLight.withValues(alpha: 0.6),
-          ],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+      gradient: const LinearGradient(
+        colors: [
+          AppTheme.primaryColor,
+          AppTheme.primaryColorLight,
+        ],
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ),
       child: Row(
         children: [
@@ -211,10 +212,9 @@ class ProfileScreen extends StatelessWidget {
         }).toSet();
         final int uniqueDays = checkins.map((c) => c.ymdDate).toSet().length;
 
-        return Container(
+        return AppCard(
           margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium),
           padding: const EdgeInsets.all(AppTheme.spacingLarge),
-          decoration: AppTheme.handDrawnCard,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -240,10 +240,20 @@ class ProfileScreen extends StatelessWidget {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
-                  _MiniGauge(emoji: '💬', label: '活跃天数', valueText: '$uniqueDays天'),
-                  _MiniGauge(emoji: '🎯', label: '完成任务', valueText: '${checkins.length}次'),
-                  _MiniGauge(emoji: '🔥', label: '连续打卡', valueText: '${stats?.currentStreak ?? 0}天'),
-                  _MiniGauge(emoji: '✅', label: '近7天完成率', valueText: '${(((stats?.completionRate7d ?? 0.0) * 100).round())}%'),
+                  ...[
+                    _MiniGauge(emoji: '💬', label: '活跃天数', valueText: '$uniqueDays天'),
+                    _MiniGauge(emoji: '🎯', label: '完成任务', valueText: '${checkins.length}次'),
+                    _MiniGauge(emoji: '🔥', label: '连续打卡', valueText: '${stats?.currentStreak ?? 0}天'),
+                    _MiniGauge(emoji: '✅', label: '近7天完成率', valueText: '${(((stats?.completionRate7d ?? 0.0) * 100).round())}%'),
+                  ].asMap().entries.map((e) {
+                    final i = e.key;
+                    final w = e.value;
+                    return HandDrawnAnimatedWidget(
+                      delay: Duration(milliseconds: i * 40),
+                      animationType: AnimationType.fadeIn,
+                      child: w,
+                    );
+                  }),
                 ],
               ),
               const SizedBox(height: AppTheme.spacingLarge),
@@ -266,136 +276,17 @@ class ProfileScreen extends StatelessWidget {
 
 
 
-  // 简化后的成就展示 + 查看更多
-  Widget _buildLiteAchievementsSection(BuildContext context) {
-    final achievements = [
-      {
-        'emoji': '🐱',
-        'name': '猫咪铲屎官',
-        'desc': '成功领养一只猫咪',
-        'complete': true,
-      },
-      {
-        'emoji': '💝',
-        'name': '爱心满满',
-        'desc': '与猫咪互动超过100次',
-        'complete': true,
-      },
-      {
-        'emoji': '🗺️',
-        'name': '旅行达人',
-        'desc': '记录第一个旅行地点',
-        'complete': true,
-      },
-      {
-        'emoji': '🏆',
-        'name': '资深玩家',
-        'desc': '连续使用7天',
-        'complete': false,
-      },
-    ];
 
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium),
-      padding: const EdgeInsets.all(AppTheme.spacingLarge),
-      decoration: AppTheme.handDrawnCard,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text('🏅', style: TextStyle(fontSize: 24)),
-              const SizedBox(width: 8),
-              Text(
-                '我的成就',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppTheme.textPrimary,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppTheme.spacingMedium),
-          ...achievements.take(3).map((a) => _buildAchievementItem(a)),
-          const SizedBox(height: AppTheme.spacingSmall),
-          Align(
-            alignment: Alignment.centerRight,
-            child: TextButton(
-              onPressed: () => Navigator.pushNamed(context, '/more_achievements'),
-              child: const Text('查看更多'),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 
-  Widget _buildAchievementItem(Map<String, dynamic> achievement) {
-    final isComplete = achievement['complete'] as bool;
-
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppTheme.spacingSmall),
-      padding: const EdgeInsets.all(AppTheme.spacingMedium),
-      decoration: BoxDecoration(
-        color: isComplete
-            ? AppTheme.successColor.withValues(alpha: 0.1)
-            : AppTheme.textHint.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(AppTheme.radiusMedium),
-        border: Border.all(
-          color: isComplete
-              ? AppTheme.successColor.withValues(alpha: 0.3)
-              : AppTheme.textHint.withValues(alpha: 0.3),
-          width: 1.5,
-        ),
-      ),
-      child: Row(
-        children: [
-          Text(
-            achievement['emoji'] as String,
-            style: TextStyle(
-              fontSize: 32,
-              color: isComplete ? null : Colors.grey,
-            ),
-          ),
-          const SizedBox(width: AppTheme.spacingMedium),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  achievement['name'] as String,
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: isComplete ? AppTheme.textPrimary : AppTheme.textHint,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  achievement['desc'] as String,
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: isComplete ? AppTheme.textSecondary : AppTheme.textHint,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (isComplete)
-            const Text('✅', style: TextStyle(fontSize: 20)),
-        ],
-      ),
-    );
   }
 
 
   // 我的猫咪（与AI强绑定）
   Widget _buildMyCatSection(BuildContext context) {
     final cat = context.watch<CatProvider>().cat;
-    return Container(
+    return AppCard(
       margin: const EdgeInsets.symmetric(horizontal: AppTheme.spacingMedium),
       padding: const EdgeInsets.all(AppTheme.spacingLarge),
-      decoration: AppTheme.handDrawnCard,
       child: Row(
         children: [
           Container(
@@ -433,20 +324,6 @@ class ProfileScreen extends StatelessWidget {
 
 
 
-  // 废弃的 AI 偏好辅助样式保留不影响功能，若需可继续用于其他卡片。
-  Widget _chipWrap(BuildContext context, Widget child) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: AppTheme.primaryColorLight.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppTheme.primaryColor.withValues(alpha: 0.4)),
-      ),
-      child: child,
-    );
-  }
-
-
   String _personalityText(CatPersonality p) {
     switch (p) {
       case CatPersonality.playful:
@@ -462,7 +339,6 @@ class ProfileScreen extends StatelessWidget {
       case CatPersonality.independent:
         return '高冷/独立';
     }
-}
 }
 
 

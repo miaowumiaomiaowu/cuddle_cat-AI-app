@@ -145,8 +145,7 @@ class MoodProvider extends ChangeNotifier {
       // 更新用户统计
       await _userProvider?.incrementMoodEntryCount();
 
-      // 检查成就
-      await _checkAchievements();
+
 
       debugPrint('添加心情记录: ${MoodTypeConfig.getMoodName(entry.mood)} ${entry.emoji}');
       notifyListeners();
@@ -341,35 +340,6 @@ class MoodProvider extends ChangeNotifier {
     }
   }
 
-  /// 检查成就
-  Future<void> _checkAchievements() async {
-    if (_userProvider == null) return;
-
-    final totalEntries = _moodEntries.length;
-    final gratitudeEntries = _moodEntries.where((e) => e.gratitude.isNotEmpty).length;
-    final consecutiveDays = _userProvider!.consecutiveDays;
-
-    // 检查各种成就
-    if (totalEntries >= 1 && !_userProvider!.hasAchievement('first_mood')) {
-      await _userProvider!.addAchievement('first_mood');
-    }
-
-    if (totalEntries >= 7 && !_userProvider!.hasAchievement('week_recorder')) {
-      await _userProvider!.addAchievement('week_recorder');
-    }
-
-    if (totalEntries >= 30 && !_userProvider!.hasAchievement('month_recorder')) {
-      await _userProvider!.addAchievement('month_recorder');
-    }
-
-    if (gratitudeEntries >= 10 && !_userProvider!.hasAchievement('gratitude_master')) {
-      await _userProvider!.addAchievement('gratitude_master');
-    }
-
-    if (consecutiveDays >= 7 && !_userProvider!.hasAchievement('week_streak')) {
-      await _userProvider!.addAchievement('week_streak');
-    }
-  }
 
   /// 设置加载状态
   void _setLoading(bool loading) {
@@ -468,10 +438,6 @@ class MoodProvider extends ChangeNotifier {
     return _analytics?.recommendations ?? [];
   }
 
-  /// 获取成就列表
-  List<Achievement> get achievements {
-    return _analytics?.achievements ?? [];
-  }
 
   /// 今天是否已记录心情
   bool get hasTodayEntry {

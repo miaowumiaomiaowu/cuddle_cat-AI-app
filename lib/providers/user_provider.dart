@@ -142,20 +142,6 @@ class UserProvider extends ChangeNotifier {
   }
 
 
-  /// 添加成就
-  Future<void> addAchievement(String achievementId) async {
-    if (currentUser == null) return;
-
-    final currentStats = currentUser!.stats;
-    if (currentStats.achievements.contains(achievementId)) {
-      return; // 已经有这个成就了
-    }
-
-    final updatedAchievements = [...currentStats.achievements, achievementId];
-    final updatedStats = currentStats.copyWith(achievements: updatedAchievements);
-
-    await updateUserStats(updatedStats);
-  }
 
   /// 删除账户
   Future<bool> deleteAccount() async {
@@ -204,15 +190,6 @@ class UserProvider extends ChangeNotifier {
     return currentUser?.stats.longestStreak ?? 0;
   }
 
-  /// 获取成就数量
-  int get achievementCount {
-    return currentUser?.stats.achievements.length ?? 0;
-  }
-
-  /// 检查是否有特定成就
-  bool hasAchievement(String achievementId) {
-    return currentUser?.stats.achievements.contains(achievementId) ?? false;
-  }
 
   /// 获取用户等级（基于记录数量）
   int get userLevel {

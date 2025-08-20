@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../theme/app_theme.dart';
+
 import 'package:provider/provider.dart';
 import '../theme/artistic_theme.dart';
 import '../providers/mood_provider.dart';
@@ -22,7 +24,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
     with TickerProviderStateMixin {
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
-  
+
   double _zoomLevel = 1.0;
   Offset _panOffset = Offset.zero;
   String _selectedTimeRange = 'all'; // all, week, month, year
@@ -31,7 +33,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
   @override
   void initState() {
     super.initState();
-    
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 1000),
       vsync: this,
@@ -40,7 +42,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
       parent: _animationController,
       curve: Curves.easeInOut,
     );
-    
+
     _animationController.forward();
   }
 
@@ -273,7 +275,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
     final dominantMood = _getDominantMood(entries);
     final color = MoodTypeConfig.getMoodColor(dominantMood);
     final emoji = MoodTypeConfig.getMoodEmoji(dominantMood);
-    
+
     // 简化的位置计算（实际项目中应该使用真实的地理坐标）
     final position = _calculateMarkerPosition(location, entries);
 
@@ -431,12 +433,12 @@ class _MoodMapScreenState extends State<MoodMapScreen>
 
   MoodType _getDominantMood(List<MoodEntry> entries) {
     if (entries.isEmpty) return MoodType.neutral;
-    
+
     final moodCounts = <MoodType, int>{};
     for (final entry in entries) {
       moodCounts[entry.mood] = (moodCounts[entry.mood] ?? 0) + 1;
     }
-    
+
     return moodCounts.entries.reduce((a, b) => a.value > b.value ? a : b).key;
   }
 
@@ -444,7 +446,7 @@ class _MoodMapScreenState extends State<MoodMapScreen>
     // 简化的位置计算（实际项目中应该使用真实的地理坐标转换）
     final hash = location.hashCode;
     final random = math.Random(hash);
-    
+
     return Offset(
       50 + random.nextDouble() * 250,
       50 + random.nextDouble() * 300,
@@ -456,105 +458,118 @@ class _MoodMapScreenState extends State<MoodMapScreen>
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => DraggableScrollableSheet(
-        initialChildSize: 0.6,
-        maxChildSize: 0.9,
-        minChildSize: 0.3,
-        builder: (context, scrollController) {
-          return Container(
-            decoration: const BoxDecoration(
-              color: ArtisticTheme.surfaceColor,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-            ),
-            child: Column(
-              children: [
-                Container(
-                  width: 40,
-                  height: 4,
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  decoration: BoxDecoration(
-                    color: ArtisticTheme.textSecondary.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
-                  ),
+      builder: (context) {
+        final routeAnim = ModalRoute.of(context)!.animation!;
+        return AnimatedBuilder(
+          animation: routeAnim,
+          builder: (ctx, child) {
+            final curved = CurvedAnimation(parent: routeAnim, curve: AppTheme.easeStandard);
+            return FadeTransition(
+              opacity: curved,
+              child: SlideTransition(
+                position: Tween<Offset>(begin: const Offset(0, 0.06), end: Offset.zero).animate(curved),
+                child: child!,
+              ),
+            );
+          },
+          child: DraggableScrollableSheet(
+            initialChildSize: 0.6,
+            maxChildSize: 0.9,
+            minChildSize: 0.3,
+            builder: (context, scrollController) {
+              return Container(
+                decoration: const BoxDecoration(
+                  color: ArtisticTheme.surfaceColor,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(ArtisticTheme.spacingLarge),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
+                child: Column(
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      margin: const EdgeInsets.symmetric(vertical: 8),
+                      decoration: BoxDecoration(
+                        color: ArtisticTheme.textSecondary.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(ArtisticTheme.spacingLarge),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Icon(Icons.location_on, color: ArtisticTheme.primaryColor),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              location,
-                              style: ArtisticTheme.headlineSmall.copyWith(
-                                fontWeight: FontWeight.w600,
+                          Row(
+                            children: [
+                              const Icon(Icons.location_on, color: ArtisticTheme.primaryColor),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  location,
+                                  style: ArtisticTheme.headlineSmall.copyWith(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '${entries.length} 条心情记录',
+                            style: ArtisticTheme.bodyMedium.copyWith(
+                              color: ArtisticTheme.textSecondary,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 8),
-                      Text(
-                        '${entries.length} 条心情记录',
-                        style: ArtisticTheme.bodyMedium.copyWith(
-                          color: ArtisticTheme.textSecondary,
-                        ),
+                    ),
+                    Expanded(
+                      child: ListView.builder(
+                        controller: scrollController,
+                        padding: const EdgeInsets.symmetric(horizontal: ArtisticTheme.spacingLarge),
+                        itemCount: entries.length,
+                        itemBuilder: (context, index) {
+                          final entry = entries[index];
+                          return Card(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            child: ListTile(
+                              leading: Text(
+                                entry.emoji,
+                                style: const TextStyle(fontSize: 24),
+                              ),
+                              title: Text(MoodTypeConfig.getMoodName(entry.mood)),
+                              subtitle: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (entry.description != null) Text(entry.description!),
+                                  Text(
+                                    '${entry.timestamp.month}/${entry.timestamp.day} ${entry.timestamp.hour}:${entry.timestamp.minute.toString().padLeft(2, '0')}',
+                                    style: ArtisticTheme.caption,
+                                  ),
+                                ],
+                              ),
+                              trailing: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: MoodTypeConfig.getMoodColor(entry.mood).withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '${entry.intensity}/10',
+                                  style: ArtisticTheme.caption.copyWith(fontWeight: FontWeight.w600),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ),
-                Expanded(
-                  child: ListView.builder(
-                    controller: scrollController,
-                    padding: const EdgeInsets.symmetric(horizontal: ArtisticTheme.spacingLarge),
-                    itemCount: entries.length,
-                    itemBuilder: (context, index) {
-                      final entry = entries[index];
-                      return Card(
-                        margin: const EdgeInsets.only(bottom: 8),
-                        child: ListTile(
-                          leading: Text(
-                            entry.emoji,
-                            style: const TextStyle(fontSize: 24),
-                          ),
-                          title: Text(MoodTypeConfig.getMoodName(entry.mood)),
-                          subtitle: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              if (entry.description != null)
-                                Text(entry.description!),
-                              Text(
-                                '${entry.timestamp.month}/${entry.timestamp.day} ${entry.timestamp.hour}:${entry.timestamp.minute.toString().padLeft(2, '0')}',
-                                style: ArtisticTheme.caption,
-                              ),
-                            ],
-                          ),
-                          trailing: Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: MoodTypeConfig.getMoodColor(entry.mood).withValues(alpha: 0.2),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Text(
-                              '${entry.intensity}/10',
-                              style: ArtisticTheme.caption.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          );
-        },
-      ),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }

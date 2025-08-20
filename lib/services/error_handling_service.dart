@@ -1,4 +1,6 @@
 import 'package:flutter/foundation.dart';
+import '../theme/app_theme.dart';
+
 import 'package:flutter/material.dart';
 import 'dart:async';
 
@@ -14,12 +16,12 @@ class ErrorHandlingService {
   /// 初始化错误处理服务
   void initialize() {
     _errorStreamController = StreamController<AppError>.broadcast();
-    
+
     // 设置全局错误处理
     FlutterError.onError = (FlutterErrorDetails details) {
       _handleFlutterError(details);
     };
-    
+
     // 设置Zone错误处理
     runZonedGuarded(() {
       // 应用运行在这个Zone中
@@ -37,9 +39,9 @@ class ErrorHandlingService {
       timestamp: DateTime.now(),
       context: details.context?.toString(),
     );
-    
+
     _recordError(error);
-    
+
     if (kDebugMode) {
       debugPrint('Flutter错误: ${error.message}');
       debugPrint('堆栈跟踪: ${error.stackTrace}');
@@ -54,9 +56,9 @@ class ErrorHandlingService {
       stackTrace: stackTrace.toString(),
       timestamp: DateTime.now(),
     );
-    
+
     _recordError(appError);
-    
+
     if (kDebugMode) {
       debugPrint('运行时错误: ${appError.message}');
       debugPrint('堆栈跟踪: ${appError.stackTrace}');
@@ -78,7 +80,7 @@ class ErrorHandlingService {
       context: context,
       severity: severity,
     );
-    
+
     _recordError(error);
   }
 
@@ -91,7 +93,7 @@ class ErrorHandlingService {
       context: 'Endpoint: $endpoint, Status: $statusCode',
       severity: ErrorSeverity.medium,
     );
-    
+
     _recordError(error);
   }
 
@@ -104,7 +106,7 @@ class ErrorHandlingService {
       context: 'Operation: $operation',
       severity: ErrorSeverity.high,
     );
-    
+
     _recordError(error);
   }
 
@@ -115,7 +117,7 @@ class ErrorHandlingService {
   }) {
     Color backgroundColor;
     IconData icon;
-    
+
     switch (severity) {
       case ErrorSeverity.low:
         backgroundColor = Colors.blue;
@@ -209,9 +211,19 @@ class ErrorHandlingService {
     String confirmText = '确认',
     String cancelText = '取消',
   }) async {
-    final result = await showDialog<bool>(
+    final result = await showGeneralDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
         title: Text(title),
         content: Text(message),
         actions: [
@@ -224,24 +236,27 @@ class ErrorHandlingService {
             child: Text(confirmText),
           ),
         ],
-      ),
+            ),
+          ),
+        );
+      },
     );
-    
+
     return result ?? false;
   }
 
   /// 内部方法：记录错误
   void _recordError(AppError error) {
     _errorHistory.add(error);
-    
+
     // 限制错误历史记录数量
     if (_errorHistory.length > 100) {
       _errorHistory.removeAt(0);
     }
-    
+
     // 通知错误流监听者
     _errorStreamController?.add(error);
-    
+
     // 如果是严重错误，立即处理
     if (error.severity == ErrorSeverity.critical) {
       _handleCriticalError(error);
@@ -257,45 +272,57 @@ class ErrorHandlingService {
   /// 显示错误详情
   void _showErrorDetails(BuildContext context) {
     if (_errorHistory.isEmpty) return;
-    
+
     final recentError = _errorHistory.last;
-    
-    showDialog(
+
+    showGeneralDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('错误详情'),
-        content: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text('类型: ${_getErrorTypeText(recentError.type)}'),
-              const SizedBox(height: 8),
-              Text('时间: ${recentError.timestamp}'),
-              const SizedBox(height: 8),
-              Text('消息: ${recentError.message}'),
-              if (recentError.context != null) ...[
-                const SizedBox(height: 8),
-                Text('上下文: ${recentError.context}'),
+      barrierDismissible: true,
+      barrierLabel: 'dialog',
+      transitionDuration: AppTheme.motionMedium,
+      pageBuilder: (ctx, _, __) => const SizedBox.shrink(),
+      transitionBuilder: (ctx, anim, sec, child) {
+        final curved = CurvedAnimation(parent: anim, curve: AppTheme.easeStandard);
+        return FadeTransition(
+          opacity: curved,
+          child: ScaleTransition(
+            scale: Tween<double>(begin: 0.98, end: 1.0).animate(curved),
+            child: AlertDialog(
+              title: const Text('错误详情'),
+              content: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('类型: ${_getErrorTypeText(recentError.type)}'),
+                    const SizedBox(height: 8),
+                    Text('时间: ${recentError.timestamp}'),
+                    const SizedBox(height: 8),
+                    Text('消息: ${recentError.message}'),
+                    if (recentError.context != null) ...[
+                      const SizedBox(height: 8),
+                      Text('上下文: ${recentError.context}'),
+                    ],
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(ctx).pop(),
+                  child: const Text('关闭'),
+                ),
+                if (kDebugMode)
+                  TextButton(
+                    onPressed: () {
+                      Navigator.of(ctx).pop();
+                    },
+                    child: const Text('复制'),
+                  ),
               ],
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('关闭'),
-          ),
-          if (kDebugMode)
-            TextButton(
-              onPressed: () {
-                // 复制错误信息到剪贴板
-                Navigator.of(context).pop();
-              },
-              child: const Text('复制'),
             ),
-        ],
-      ),
+          ),
+        );
+      },
     );
   }
 
