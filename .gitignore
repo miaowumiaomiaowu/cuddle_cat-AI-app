@@ -83,6 +83,14 @@ server/__pycache__/
 server/*.pyc
 server/.pytest_cache/
 
+# Server data files (runtime generated)
+server/app/memory.db
+server/app/memory_hnsw.index
+server/app/memory_hnsw_meta.json
+server/app/*.db
+server/app/*.index
+server/app/*_meta.json
+
 # Temporary and backup files
 *.tmp
 *.temp

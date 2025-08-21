@@ -12,7 +12,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(title="Cuddle Cat AI Analysis Service")
 
-# Enable CORS (development-friendly). Adjust origins as needed for production.
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -21,17 +20,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Initialize SQLite DB for memory persistence
 init_db()
 
 from .metrics import inc as metrics_inc, get_counters as metrics_get, uptime_seconds as metrics_uptime, add_latency_sample as metrics_add_latency, get_latency_p95 as metrics_p95
 
 from .db_feedback import ensure_feedback_table, insert_feedback, fetch_feedback_stats
-# Feedback table
 ensure_feedback_table()
-
-
-# Simple API key protection for internal endpoints
 
 def require_metrics_key(x_api_key: str | None = Header(default=None, alias='X-API-Key')):
     required = os.getenv('METRICS_API_KEY') or os.getenv('AI_SERVICE_INTERNAL_KEY')

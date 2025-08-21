@@ -137,7 +137,6 @@ class AdvancedAIService {
   }) {
     final now = DateTime.now();
     
-    // 计算最近心情平均分
     double recentMoodAvg = 3.0;
     if (moodRecords.isNotEmpty) {
       final recentMoods = moodRecords.take(7).toList();
@@ -145,7 +144,6 @@ class AdvancedAIService {
       recentMoodAvg = moodScores.reduce((a, b) => a + b) / moodScores.length;
     }
 
-    // 计算连击长度
     int streakLength = 0;
     if (checkins.isNotEmpty) {
       final sortedCheckins = checkins.toList()
@@ -171,19 +169,18 @@ class AdvancedAIService {
       }
     }
 
-    // 计算今日完成任务数
     final today = '${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')}';
     final todayTasks = checkins.where((c) => c.ymdDate == today).length;
 
     final context = {
       'hour_of_day': now.hour,
       'day_of_week': now.weekday,
-      'weather_score': 3, // 默认值，可以从天气服务获取
+      'weather_score': 3,
       'tasks_completed_today': todayTasks,
       'recent_mood_avg': recentMoodAvg,
       'streak_length': streakLength,
-      'sleep_quality': 3, // 默认值，可以从用户输入获取
-      'social_interaction': 0, // 默认值，可以从聊天记录分析
+      'sleep_quality': 3,
+      'social_interaction': 0,
     };
 
     if (additionalContext != null) {

@@ -17,13 +17,10 @@ import 'memory_api_client.dart';
 class AIService {
   static final AIService _instance = AIService._internal();
 
-  /// 单例模式工厂构造函数
   factory AIService() {
     return _instance;
   }
 
-
-  // Simple circuit breaker to guard against repeated network failures
   int _consecutiveFailures = 0;
   DateTime? _openedUntil;
 
@@ -40,7 +37,6 @@ class AIService {
     }
   }
 
-  /// 获取熔断器状态信息（用于调试）
   Map<String, dynamic> getCircuitBreakerStatus() {
     return {
       'isOpen': _circuitOpen,
@@ -52,7 +48,6 @@ class AIService {
     };
   }
 
-  /// 重置熔断器（用于调试和恢复）
   void resetCircuitBreaker() {
     _consecutiveFailures = 0;
     _openedUntil = null;
@@ -61,10 +56,8 @@ class AIService {
 
   AIService._internal();
 
-  /// API密钥
   String? get _apiKey => dotenv.env['DEEPSEEK_API_KEY'];
 
-  /// API端点
   String get _apiEndpoint {
     final endpoint = dotenv.env['DEEPSEEK_API_ENDPOINT'];
     if (endpoint == null || endpoint.isEmpty) {

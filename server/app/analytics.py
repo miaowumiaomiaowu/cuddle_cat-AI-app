@@ -1,14 +1,13 @@
-from typing import Dict, List, Optional
-from datetime import datetime, timedelta
-import json
+from typing import Dict, List
+from datetime import datetime
 from .models import get_cache_manager
 
 class RecommendationAnalytics:
     """推荐系统分析器"""
-    
+
     def __init__(self):
         self.cache_manager = get_cache_manager()
-    
+
     def log_recommendation(self, user_id: str, recommendations: List[Dict], context: Dict):
         """记录推荐结果"""
         log_entry = {
@@ -16,12 +15,12 @@ class RecommendationAnalytics:
             "user_id": user_id,
             "recommendations": recommendations,
             "context": context,
-            "feedback": None  # 待用户反馈
+            "feedback": None
         }
-        
+
         key = f"rec_log:{user_id}:{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-        self.cache_manager.set(key, log_entry, ttl=86400 * 30)  # 30天
-    
+        self.cache_manager.set(key, log_entry, ttl=86400 * 30)
+
     def log_user_feedback(self, user_id: str, recommendation_id: str, feedback: Dict):
         """记录用户反馈"""
         feedback_entry = {
@@ -30,9 +29,9 @@ class RecommendationAnalytics:
             "recommendation_id": recommendation_id,
             "feedback": feedback
         }
-        
+
         key = f"feedback:{user_id}:{recommendation_id}"
-        self.cache_manager.set(key, feedback_entry, ttl=86400 * 90)  # 90天
+        self.cache_manager.set(key, feedback_entry, ttl=86400 * 90)
     
     def get_recommendation_stats(self, days: int = 7) -> Dict:
         """获取推荐统计"""

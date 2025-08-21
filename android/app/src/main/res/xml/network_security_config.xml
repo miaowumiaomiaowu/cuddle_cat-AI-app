@@ -2,9 +2,4 @@
 <network-security-config>
     <!-- 开发环境下允许明文 HTTP，确保本机代理(10.0.2.2)与自建网关可用 -->
     <base-config cleartextTrafficPermitted="true" />
-
-    <!-- 允许高德瓦片域名 -->
-    <domain-config cleartextTrafficPermitted="true">
-        <domain includeSubdomains="true">is.autonavi.com</domain>
-    </domain-config>
 </network-security-config>

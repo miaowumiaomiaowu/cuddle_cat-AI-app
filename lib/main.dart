@@ -5,14 +5,12 @@ import 'package:animations/animations.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// 导入实现的页面
 import 'screens/happiness_home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/dialogue_screen.dart';
 import 'screens/api_debug_screen.dart';
 import 'screens/data_debug_screen.dart';
 import 'screens/happiness_task_edit_screen.dart';
-
 import 'screens/immersive_chat_home_screen.dart';
 import 'screens/ai_chat_screen.dart';
 import 'screens/enhanced_mood_entry_screen.dart';
@@ -22,7 +20,6 @@ import 'screens/onboarding_screen.dart';
 import 'screens/help_center_screen.dart';
 import 'screens/adopt_cat_screen.dart';
 import 'screens/more_stats_screen.dart';
-
 import 'screens/ai_service_debug_screen.dart';
 import 'screens/smart_analysis_screen.dart';
 import 'screens/reminder_settings_screen.dart';
@@ -31,7 +28,6 @@ import 'widgets/quick_record_fab.dart';
 import 'services/error_handling_service.dart';
 import 'providers/cat_provider.dart';
 import 'providers/dialogue_provider.dart';
-
 import 'providers/mood_provider.dart';
 import 'providers/user_provider.dart';
 import 'services/provider_manager.dart';
@@ -41,7 +37,6 @@ import 'providers/happiness_provider.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
 import 'theme/app_theme.dart';
-
 import 'utils/page_transitions.dart';
 import 'services/config_service.dart';
 
@@ -53,22 +48,17 @@ Future<ConfigService> importConfigServiceAndSync() async {
 
 
 void main() async {
-  //初始化flutter绑定
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 初始化错误处理服务
   ErrorHandlingService().initialize();
 
-  // 加载环境变量 - 添加错误处理
   try {
     await dotenv.load(fileName: ".env");
     debugPrint("环境变量加载成功");
   } catch (e) {
     debugPrint("环境变量加载失败: $e");
-    // 继续运行，不阻止应用启动
   }
 
-  // 同步运行时配置（SharedPreferences 覆盖 .env）
   try {
     await importConfigServiceAndSync();
     debugPrint('[Bootstrap] 运行时配置已同步');
@@ -76,10 +66,8 @@ void main() async {
     debugPrint('同步运行时配置失败: $e');
   }
 
-  // 全局 HTTP 代理（方案B）：通过 .env 开关让所有网络走 10.0.2.2:7890 等代理
   _maybeEnableGlobalProxyFromEnv();
 
-  // 设置系统UI样式
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
@@ -89,33 +77,24 @@ void main() async {
     ),
   );
 
-  // 设置屏幕方向
   SystemChrome.setPreferredOrientations([
     DeviceOrientation.portraitUp,
     DeviceOrientation.portraitDown,
   ]);
 
-  // 创建服务实例
   final authService = AuthService();
-
-  // 创建Provider实例
   final catProvider = CatProvider();
   final dialogueProvider = DialogueProvider();
-
   final userProvider = UserProvider(authService);
   final moodProvider = MoodProvider(userProvider);
-  // 幸福任务 Provider（AI联动）
   final happinessProvider = HappinessProvider(
     aiService: AIPsychologyService(),
     dialogueProvider: dialogueProvider,
     moodProvider: moodProvider,
     userProvider: userProvider,
   );
-
-  // 创建Provider管理器
   final providerManager = ProviderManager();
 
-  //使用provider状态管理启动应用
   runApp(
     MultiProvider(
       providers: [
@@ -123,7 +102,6 @@ void main() async {
         ChangeNotifierProvider.value(value: userProvider),
         ChangeNotifierProvider.value(value: catProvider),
         ChangeNotifierProvider.value(value: dialogueProvider),
-
         ChangeNotifierProvider.value(value: moodProvider),
         ChangeNotifierProvider.value(value: happinessProvider),
         Provider.value(value: providerManager),
@@ -134,7 +112,6 @@ void main() async {
 }
 
 void _maybeEnableGlobalProxyFromEnv() {
-  // 支持 USE_HTTP_PROXY=true / 1 / yes / on（大小写不敏感）
   final raw = dotenv.env['USE_HTTP_PROXY']?.trim().toLowerCase();
   final enable = raw == 'true' || raw == '1' || raw == 'yes' || raw == 'on';
 
@@ -143,7 +120,6 @@ void _maybeEnableGlobalProxyFromEnv() {
     return;
   }
 
-  // 支持 HTTP_PROXY=host:port 或 HTTP_PROXY_HOST + HTTP_PROXY_PORT
   String? proxy = dotenv.env['HTTP_PROXY']?.trim();
   final host = dotenv.env['HTTP_PROXY_HOST']?.trim();
   final port = dotenv.env['HTTP_PROXY_PORT']?.trim();

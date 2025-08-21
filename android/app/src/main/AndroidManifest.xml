@@ -32,10 +32,7 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-        <!-- 设置您申请的高德地图API Key -->
-        <meta-data
-            android:name="com.amap.api.v2.apikey"
-            android:value="ac745c1aa3a468aaa61baa62030fa2fe" />
+
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and
@@ -48,14 +45,10 @@
             <data android:mimeType="text/plain"/>
         </intent>
     </queries>
-    <!-- 地图包名 -->
+    <!-- 网络权限 -->
     <uses-permission android:name="android.permission.INTERNET" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-    <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
 
