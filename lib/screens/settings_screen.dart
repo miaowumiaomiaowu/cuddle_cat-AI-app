@@ -258,7 +258,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               setState(() {
                 _darkModeEnabled = value;
               });
-              // TODO: 实现主题切换
+              // 主题切换暂未提供
             },
           ),
         ],
@@ -402,9 +402,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   text: '导出数据',
                   icon: Icons.download,
                   onPressed: () {
-                    // TODO: 实现数据导出
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('数据导出功能即将开放！')),
+                      const SnackBar(content: Text('数据导出暂未提供。')),
                     );
                   },
                   style: ArtisticButtonStyle.secondary,
@@ -416,9 +415,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   text: '导入数据',
                   icon: Icons.upload,
                   onPressed: () {
-                    // TODO: 实现数据导入
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('数据导入功能即将开放！')),
+                      const SnackBar(content: Text('数据导入暂未提供。')),
                     );
                   },
                   style: ArtisticButtonStyle.secondary,
@@ -452,20 +450,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           const SizedBox(height: ArtisticTheme.spacingMedium),
-          
+
           _buildInfoRow('应用版本', '1.0.0'),
-          _buildInfoRow('开发者', '暖猫团队'),
-          _buildInfoRow('联系邮箱', 'support@cuddlecat.com'),
-          
+          _buildInfoRow('开发者', '韩嘉仪 / Han Jiayi'),
+          _buildInfoRow('项目主页', 'github.com/miaowumiaomiaowu'),
+
           const SizedBox(height: ArtisticTheme.spacingMedium),
-          
+
           ArtisticButton(
             text: '用户协议与隐私政策',
             icon: Icons.description,
             onPressed: () {
-              // TODO: 显示用户协议
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('用户协议页面即将开放！')),
+                const SnackBar(content: Text('隐私与协议页面暂未提供。')),
               );
             },
             style: ArtisticButtonStyle.outline,

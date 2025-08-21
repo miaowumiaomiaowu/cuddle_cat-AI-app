@@ -38,12 +38,12 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
     ),
     FAQItem(
       question: '我的数据安全吗？',
-      answer: '我们非常重视你的隐私。所有敏感数据都经过加密存储，你可以在设置中控制数据的使用和分享。私密记录不会用于数据分析。',
+      answer: '应用默认将数据保存在本地（如 SharedPreferences），未接入云同步。请注意自行备份设备数据。',
       category: '隐私安全',
     ),
     FAQItem(
       question: '如何导出我的数据？',
-      answer: '在个人资料页面点击"数据管理"，可以导出你的心情记录、分析报告等数据。支持多种格式导出。',
+      answer: '当前版本暂未提供导出功能。如需导出，请关注项目更新或在 GitHub 提交需求。',
       category: '数据管理',
     ),
     FAQItem(
@@ -329,31 +329,10 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
           const SizedBox(height: ArtisticTheme.spacingLarge),
           
           _buildContactItem(
-            icon: Icons.email,
-            title: '邮箱支持',
-            subtitle: 'support@cuddlecat.com',
-            onTap: () => _copyToClipboard('support@cuddlecat.com'),
-          ),
-          
-          _buildContactItem(
-            icon: Icons.chat,
-            title: '在线客服',
-            subtitle: '工作日 9:00-18:00',
-            onTap: () => _showComingSoon(),
-          ),
-          
-          _buildContactItem(
-            icon: Icons.phone,
-            title: '客服热线',
-            subtitle: '400-123-4567',
-            onTap: () => _copyToClipboard('400-123-4567'),
-          ),
-          
-          _buildContactItem(
             icon: Icons.web,
-            title: '官方网站',
-            subtitle: 'www.cuddlecat.com',
-            onTap: () => _copyToClipboard('www.cuddlecat.com'),
+            title: '项目主页',
+            subtitle: 'github.com/miaowumiaomiaowu',
+            onTap: () => _copyToClipboard('https://github.com/miaowumiaomiaowu'),
           ),
         ],
       ),
@@ -407,13 +386,6 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
     _errorService.showSuccessMessage(context, '已复制到剪贴板');
   }
 
-  void _showComingSoon() {
-    _errorService.showUserFriendlyError(
-      context,
-      '在线客服功能即将上线，敬请期待！',
-      severity: ErrorSeverity.low,
-    );
-  }
 }
 
 /// FAQ项目模型

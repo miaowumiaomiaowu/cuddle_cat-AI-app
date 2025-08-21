@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 
-/// Theme extensions for gradients, shadows, and state layers.
-/// Keep these generic; values are provided from AppTheme.lightTheme.
 
 class AppGradients extends ThemeExtension<AppGradients> {
   final Gradient mistSky; // soft background gradient

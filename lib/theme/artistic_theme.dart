@@ -1,12 +1,7 @@
 import 'package:flutter/material.dart';
 
 
-/// 艺术感UI主题配置类 - 参考现代优秀设计
 class ArtisticTheme {
-  // 莫兰迪艺术色系 - 更精致的配色
-  // 森系绿色主题（方案B）
-  // 莫奈睡莲色系
-  // 采用用户提供的绿色系调色板
   static const Color primaryColor = Color(0xFF329363); // 深翠绿
   static const Color primaryColorLight = Color(0xFF98CCBB); // 雾青绿
   static const Color primaryColorDark = Color(0xFF398D37); // 深叶绿
@@ -119,7 +114,7 @@ class ArtisticTheme {
   static const double radiusXLarge = 32.0;
   static const double radiusXXLarge = 40.0;
 
-  // 艺术间距系统
+
   static const double spacingXSmall = 4.0;
   static const double spacingSmall = 8.0;
   static const double spacingMedium = 16.0;
@@ -127,7 +122,6 @@ class ArtisticTheme {
   static const double spacingXLarge = 32.0;
   static const double spacingXXLarge = 48.0;
 
-  // 艺术字体系统 - 参考现代设计
   static const TextStyle displayLarge = TextStyle(
     fontSize: 36,
     fontWeight: FontWeight.w300, // Light weight for elegance
@@ -299,7 +293,7 @@ class ArtisticTheme {
     );
   }
 
-  /// 获取心情颜色 - 艺术化
+
   static Color getMoodColor(String mood) {
     switch (mood.toLowerCase()) {
       case 'happy':

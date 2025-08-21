@@ -15,8 +15,8 @@
 在项目根目录的 `.env` 文件中配置：
 
 ```env
-# DeepSeek AI API密钥
-DEEPSEEK_API_KEY=你的真实API密钥
+# DeepSeek AI API密钥（可选）
+DEEPSEEK_API_KEY=
 DEEPSEEK_API_ENDPOINT=https://api.deepseek.com/v1/chat/completions
 ```
 

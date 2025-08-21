@@ -313,7 +313,7 @@ class _SplashScreenState extends State<SplashScreen>
               Padding(
                 padding: const EdgeInsets.only(bottom: 20),
                 child: Text(
-                  '© 2024 暖猫团队',
+                  'Han Jiayi · Cuddle Cat',
                   style: ArtisticTheme.caption.copyWith(
                     color: ArtisticTheme.textSecondary.withValues(alpha: 0.6),
                   ),

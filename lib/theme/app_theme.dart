@@ -7,12 +7,7 @@ import 'package:google_fonts/google_fonts.dart';
 
 /// 应用主题配置类 - 手绘风格
 class AppTheme {
-  // 莫兰迪色系主色调配置 - 手绘彩铅风格
-  // 森系绿色主题（方案B）
-  // 莫奈睡莲色系（柔和水绿 + 雾蓝 + 淡紫）
-  // 采用用户提供的配色（梵高·绿色原野调色盘）
-  // #329363 深翠绿、#98CCBB 雾青绿、#398D37 深叶绿、#80BC6B 浅叶绿、#C2D4D6 雾蓝灰
-  // 更柔和的疗愈绿（按你的偏好 #34D399 作为主色）
+
   static const Color primaryColor = Color(0xFF34D399);
   static const Color primaryColorLight = Color(0xFFA7F3D0); // 浅薄荷绿
   static const Color primaryColorDark = Color(0xFF10B981); // 深一点的青绿
@@ -20,27 +15,27 @@ class AppTheme {
   static const Color secondaryColor = Color(0xFFC2D4D6); // 雾蓝灰（次要）
 
 
-	  // 亮强调色（来自参考图更鲜亮的草绿色）
+	 
 	  static const Color vibrantGreen = Color(0xFF68A530);
 
-  // 画布与卡片采用更浅的雾蓝/雾青系，保证可读性
+ 
   static const Color backgroundColor = Color(0xFFF4F8F8); // 极浅雾青白
   static const Color surfaceColor = Color(0xFFFCFEFD); // 近白
   static const Color cardColor = Color(0xFFE6F1EE); // 浅雾青卡片
 
-  // 文本色更偏墨蓝灰，提升高级感
+  
   static const Color textPrimary = Color(0xFF2F3A40); // 墨蓝灰
   static const Color textSecondary = Color(0xFF5B6A73); // 次级墨蓝
   static const Color textHint = Color(0xFF9AA8B1); // 提示灰蓝
   static const Color textColor = Color(0xFF2F3A40); // 主文本颜色（与textPrimary相同）
 
-  // 功能色：依睡莲系微调
+  
   static const Color successColor = Color(0xFF7FB8A7); // 柔水绿
   static const Color warningColor = Color(0xFFE3C48E); // 柔金杏
   static const Color errorColor = Color(0xFFCE9AA5); // 玫瑰灰
   static const Color infoColor = Color(0xFFA8BBCB); // 雾蓝
 
-  // 猫咪心情色（与新系一致）
+  
   static const Color happyColor = Color(0xFFF0EEC8); // 开心 - 淡暖米黄
   static const Color playfulColor = Color(0xFF89A89E); // 顽皮 - 水绿
   static const Color calmColor = Color(0xFFA8BBCB); // 平静 - 雾蓝

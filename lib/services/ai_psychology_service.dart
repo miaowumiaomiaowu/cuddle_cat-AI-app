@@ -6,8 +6,8 @@ import '../models/user.dart';
 
 /// AI心理支持服务 - 提供智能对话和情绪分析
 class AIPsychologyService {
-  static const String _apiKey = 'your_openai_api_key'; // 实际项目中应该从环境变量获取
-  
+  // 无硬编码密钥；如需对接外部服务，请通过 .env 或安全存储读取
+
   /// 分析心情记录并提供建议
   Future<PsychologyInsight> analyzeMoodPattern(List<MoodEntry> entries, User user) async {
     try {

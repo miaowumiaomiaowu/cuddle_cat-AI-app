@@ -3,9 +3,6 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../theme/artistic_theme.dart';
 import '../theme/app_theme.dart';
-// import '../services/performance_service.dart'; // 已删除
-// import '../services/testing_service.dart'; // 已删除
-// import '../services/health_check_service.dart'; // 已删除
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../widgets/hand_drawn_card.dart';
