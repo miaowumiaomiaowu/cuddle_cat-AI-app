@@ -89,12 +89,12 @@
 4) 可选：配置 .env（仅在你需要启用在线能力时）
 - 复制 .env.example 为 .env，并按需填写：
   - ENABLE_REMOTE_BACKEND=true 与 SERVER_BASE_URL（启用本仓库 server/ 后端）
-  - DEEPSEEK_API_KEY（可选，用于 server 端调用第三方模型）
+  - DEEPSEEK_API_KEY（用于 server 端调用第三方模型）
   - METRICS_API_KEY/AI_SERVICE_INTERNAL_KEY（可选，保护 /metrics 与内部端点）
 
 ---
 
-## 🛠️ 可选后端（FastAPI，server/）
+## 🛠️ 后端（FastAPI，server/）
 
 快速启动：
 ```bash
