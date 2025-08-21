@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 // 导入实现的页面
-// import 'screens/cat_home_screen.dart';
 import 'screens/happiness_home_screen.dart';
 import 'screens/profile_screen.dart';
 import 'screens/dialogue_screen.dart';
@@ -17,7 +16,6 @@ import 'screens/happiness_task_edit_screen.dart';
 import 'screens/immersive_chat_home_screen.dart';
 import 'screens/ai_chat_screen.dart';
 import 'screens/enhanced_mood_entry_screen.dart';
-import 'screens/mood_map_screen.dart';
 import 'screens/developer_tools_screen.dart';
 import 'screens/splash_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -200,11 +198,8 @@ class MyApp extends StatelessWidget {
         DialogueScreen.routeName: (ctx) => const DialogueScreen(),
         ApiDebugScreen.routeName: (ctx) => const ApiDebugScreen(),
         DataDebugScreen.routeName: (ctx) => const DataDebugScreen(),
-
-        // '/records_summary': (ctx) => const RecordsSummaryScreen(), // 已删除
         AIChatScreen.routeName: (ctx) => const AIChatScreen(),
         EnhancedMoodEntryScreen.routeName: (ctx) => const EnhancedMoodEntryScreen(),
-        MoodMapScreen.routeName: (ctx) => const MoodMapScreen(),
         DeveloperToolsScreen.routeName: (ctx) => const DeveloperToolsScreen(),
         OnboardingScreen.routeName: (ctx) => const OnboardingScreen(),
         HelpCenterScreen.routeName: (ctx) => const HelpCenterScreen(),

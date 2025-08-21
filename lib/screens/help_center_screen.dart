@@ -31,11 +31,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen>
       answer: 'AI小暖会分析你的心情记录模式，提供个性化的心理支持和建议。你可以通过AI聊天功能与小暖对话，获得即时的情绪支持。',
       category: 'AI功能',
     ),
-    FAQItem(
-      question: '心情地图是什么？',
-      answer: '心情地图将你的心情记录与地理位置关联，帮助你发现不同地点对情绪的影响，找到属于你的治愈之地。',
-      category: '功能介绍',
-    ),
+
     FAQItem(
       question: '我的数据安全吗？',
       answer: '应用默认将数据保存在本地（如 SharedPreferences），未接入云同步。请注意自行备份设备数据。',

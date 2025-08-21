@@ -165,7 +165,7 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
 
                 const SizedBox(height: 16),
 
-                // 旅行记录
+                // 幸福打卡
                 Transform.translate(
                   offset: Offset(0, -40 * _menuAnimation.value),
                   child: Transform.scale(
@@ -310,9 +310,6 @@ class _QuickRecordFABState extends State<QuickRecordFAB>
     _closeMenu();
     await Navigator.of(context).pushNamed(HappinessTaskEditScreen.routeName);
   }
-
-
-  // 旅行功能已移除
 
   Future<void> _openAIChat(BuildContext context) async {
     _closeMenu();

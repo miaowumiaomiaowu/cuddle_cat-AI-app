@@ -44,13 +44,7 @@ class _OnboardingScreenState extends State<OnboardingScreen>
       description: 'AI小暖会分析你的心情模式，提供个性化的心理支持和改善建议。',
       color: ArtisticTheme.infoColor,
     ),
-    OnboardingPage(
-      emoji: '🗺️',
-      title: '探索心情地图',
-      subtitle: '发现地点与心情的奇妙联系',
-      description: '通过心情地图，看看不同的地方如何影响你的情绪，发现属于你的治愈之地。',
-      color: ArtisticTheme.accentColor,
-    ),
+
   ];
 
   @override

@@ -1,162 +1,302 @@
-# 暖猫 (Cuddle Cat)
+﻿# 🐱 暖猫 (Cuddle Cat)
 
-一款基于 AI 分析能力，关注“情绪记录 × 温和陪伴 × 轻量建议”的 Flutter 应用。
+> 一款基于 AI 驱动的心理健康与情感陪伴应用，融合了先进的情绪分析、智能对话和个性化建议系统
 
-- 🐾 猫咪助手式对话与陪伴
-- 📓 情绪记录与趋势洞察
-- 🎁 温和建议/礼物卡片与计划
-- 🗺️ 心情地图
+[![Flutter](https://img.shields.io/badge/Flutter-3.16+-02569B?style=flat&logo=flutter)](https://flutter.dev)
+[![Dart](https://img.shields.io/badge/Dart-3.6+-0175C2?style=flat&logo=dart)](https://dart.dev)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi)](https://fastapi.tiangolo.com)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=flat&logo=python)](https://python.org)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
 
-开发者：韩嘉仪 / Han Jiayi · GitHub: https://github.com/miaowumiaowu
+## ✨ 项目概述
 
----
+暖猫是一款创新的心理健康应用，通过可爱的猫咪助手形象，为用户提供温暖的情感陪伴和专业的心理支持。应用结合了现代 AI 技术与人性化设计，创造出独特的"情绪记录  温和陪伴  智能建议"体验。
 
-## 🤖 AI 功能特性
-
-### 智能对话与陪伴
-- 个性化回复：AI 猫咪助手基于 DeepSeek 模型，能够理解你的情绪状态和个人偏好，提供温暖贴心的回复
-- 上下文记忆：记住你之前分享的经历、喜好和困扰，让每次对话更有连续性和针对性
-- 情绪感知：识别你当前的心情状态，调整对话风格和建议方向，提供恰当的情感支持
-
-### 个性化建议系统
-- 智能礼物推荐：结合你的心情记录、兴趣偏好和当前状态，推荐适合的幸福清单
-- 健康计划定制：根据你的生活习惯和目标，制定个性化的幸福提升计划，包含具体的行动步骤
-- 情境感知建议：考虑时间、地点、天气等因素，提供更贴合当下情境的温和建议
-
-### 情绪分析与洞察
-- 深度情绪理解：不仅识别基础情绪，还能分析情绪背后的原因和模式
-- 趋势预测：基于历史数据预测可能的情绪变化，提前给出关怀提醒
-- 个人画像构建：持续学习你的情绪特点，构建专属的心理健康档案
-
-### 记忆与学习系统
-- 长期记忆：保存重要的对话内容和个人信息，建立更深的陪伴关系
-- 偏好学习：自动学习你的喜好、习惯和反馈，不断优化建议质量
-- 成长追踪：记录你的心理成长轨迹，见证每一个积极的变化
-
-> 说明：若你不配置任何后端/密钥，应用也可在本地正常使用（以规则与本地偏好推断为主）；当你接入后端并启用在线能力时，以上 AI 功能将获得更强的个性化与上下文理解。
+### 🎯 核心价值
+- **🧠 智能情绪分析**：基于 DeepSeek 模型的深度情绪理解与模式识别
+- **💝 温暖陪伴体验**：可爱猫咪助手提供24/7情感支持
+- **📊 数据驱动洞察**：科学的心理健康追踪与趋势分析
+- **🎁 个性化建议**：AI驱动的幸福清单与健康计划定制
+- **🔒 隐私优先设计**：本地存储优先，可选云端同步
 
 ---
 
-## 🌟 核心体验亮点
-- 对话可感知情绪走向，并在合适时机引用你过往分享的关键信息
-- 推荐卡片包含理由与预计时长，帮助你采取“小步快走”的行动
-- 周期性健康计划提供目标/习惯/检查点，不强迫、可持续
-- 记忆系统长期保存重要线索，结合当前语境生成更贴近你的回应
-- 默认可离线使用；连接在线 AI 后，个性化与上下文理解更强
+## 🚀 主要功能
 
+### 🐾 智能猫咪助手
+- **个性化对话**：基于 DeepSeek AI 模型的智能回复系统
+- **情绪感知**：实时识别用户情绪状态，调整对话风格
+- **上下文记忆**：长期记忆用户偏好与重要信息
+- **多种猫咪品种**：波斯猫、布偶猫、暹罗猫等可选择领养，对应不同对话风格
+
+###  情绪记录与分析
+- **多维度记录**：心情类型、强度等级、触发事件
+- **智能标签系统**：工作、家庭、健康等分类标签
+- **趋势可视化**：FL Chart 驱动的美观图表展示
+
+
+###  幸福任务系统
+- **AI推荐引擎**：基于心情记录生成个性化幸福清单
+- **健康计划定制**：周期性目标设定与习惯培养
+- **微幸福打卡**：深呼吸、伸展运动等快速正念练习
+- **进度追踪**：完成率统计与连续打卡记录
+
+###  智能分析面板
+- **情绪模式识别**：AI分析情绪变化规律
+- **预测性洞察**：基于历史数据的情绪趋势预测
+- **个人画像构建**：持续学习用户特征的心理健康档案
+- **突破检测**：识别积极变化与成长里程碑
 
 ---
 
-## 🧩 功能模块
+## 🏗️ 技术架构
 
-- 🧠 细粒度情绪维度：在建议与计划生成时综合考虑强度、标签与近期节律
-- 🕒 时段敏感：晚间更偏向放松类建议，白天更倾向行动类
-- 🧾 理由可解释：每张卡片/每条建议尽量附带“为什么推荐给你”的说明
-- 🔁 反馈可用：对建议的“喜欢/有用”反馈会用于后续优化
+### 前端架构 (Flutter)
+```
+📱 Flutter App (Dart 3.6+)
+├── 🎨 UI Layer
+│   ├── Material Design 3 + 自定义主题系统
+│   ├── 响应式布局 (手机/平板适配)
+│   └── 流畅动画 (Lottie + 自定义动效)
+├── 🔄 状态管理
+│   ├── Provider + ChangeNotifier 架构
+│   ├── 多Provider协调 (Mood/Cat/Happiness/User)
+│   └── 生命周期管理与错误处理
+├── 💾 数据层
+│   ├── SharedPreferences (本地存储)
+│   ├── SQLite (复杂数据结构)
+│   └── HTTP Client (可选云端同步)
+└── 🧩 核心服务
+    ├── AI Psychology Service (情绪分析)
+    ├── Memory Service (长期记忆)
+    ├── Reminder Service (智能提醒)
+    └── Config Service (运行时配置)
+```
 
+### 后端架构 (FastAPI)
+```
+🐍 Python Backend (FastAPI + Uvicorn)
+├── 🤖 AI 引擎
+│   ├── DeepSeek API 集成
+│   ├── Sentence Transformers (文本嵌入)
+│   ├── 情绪分析模型 (Transformers)
+│   └── 在线学习系统 (自适应优化)
+├── 💾 数据存储
+│   ├── PostgreSQL + pgvector (向量存储)
+│   ├── SQLite (轻量级部署)
+│   └── Redis (缓存与会话)
+├── 📊 分析服务
+│   ├── 行为模式分析
+│   ├── 情绪预测模型
+│   └── 个性化推荐引擎
+└── 🔧 运维支持
+    ├── Prometheus 指标监控
+    ├── 健康检查端点
+    └── Docker 容器化部署
+```
 
-- 💬 沉浸式聊天
-  - 留有“参考与反馈”区块：展示依据的历史偏好/记忆摘要，提供“喜欢/有用”等反馈入口
-  - 在未启用后端时，聊天以“温和建议/提示”形式呈现（规则推断）
-  - 当启用在线 AI 时，会结合你的历史偏好、近期情绪与关键记忆生成更贴合当下的回复与建议
-  - 对话消息的“依据参考（used_memories/profile）”可在界面中展开查看
+---
 
-- 📈 情绪记录与洞察
-  - 快速心情/详细记录：强度、标签、备注
-  - 趋势、分布、近 7 天完成率、积极/消极占比等基础统计
-- 🎯 幸福清单与温和建议
-  - 情绪事件会带上地点、标签与注释，方便回顾触发因素
-  - 统计面板支持按时间范围快速切换，帮助你发现模式与改善窗口
-  - 结合近期记录生成幸福清单（时长/类别/理由）
-- ⚙️ 设置与开发者工具
-  - 快速查看基础系统信息与本地存储自检
-  - 指标开关与 API Key（用于 /metrics）
+## 🛠️ 技术栈详解
+
+### 移动端技术
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| **Flutter** | 3.16+ | 跨平台UI框架 |
+| **Dart** | 3.6+ | 编程语言 |
+| **Provider** | 6.1.1 | 状态管理 |
+| **FL Chart** | 0.68.0 | 数据可视化 |
+| **Lottie** | 3.1.0 | 动画效果 |
+| **SQLite** | 2.3.0 | 本地数据库 |
+| **Google Fonts** | 6.3.0 | 字体系统 |
+
+### 后端技术
+| 技术 | 版本 | 用途 |
+|------|------|------|
+| **FastAPI** | 0.115.0 | Web框架 |
+| **PyTorch** | 2.3.1 | 机器学习 |
+| **Transformers** | 4.43.3 | NLP模型 |
+| **PostgreSQL** | 16+ | 主数据库 |
+| **pgvector** | 0.2.5+ | 向量存储 |
+| **Redis** | 5.0+ | 缓存系统 |
 
 ---
 
 ## 🚀 快速开始
 
-1) 准备环境
-- Flutter 3.x
-- Dart 3.6+
+### 环境要求
+- **Flutter SDK**: 3.16.0+
+- **Dart SDK**: 3.6.0+
+- **Python**: 3.11+ (后端可选)
+- **Node.js**: 18+ (开发工具)
 
-2) 拉取依赖
-- `flutter pub get`
-
-3) 运行
-- `flutter run`
-
-4) 可选：配置 .env（仅在你需要启用在线能力时）
-- 复制 .env.example 为 .env，并按需填写：
-  - ENABLE_REMOTE_BACKEND=true 与 SERVER_BASE_URL（启用本仓库 server/ 后端）
-  - DEEPSEEK_API_KEY（用于 server 端调用第三方模型）
-  - METRICS_API_KEY/AI_SERVICE_INTERNAL_KEY（可选，保护 /metrics 与内部端点）
-
----
-
-## 🛠️ 后端（FastAPI，server/）
-
-快速启动：
+### 1️⃣ 克隆项目
 ```bash
+git clone https://github.com/miaowumiaowu/cuddle_cat.git
+cd cuddle_cat
+```
+
+### 2️⃣ 安装依赖
+```bash
+# Flutter 依赖
+flutter pub get
+
+# 后端依赖 (可选)
 cd server
 python -m venv .venv
-# Windows: .venv\Scripts\activate
-# macOS/Linux: source .venv/bin/activate
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
+```
+
+### 3️⃣ 配置环境
+```bash
+# 复制环境配置模板
+cp .env.example .env
+
+# 编辑配置文件 (可选)
+# DEEPSEEK_API_KEY=your_api_key_here
+# ENABLE_REMOTE_BACKEND=true
+# SERVER_BASE_URL=http://localhost:8000
+```
+
+### 4️⃣ 启动应用
+```bash
+# 启动 Flutter 应用
+flutter run
+
+# 启动后端服务 (可选)
+cd server
 uvicorn app.main:app --reload --port 8000
 ```
 
-主要端点：
-- GET  /health
-- POST /chat/reply
-- POST /recommend/gifts
-- POST /recommend/wellness-plan
-- POST /memory/upsert
-- POST /memory/query
-- POST /feedback；GET /feedback/stats/{user_id}
-- GET  /analytics/stats；POST /analytics/predict-mood；POST /analytics/emotion-advanced
-- GET  /metrics；GET /metrics_prom（如设置 METRICS_API_KEY 则需携带 X-API-Key）
-- GET  /learning/system-stats；POST /learning/train-models；POST /learning/add-training-data
+---
 
-Flutter 侧通过 .env 与运行时设置读取 SERVER_BASE_URL；当 `ENABLE_REMOTE_BACKEND=true` 时始终使用 HTTP 后端。
+## 📱 应用截图
+
+### 主要界面
+- **🏠 沉浸式聊天首页**: 与AI猫咪助手的温暖对话
+- **📊 幸福清单面板**: 个性化建议与幸福清单，提升用户幸福感
+- **📈 智能分析页面**: 情绪趋势与深度洞察
+- **👤 个人中心**: 用户设置与数据管理
+
+### 核心功能演示
+- **🎭 情绪记录**: 多维度心情追踪与标签系统
+- **🎁 幸福清单**: AI驱动的个性化幸福清单
+- **📅 习惯培养**: 可持续的健康计划制定
 
 ---
 
-## 🔒 数据与隐私
+## 🔧 开发指南
 
-- 默认本地存储（SharedPreferences）；未接入云同步
-- 启用后端时，建议通过 HTTPS/TLS 暴露服务，并限制访问来源
-- 指标端点可通过 METRICS_API_KEY 受保护
+### 项目结构
+```
+cuddle_cat/
+├── 📱 lib/                    # Flutter 应用源码
+│   ├── models/                # 数据模型
+│   ├── providers/             # 状态管理
+│   ├── screens/               # 页面组件
+│   ├── services/              # 业务服务
+│   ├── widgets/               # UI组件
+│   └── theme/                 # 主题系统
+├── 🐍 server/                 # Python 后端
+│   ├── app/                   # FastAPI 应用
+│   ├── requirements.txt       # Python 依赖
+│   └── Dockerfile            # 容器配置
+├── 🧪 test/                   # 测试文件
+├── 📚 docs/                   # 项目文档
+└── 🐳 docker-compose.yml     # 容器编排
+```
 
----
-
-## 🧪 开发与调试
-
-- 开发者工具页：
-  - 查看运行时配置、基础系统信息、本地存储自检
-  - 重置某些节律限制（例如“今日礼物限制”）
-- Android 模拟器代理脚本（Windows）：
-  - `scripts/setup_android_proxy.bat`（将模拟器 127.0.0.1:7890 反向映射到宿主机）
-
----
-
-## 🗺️ 架构概览（简）
-
-- Flutter 客户端
-  - Provider + ChangeNotifier
-  - ArtisticTheme 设计体系（柔和绿色系、圆角、温和动效）
-  - 本地存储：SharedPreferences
-  - 网络：http + 轻量超时/降级
-- FastAPI 后端（可选）
-  - 规则/轻学习 + 记忆检索（SQLite + 轻量向量索引）
-  - Analytics & Online Learning：用于画像与排序优化
-  - Metrics：/metrics 与 /metrics_prom（可选 API Key）
-
+### 开发工具
+- **🔍 开发者工具页面**: 运行时配置与系统诊断
+- **🐛 调试面板**: API连接测试与错误日志
+- **📊 指标监控**: Prometheus格式的性能指标
+- **🔧 代理配置**: Android模拟器网络代理脚本
 
 ---
 
-## 👩🏻‍💻 开发者与支持
+## 🚢 部署指南
 
-- 开发者：韩嘉仪 / Han Jiayi
-- GitHub：https://github.com/miaowumiaowu
+### Docker 部署 (推荐)
+```bash
+# 启动完整服务栈
+docker-compose up -d
 
+# 服务访问地址
+# - 后端API: http://localhost:8002
+# - PostgreSQL: localhost:5434
+# - Redis: localhost:6379
+```
+
+### 手动部署
+```bash
+# 后端服务
+cd server
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+
+# Flutter Web (可选)
+flutter build web
+# 部署 build/web 目录到静态服务器
+```
+
+---
+
+## 📊 性能特性
+
+### 🚀 性能优化
+- **懒加载**: Provider延迟初始化，减少启动时间
+- **内存管理**: 智能缓存与资源回收机制
+- **网络优化**: 请求超时控制与降级策略
+- **本地优先**: 离线模式确保基础功能可用
+
+### 📈 可扩展性
+- **模块化架构**: 松耦合的服务设计
+- **插件系统**: 可扩展的AI模型接入
+- **多租户支持**: 用户数据隔离与权限管理
+- **水平扩展**: 容器化部署支持集群扩展
+
+---
+
+## 🔒 隐私与安全
+
+### 数据保护
+- **🏠 本地优先**: 默认本地存储，无强制云同步
+- **🔐 加密传输**: HTTPS/TLS端到端加密
+- **🎭 匿名化**: 敏感数据脱敏处理
+- **🗑️ 数据清理**: 用户可控的数据删除
+
+### 安全措施
+- **🔑 API密钥管理**: 环境变量安全存储
+- **🛡️ 访问控制**: 基于角色的权限系统
+- **📊 审计日志**: 关键操作记录与监控
+- **🔍 漏洞扫描**: 定期安全检查与更新
+
+
+---
+
+## 👩‍💻 开发者信息
+
+**开发者**: 韩嘉仪 / Han Jiayi
+**GitHub**: [@miaowumiaowu](https://github.com/miaowumiaowu)
+**项目地址**: [https://github.com/miaowumiaowu/cuddle_cat](https://github.com/miaowumiaowu/cuddle_cat)
+
+---
+
+## 🙏 致谢
+
+感谢以下开源项目和服务：
+- [Flutter](https://flutter.dev) - 跨平台UI框架
+- [FastAPI](https://fastapi.tiangolo.com) - 现代Python Web框架
+- [DeepSeek](https://platform.deepseek.com) - AI模型服务
+- [PostgreSQL](https://postgresql.org) - 开源数据库
+- [pgvector](https://github.com/pgvector/pgvector) - 向量存储扩展
+
+---
+
+<div align="center">
+
+**🐱 用温暖的技术，陪伴每一个需要关怀的心灵 🐱**
+
+Made with ❤️ by Han Jiayi
+
+</div>
